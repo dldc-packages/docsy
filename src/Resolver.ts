@@ -8,7 +8,7 @@ export type InjectedValues = {
 export function resolve<I extends InjectedValues>(node: Node, values: I): any {
   return resolveInternal(node);
 
-  function resolveInternal(item: Node) {
+  function resolveInternal(item: Node): any {
     if (NodeIs.Identifier(item)) {
       return values[item.name];
     }
@@ -28,10 +28,10 @@ export function resolve<I extends InjectedValues>(node: Node, values: I): any {
       return undefined;
     }
     if (NodeIs.DotMember(item)) {
-      return item.target[item.property.name];
+      return resolveInternal(item.target)[item.property.name];
     }
     if (NodeIs.BracketMember(item)) {
-      return item.target[resolveInternal(item.property)];
+      return resolveInternal(item.target)[resolveInternal(item.property)];
     }
     throw new Error(`Unsuported node ${item.type}`);
   }
