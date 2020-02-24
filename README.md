@@ -1,2 +1,3 @@
-# mdx-parser
-A MDX parser
+# Docsy
+
+> A syntax for Component based documents

@@ -1,0 +1,29 @@
+<|Title color="john's">Hello <|B>world|> !|>
+
+<|Title color='red'>Hello world !|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title bold|>
+
+<|Title mainColor='red'>
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: 'green', 'other': 'blue', [property]: true } hey='yoo' num=34 bool=true noop=null|>
+
+<|Title config=[34, 'foo', Theme.bar]>Hello <|B>world|> !|>
+
+<|Title config={ color: 'green', ...Theme.spread } hey='yoo' num=-34.9 bool=true noop=null>
+Hello <|B>world|> !
+<Title|>
+
+<|Block color='red'>
+<|Agathe color='red'>
+bla bla bla
+<Agathe|>
+<Block|>
+
+<|Block theme=Theme.dark() foo=43|>
