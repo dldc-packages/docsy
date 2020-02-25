@@ -1,6 +1,6 @@
-import { Node, NodeIs, NodeType, Nodes } from './Node';
-import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './constants';
-import { Position } from './InputStream';
+import { Node, NodeIs, NodeType, Nodes } from './utils/Node';
+import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './utils/constants';
+import { Position } from './utils/InputStream';
 
 export function format(node: Node): Node {
   return formatInternal(node);

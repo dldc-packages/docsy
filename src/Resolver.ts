@@ -1,4 +1,4 @@
-import { Node, NodeIs } from './Node';
+import { Node, NodeIs } from './utils/Node';
 
 export type InjectedValues = {
   createElement: (type: any, props: any, ...children: any) => any;

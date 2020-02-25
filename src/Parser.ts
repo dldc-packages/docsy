@@ -10,8 +10,8 @@ import {
   ObjectItem,
   DottableExpression,
   QuoteType,
-} from './Node';
-import { InputStream, Position } from './InputStream';
+} from './utils/Node';
+import { InputStream, Position } from './utils/InputStream';
 import {
   BACKTICK,
   DIGIT_REGEX,
@@ -19,7 +19,7 @@ import {
   IDENTIFIER_REGEX,
   IDENTIFIER_START_REGEX,
   SINGLE_QUOTE,
-} from './constants';
+} from './utils/constants';
 
 export function parse(file: string): Document {
   const input = InputStream(file);

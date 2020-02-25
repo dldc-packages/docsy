@@ -1,5 +1,5 @@
-import { Node, NodeIs, Prop, ObjectItem, Expression, Children } from './Node';
-import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './constants';
+import { Node, NodeIs, Prop, ObjectItem, Expression, Children } from './utils/Node';
+import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './utils/constants';
 
 export function serialize(node: Node): string {
   return serializeInternal(node);

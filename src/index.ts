@@ -14,4 +14,4 @@ export {
   NodeType,
   ObjectItem,
   Prop,
-} from './Node';
+} from './utils/Node';
