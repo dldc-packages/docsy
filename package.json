@@ -27,10 +27,10 @@
   "scripts": {
     "build": "tsdx build --target web",
     "lint": "tsdx lint",
+    "pub": "yarn build && np",
     "start": "tsdx watch",
     "test": "tsdx test",
-    "test:watch": "tsdx test --watch",
-    "pub": "yarn build && np"
+    "test:watch": "tsdx test --watch"
   },
   "husky": {
     "hooks": {
