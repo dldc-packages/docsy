@@ -9,6 +9,7 @@ import {
   Expression,
   ObjectItem,
   DottableExpression,
+  QuoteType,
 } from './Node';
 import { InputStream, Position } from './InputStream';
 import {
@@ -18,8 +19,6 @@ import {
   IDENTIFIER_REGEX,
   IDENTIFIER_START_REGEX,
   SINGLE_QUOTE,
-  WHITESPACE_REGEX,
-  MORE_THAN_ONE_NEW_LINE,
 } from './constants';
 
 export function parse(file: string): Document {
@@ -41,17 +40,18 @@ export function parse(file: string): Document {
     const children: Array<Children> = [];
     while (!input.eof() && limit > 0) {
       limit--;
-      const item = parseElementOrText();
+      const beforeItemState = input.saveState();
+      const item = parseNextChildren();
       if (item.type === 'CLOSE') {
         if (expectCloseTag === false) {
           return input.croak(`Unexpected close tag`);
         }
-        if (item.tag === null) {
-          break;
+        if (item.tag !== null) {
+          if (!sameComponent(expectCloseTag, item.tag)) {
+            input.croak(`Unexpected close tag name (expecting a closing tag but not that one)`);
+          }
         }
-        if (!sameComponent(expectCloseTag, item.tag)) {
-          input.croak(`Unexpected close tag name (expecting a closing tag but not that one)`);
-        }
+        input.restoreState(beforeItemState);
         break;
       }
       children.push(item);
@@ -78,45 +78,27 @@ export function parse(file: string): Document {
   }
 
   function normalizeChildren(nodes: Array<Children>): Array<Children> {
-    return nodes
-      .reduce<Array<Children>>((acc, item) => {
-        if (acc.length === 0) {
-          acc.push(item);
-          return acc;
-        }
-        const last = acc[acc.length - 1];
-        if (last.type === 'Text' && item.type === 'Text') {
-          acc.pop();
-          acc.push(
-            createNode('Text', last.position!.start, item.position!.end, {
-              content: last.content + item.content,
-            })
-          );
-        }
+    return nodes.reduce<Array<Children>>((acc, item) => {
+      if (acc.length === 0) {
         acc.push(item);
         return acc;
-      }, [])
-      .map(item => {
-        if (item.type === 'Text') {
-          if (item.content.match(WHITESPACE_REGEX) && item.content.match(MORE_THAN_ONE_NEW_LINE)) {
-            return createNode('EmptyLine', item.position!.start, item.position?.end!, {});
-          }
-        }
-        return item;
-      })
-      .filter(item => {
-        if (item.type === 'Text') {
-          if (item.content.match(WHITESPACE_REGEX)) {
-            return false;
-          }
-        }
-        return true;
-      });
+      }
+      // join Text nodes
+      const last = acc[acc.length - 1];
+      if (last.type === 'Text' && item.type === 'Text') {
+        acc.pop();
+        acc.push(
+          createNode('Text', last.position!.start, item.position!.end, {
+            content: last.content + item.content,
+          })
+        );
+      }
+      acc.push(item);
+      return acc;
+    }, []);
   }
 
-  function parseElementOrText():
-    | Node<'Text' | 'Element'>
-    | { type: 'CLOSE'; tag: ComponentType | null } {
+  function parseNextChildren(): Children | { type: 'CLOSE'; tag: ComponentType | null } {
     const start = input.position();
     if (peek('|>')) {
       skip('|>');
@@ -146,7 +128,7 @@ export function parse(file: string): Document {
     });
   }
 
-  function maybeParseElement(): false | Node<'Element'> {
+  function maybeParseElement(): false | Node<'Element' | 'SelfClosingElement'> {
     const start = input.position();
     const component = ((): ComponentType | false => {
       try {
@@ -172,18 +154,30 @@ export function parse(file: string): Document {
     }
     if (peek('|>')) {
       skip('|>');
-      return createNode('Element', start, input.position(), {
+      return createNode('SelfClosingElement', start, input.position(), {
         component: component as any,
         props,
-        children: [],
       });
     }
     skip('>');
     const children = parseChildren(component);
+    const namedClose = (() => {
+      if (peek('|>')) {
+        skip('|>');
+        return false;
+      }
+      // name
+      skip('<');
+      const identifier = parseIdentifier();
+      maybeParseElementTypeMember(identifier);
+      skip('|>');
+      return true;
+    })();
     return createNode('Element', start, input.position(), {
       component: component as any,
       props,
       children,
+      namedCloseTag: namedClose,
     });
   }
 
@@ -412,7 +406,9 @@ export function parse(file: string): Document {
         str += ch;
       }
     }
-    return createNode('Str', start, input.position(), { value: str });
+    const quoteType: QuoteType =
+      end === BACKTICK ? 'Backtick' : end === SINGLE_QUOTE ? 'Single' : 'Double';
+    return createNode('Str', start, input.position(), { value: str, quote: quoteType });
   }
 
   function isDigit(ch: string): boolean {

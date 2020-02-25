@@ -1,1 +1,1 @@
-<|Title obj={ foo: 'bar', ['computed']: true, shorthand, ...(Config.dark('light').theme), bracket: foo['bar'] } >Hello world !|>
+<|Title obj={ foo: "bar", ['computed']: true, shorthand, ...(Config.dark('light').theme), bracket: foo['bar'] } >Hello world !|>

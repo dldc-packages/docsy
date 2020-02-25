@@ -11,11 +11,11 @@ function readFile(name: string): string {
 
 describe('Parse', () => {
   it(`Parse an element`, () => {
-    const file = readFile('element');
+    const file = `<|Demo|>`;
     expect(() => parse(file)).not.toThrow();
     const result = parse(file) as any;
     expect(result.children.length).toBe(1);
-    expect(result.children[0].type).toEqual('Element');
+    expect(result.children[0].type).toEqual('SelfClosingElement');
     expect(result.children[0].component).toEqual({
       name: 'Demo',
       position: {
@@ -30,22 +30,25 @@ describe('Parse', () => {
     const file = readFile('elements');
     expect(() => parse(file)).not.toThrow();
     const result = parse(file) as any;
-    expect(result.children.length).toBe(5);
+    expect(result.children.length).toBe(8);
     expect(result.children.map((v: any) => v.type)).toEqual([
-      'Element',
-      'Element',
-      'Element',
+      'SelfClosingElement',
       'Text',
-      'Element',
+      'SelfClosingElement',
+      'Text',
+      'SelfClosingElement',
+      'Text',
+      'SelfClosingElement',
+      'Text',
     ]);
-    expect(result.children[3].content).toEqual('\n\nFoo\n\n');
+    expect(result.children[5].content).toEqual('\n\nFoo\n\n');
   });
 
   it(`Parse open/close tag`, () => {
     const file = readFile('open-close');
     expect(() => parse(file)).not.toThrow();
     const result = parse(file) as any;
-    expect(result.children.length).toBe(1);
+    expect(result.children.length).toBe(2);
     expect(result.children[0].type).toBe('Element');
     const component = result.children[0].component;
     expect(component.type).toBe('Identifier');
@@ -59,7 +62,7 @@ describe('Parse', () => {
     const file = readFile('open-close-named');
     expect(() => parse(file)).not.toThrow();
     const result = parse(file) as any;
-    expect(result.children.length).toBe(1);
+    expect(result.children.length).toBe(2);
     expect(result.children[0].type).toBe('Element');
     const component = result.children[0].component;
     expect(component.type).toBe('Identifier');
@@ -70,7 +73,7 @@ describe('Parse', () => {
   });
 
   it(`Throw when you close the wrong tag`, () => {
-    const file = readFile('close-wrong-tag');
+    const file = `<|Demo>Something<Yolo|>`;
     expect(() => parse(file)).toThrow();
   });
 
@@ -78,7 +81,7 @@ describe('Parse', () => {
     const file = readFile('props');
     expect(() => parse(file)).not.toThrow();
     const result = parse(file) as any;
-    expect(result.children.length).toBe(1);
+    expect(result.children.length).toBe(2);
     expect(result.children[0].type).toBe('Element');
     expect(result.children[0].component.name).toBe('Title');
     expect(result.children[0].children.length).toBe(1);
@@ -124,7 +127,7 @@ describe('Parse', () => {
 
 describe('Serializer', () => {
   it(`Parse then serialize an element`, () => {
-    const file = readFile('element');
+    const file = `<|Demo|>\n`;
     const result = parse(file);
     expect(() => serialize(result)).not.toThrow();
     expect(serialize(result)).toBe(file);

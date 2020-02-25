@@ -4,9 +4,21 @@
 
 <|Title bold>Hello world !|>
 
-<|Title bold|>
+// some comment
+
+/*
+More comments !
+*/
 
 <|Title bold|>
+
+<|Title|>
+
+<|UI.Title color='green'|>
+
+<|Title mainColor='red'>
+Hello /* Inline comments */ <|B>world|> !
+<Title|>
 
 <|Title mainColor='red'>
 Hello <|B>world|> !

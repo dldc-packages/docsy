@@ -1,22 +1,35 @@
 import { Position } from './InputStream';
 
+export type QuoteType = 'Single' | 'Double' | 'Backtick';
+
 export interface Nodes {
   Document: {
     children: Array<Children>;
   };
+  SelfClosingElement: {
+    component: ComponentType;
+    props: Array<Prop>;
+  };
   Element: {
     component: ComponentType;
     props: Array<Prop>;
-    children: null | Array<Children>;
+    children: Array<Children>;
+    namedCloseTag: boolean;
+  };
+  LineComment: {
+    content: string;
+  };
+  BlockComment: {
+    content: string;
   };
   Null: {};
   Undefined: {};
   Text: {
     content: string;
   };
-  EmptyLine: {};
   Str: {
     value: string;
+    quote: QuoteType;
   };
   Bool: {
     value: boolean;
@@ -93,30 +106,32 @@ export type Node<K extends NodeType = NodeType> = {
 }[K];
 
 const NODES_OBJ: { [K in NodeType]: null } = {
+  Array: null,
+  BlockComment: null,
   Bool: null,
+  BracketMember: null,
   ComputedProperty: null,
   Document: null,
+  DotMember: null,
   Element: null,
-  Identifier: null,
-  EmptyLine: null,
-  Num: null,
-  Prop: null,
-  Str: null,
-  Text: null,
-  Array: null,
+  ElementTypeMember: null,
   FunctionCall: null,
+  Identifier: null,
+  LineComment: null,
+  NoValueProp: null,
   Null: null,
+  Num: null,
   Object: null,
   ObjectSpread: null,
-  Undefined: null,
-  BracketMember: null,
-  DotMember: null,
-  ElementTypeMember: null,
-  NoValueProp: null,
-  PropertyShorthand: null,
-  Property: null,
-  Spread: null,
   Parenthesis: null,
+  Prop: null,
+  Property: null,
+  PropertyShorthand: null,
+  SelfClosingElement: null,
+  Spread: null,
+  Str: null,
+  Text: null,
+  Undefined: null,
 };
 
 const NODES = Object.keys(NODES_OBJ) as Array<NodeType>;
@@ -139,7 +154,8 @@ export const CreateNode: {
 }, {});
 
 // Alias
-export type Children = Node<'Element' | 'Text' | 'EmptyLine'>;
+export type Element = Node<'Element' | 'SelfClosingElement'>;
+export type Children = Node<'Text' | 'Element' | 'SelfClosingElement'>;
 export type Document = Node<'Document'>;
 export type ComponentType = Node<'ElementTypeMember' | 'Identifier'>;
 // cannot . on number

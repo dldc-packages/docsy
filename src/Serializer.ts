@@ -1,12 +1,12 @@
 import { Node, NodeIs, Prop, ObjectItem, Expression, Children } from './Node';
-import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK, MORE_THAN_ONE_NEW_LINE } from './constants';
+import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './constants';
 
 export function serialize(node: Node): string {
   return serializeInternal(node);
 
   function serializeInternal(item: Node): string {
     if (NodeIs.Document(item)) {
-      return serializeChildren(item.children) + '\n';
+      return serializeChildren(item.children);
     }
     if (NodeIs.Text(item)) {
       return item.content;
@@ -14,8 +14,8 @@ export function serialize(node: Node): string {
     if (NodeIs.Element(item)) {
       return serializeElement(item);
     }
-    if (NodeIs.EmptyLine(item)) {
-      return '\n';
+    if (NodeIs.SelfClosingElement(item)) {
+      return serializeSelfClosingElement(item);
     }
     if (NodeIs.Identifier(item)) {
       return item.name;
@@ -33,7 +33,7 @@ export function serialize(node: Node): string {
       return item.value ? 'true' : 'false';
     }
     if (NodeIs.Num(item)) {
-      return String(item.value);
+      return item.rawValue;
     }
     if (NodeIs.Null(item)) {
       return `null`;
@@ -44,31 +44,26 @@ export function serialize(node: Node): string {
     if (NodeIs.FunctionCall(item)) {
       return serializeInternal(item.target) + serializeArguments(item.arguments);
     }
+    if (NodeIs.ElementTypeMember(item)) {
+      return serializeInternal(item.target) + '.' + serializeInternal(item.property);
+    }
     throw new Error(`Unsuported node ${item.type}`);
   }
 
   function serializeElement(elem: Node<'Element'>): string {
     let childrenStr = serializeChildren(elem.children);
-    if (elem.children && elem.children.length) {
-      if (elem.children[0].type !== 'Text') {
-        childrenStr = '\n' + childrenStr;
-      }
-      if (elem.children[elem.children.length - 1].type !== 'Text') {
-        childrenStr = childrenStr + '\n';
-      }
-    }
     return [
       `<|`,
       serializeInternal(elem.component),
       serializeProps(elem.props),
-      childrenStr.length === 0
-        ? '|>'
-        : '>' +
-          childrenStr +
-          (childrenStr.match(MORE_THAN_ONE_NEW_LINE)
-            ? `<${serializeInternal(elem.component)}|>`
-            : `|>`),
+      '>',
+      childrenStr,
+      elem.namedCloseTag ? `<${serializeInternal(elem.component)}|>` : `|>`,
     ].join('');
+  }
+
+  function serializeSelfClosingElement(elem: Node<'SelfClosingElement'>): string {
+    return [`<|`, serializeInternal(elem.component), serializeProps(elem.props), '|>'].join('');
   }
 
   function serializeObject(item: Node<'Object'>): string {
@@ -120,20 +115,7 @@ export function serialize(node: Node): string {
     if (!items || items.length === 0) {
       return '';
     }
-    return items.reduce<string>((acc, item, index, arr) => {
-      if (index === 0) {
-        return serializeInternal(item);
-      }
-      // add \n if two children do not start / end with one
-      const prev = arr[index - 1];
-      const prevIsText = prev.type === 'Text' || prev.type === 'EmptyLine';
-      const itemIsText = item.type === 'Text';
-
-      if (!prevIsText && !itemIsText) {
-        return acc + '\n' + serializeInternal(item);
-      }
-      return acc + serializeInternal(item);
-    }, '');
+    return items.map(sub => serializeInternal(sub)).join('');
   }
 
   function serializeProps(props: Array<Prop>): string {

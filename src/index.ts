@@ -1,6 +1,7 @@
 export { parse } from './Parser';
 export { serialize } from './Serializer';
 export { resolve } from './Resolver';
+export { format } from './Formatter';
 export {
   Node,
   NodeIs,
