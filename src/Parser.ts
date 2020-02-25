@@ -117,8 +117,16 @@ export function parse(file: string): Document {
         return { type: 'CLOSE', tag: elem };
       }
     }
+    if (peek('//')) {
+      return parseLineComment();
+    }
+    if (peek('/*')) {
+      return parseBlockComment();
+    }
     if (input.position().offset === start.offset) {
-      const content = readWhile(isText);
+      // the next char is text
+      const firstChar = input.next();
+      const content = firstChar + readWhile(isText);
       return createNode('Text', start, input.position(), {
         content,
       });
@@ -126,6 +134,36 @@ export function parse(file: string): Document {
     return createNode('Text', start, input.position(), {
       content: input.get(start, input.position()),
     });
+  }
+
+  function parseBlockComment(): Node<'BlockComment'> {
+    const start = input.position();
+    skip('/*');
+    let content = '';
+    while (peek('*/') === false) {
+      if (peek('*')) {
+        content += input.next();
+      }
+      content += readWhile(char => char !== '*');
+    }
+    skip('*/');
+    const elem = createNode('BlockComment', start, input.position(), {
+      content,
+    });
+    return elem;
+  }
+
+  function parseLineComment(): Node<'LineComment'> {
+    const start = input.position();
+    skip('//');
+    const content = readWhile(char => char !== '\n');
+    const elem = createNode('LineComment', start, input.position(), {
+      content,
+    });
+    if (!input.eof()) {
+      skip('\n');
+    }
+    return elem;
   }
 
   function maybeParseElement(): false | Node<'Element' | 'SelfClosingElement'> {
@@ -492,7 +530,7 @@ export function parse(file: string): Document {
   }
 
   function isText(char: string) {
-    return char !== '<' && char !== '|';
+    return char !== '<' && char !== '|' && char !== '/';
   }
 
   function isIdentifierStart(ch: string): boolean {

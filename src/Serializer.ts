@@ -47,6 +47,13 @@ export function serialize(node: Node): string {
     if (NodeIs.ElementTypeMember(item)) {
       return serializeInternal(item.target) + '.' + serializeInternal(item.property);
     }
+    if (NodeIs.LineComment(item)) {
+      // should not add \n if eof
+      return `//${item.content}\n`;
+    }
+    if (NodeIs.BlockComment(item)) {
+      return `/*${item.content}*/`;
+    }
     throw new Error(`Unsuported node ${item.type}`);
   }
 

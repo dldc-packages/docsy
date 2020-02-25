@@ -9,7 +9,7 @@ function readFile(name: string): string {
   return file;
 }
 
-describe('Parse', () => {
+describe('Parser', () => {
   it(`Parse an element`, () => {
     const file = `<|Demo|>`;
     expect(() => parse(file)).not.toThrow();
@@ -118,10 +118,76 @@ describe('Parse', () => {
     ]);
   });
 
+  it(`Parse a line comment`, () => {
+    const file = `// some comment`;
+    expect(() => parse(file)).not.toThrow();
+    const result = parse(file) as any;
+    expect(result.children[0].type).toBe('LineComment');
+  });
+
+  it(`Parse ending <`, () => {
+    const file = `<|Foo|><`;
+    expect(() => parse(file)).not.toThrow();
+    const result = parse(file) as any;
+    expect(result.children[0].type).toBe('SelfClosingElement');
+    expect(result.children[1].type).toBe('Text');
+    expect(result.children[1].content).toBe('<');
+  });
+
+  it(`Parse ending /`, () => {
+    const file = `<|Foo|>/`;
+    expect(() => parse(file)).not.toThrow();
+    const result = parse(file) as any;
+    expect(result.children[0].type).toBe('SelfClosingElement');
+    expect(result.children[1].type).toBe('Text');
+    expect(result.children[1].content).toBe('/');
+  });
+
+  it(`Parse a line in context`, () => {
+    const file = [`// some comment`, '<|Foo|> // demo'].join('\n');
+    expect(() => parse(file)).not.toThrow();
+    const result = parse(file) as any;
+    expect(result.children[0].type).toBe('LineComment');
+    expect(result.children[0].content).toBe(' some comment');
+    expect(result.children[2].type).toBe('Text');
+    expect(result.children[2].content).toBe(' ');
+    expect(result.children[3].type).toBe('LineComment');
+    expect(result.children[3].content).toBe(' demo');
+  });
+
+  it(`Does not parse element in comment`, () => {
+    const file = `// <|Foo|>`;
+    expect(() => parse(file)).not.toThrow();
+    const result = parse(file) as any;
+    expect(result.children[0].type).toBe('LineComment');
+    expect(result.children[0].content).toBe(' <|Foo|>');
+  });
+
+  it('Parse more comments', () => {
+    const file = [
+      `<|Title bold>Hello world !|>`,
+      ``,
+      `// some comment`,
+      ``,
+      `/*`,
+      `More comments !`,
+      `*/`,
+    ].join('\n');
+    expect(() => parse(file)).not.toThrow();
+    const result = parse(file) as any;
+    expect(result.children.length).toBe(5);
+    expect(result.children.map((v: any) => v.type)).toEqual([
+      'Element',
+      'Text',
+      'LineComment',
+      'Text',
+      'BlockComment',
+    ]);
+  });
+
   it(`Parse a big file`, () => {
     const file = readFile('all');
     expect(() => parse(file)).not.toThrow();
-    // log(parse(file));
   });
 });
 

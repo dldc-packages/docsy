@@ -154,8 +154,9 @@ export const CreateNode: {
 }, {});
 
 // Alias
-export type Element = Node<'Element' | 'SelfClosingElement'>;
-export type Children = Node<'Text' | 'Element' | 'SelfClosingElement'>;
+export type Children = Node<
+  'Text' | 'Element' | 'SelfClosingElement' | 'LineComment' | 'BlockComment'
+>;
 export type Document = Node<'Document'>;
 export type ComponentType = Node<'ElementTypeMember' | 'Identifier'>;
 // cannot . on number
