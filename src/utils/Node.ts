@@ -8,13 +8,23 @@ export interface Nodes {
   };
   SelfClosingElement: {
     component: ComponentType;
-    props: Array<Prop>;
+    props: Node<'Props'>;
   };
   Element: {
     component: ComponentType;
-    props: Array<Prop>;
+    props: Node<'Props'>;
     children: Array<Children>;
     namedCloseTag: boolean;
+  };
+  Props: {
+    items: Array<PropItem>;
+  };
+  Prop: {
+    name: Node<'Identifier'>;
+    value: Expression;
+  };
+  NoValueProp: {
+    name: Node<'Identifier'>;
   };
   LineComment: {
     content: string;
@@ -49,21 +59,14 @@ export interface Nodes {
     value: Expression;
   };
   Array: {
-    items: Array<Expression>;
+    items: Array<ArrayItem>;
   };
   ObjectSpread: {
     target: Expression;
   };
   FunctionCall: {
     target: Expression;
-    arguments: Array<Expression>;
-  };
-  Prop: {
-    name: Node<'ComputedProperty' | 'Identifier'>;
-    value: Expression;
-  };
-  NoValueProp: {
-    name: Node<'Identifier'>;
+    arguments: Array<ArrayItem>;
   };
   ComputedProperty: {
     expression: Expression;
@@ -101,9 +104,17 @@ type NodeCommon = {
   };
 };
 
+// export type Node<K extends NodeType = NodeType> = {
+//   [K in NodeType]: Nodes[K] & { type: K } & NodeCommon;
+// }[K];
+
+// export interface NodeNode<K extends NodeType = NodeType> {
+//   [K in keyof Nodes[K]]: number;
+// }
+
 export type Node<K extends NodeType = NodeType> = {
-  [K in NodeType]: Nodes[K] & { type: K } & NodeCommon;
-}[K];
+  [J in keyof Nodes[K]]: Nodes[K][J];
+} & { type: K } & NodeCommon;
 
 const NODES_OBJ: { [K in NodeType]: null } = {
   Array: null,
@@ -114,6 +125,7 @@ const NODES_OBJ: { [K in NodeType]: null } = {
   Document: null,
   DotMember: null,
   Element: null,
+  Props: null,
   ElementTypeMember: null,
   FunctionCall: null,
   Identifier: null,
@@ -161,8 +173,9 @@ export type Document = Node<'Document'>;
 export type ComponentType = Node<'ElementTypeMember' | 'Identifier'>;
 // cannot . on number
 export type DottableExpression = Node<Exclude<Expression['type'], 'Num'>>;
-export type Prop = Node<'NoValueProp' | 'Prop'>;
+export type PropItem = Node<'NoValueProp' | 'Prop'>;
 export type ObjectItem = Node<'PropertyShorthand' | 'Property' | 'ComputedProperty' | 'Spread'>;
+export type ArrayItem = Expression | Node<'Spread'>;
 export type Expression = Node<
   | 'Null'
   | 'Undefined'

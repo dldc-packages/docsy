@@ -1,7 +1,8 @@
 export { parse } from './Parser';
 export { serialize } from './Serializer';
-export { resolve } from './Resolver';
+export { resolve, ResolveValues } from './Resolver';
 export { format } from './Formatter';
+export { traverse, transform, transformDeep, createNodeFromValue } from './Utils';
 export {
   Node,
   NodeIs,
@@ -13,5 +14,5 @@ export {
   Expression,
   NodeType,
   ObjectItem,
-  Prop,
+  PropItem,
 } from './utils/Node';

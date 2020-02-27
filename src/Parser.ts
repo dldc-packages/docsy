@@ -5,11 +5,13 @@ import {
   NodeType,
   Node,
   ComponentType,
-  Prop,
   Expression,
   ObjectItem,
   DottableExpression,
   QuoteType,
+  NodeIs,
+  PropItem,
+  ArrayItem,
 } from './utils/Node';
 import { InputStream, Position } from './utils/InputStream';
 import {
@@ -66,10 +68,10 @@ export function parse(file: string): Document {
     if (left.type !== right.type) {
       return false;
     }
-    if (left.type === 'Identifier' && right.type === 'Identifier' && left.name === right.name) {
+    if (NodeIs.Identifier(left) && NodeIs.Identifier(right) && left.name === right.name) {
       return true;
     }
-    if (left.type === 'ElementTypeMember' && right.type === 'ElementTypeMember') {
+    if (NodeIs.ElementTypeMember(left) && NodeIs.ElementTypeMember(right)) {
       return (
         sameComponent(left.target, right.target) && sameComponent(left.property, right.property)
       );
@@ -85,7 +87,7 @@ export function parse(file: string): Document {
       }
       // join Text nodes
       const last = acc[acc.length - 1];
-      if (last.type === 'Text' && item.type === 'Text') {
+      if (NodeIs.Text(last) && NodeIs.Text(item)) {
         acc.pop();
         acc.push(
           createNode('Text', last.position!.start, item.position!.end, {
@@ -179,7 +181,8 @@ export function parse(file: string): Document {
     if (component === false) {
       return false;
     }
-    const props: Array<Prop> = [];
+    const propItems: Array<PropItem> = [];
+    const propsState = input.position();
     while (!peek('>') && !peek('|>')) {
       const skipped = skipWhitespaces();
       if (peek('>') || peek('|>')) {
@@ -188,8 +191,9 @@ export function parse(file: string): Document {
       if (!skipped) {
         input.croak(`Expected at least on whitespace`);
       }
-      props.push(parseProp());
+      propItems.push(parseProp());
     }
+    const props = createNode('Props', propsState, input.position(), { items: propItems });
     if (peek('|>')) {
       skip('|>');
       return createNode('SelfClosingElement', start, input.position(), {
@@ -219,7 +223,7 @@ export function parse(file: string): Document {
     });
   }
 
-  function parseProp(): Prop {
+  function parseProp(): PropItem {
     const propStart = input.position();
     const name = parseIdentifier();
     if (!peek('=')) {
@@ -351,9 +355,7 @@ export function parse(file: string): Document {
       return createNode('Property', start, input.position(), { name, value });
     }
     if (peek('...')) {
-      skip('...');
-      const target = parseExpression();
-      return createNode('Spread', start, input.position(), { target });
+      return parseSpread();
     }
     if (peek('[')) {
       const computedStart = input.position();
@@ -379,10 +381,17 @@ export function parse(file: string): Document {
     return createNode('Property', start, input.position(), { name, value });
   }
 
+  function parseSpread(): Node<'Spread'> {
+    const start = input.position();
+    skip('...');
+    const target = parseExpression();
+    return createNode('Spread', start, input.position(), { target });
+  }
+
   function parseArray(): Node<'Array'> {
     const start = input.position();
     skip('[');
-    const items: Array<Expression> = [];
+    const items: Array<ArrayItem> = [];
     while (!input.eof() && input.peek() !== ']') {
       skipWhitespaces();
       maybeSkip(',');
@@ -390,9 +399,13 @@ export function parse(file: string): Document {
       if (!input.eof() && input.peek() === ']') {
         break;
       }
-      const value = parseExpression();
-      skipWhitespaces();
-      items.push(value);
+      if (peek('...')) {
+        items.push(parseSpread());
+      } else {
+        const value = parseExpression();
+        skipWhitespaces();
+        items.push(value);
+      }
     }
     skipWhitespaces();
     skip(']');
