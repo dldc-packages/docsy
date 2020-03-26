@@ -1,0 +1,34 @@
+<#>Foo <|Bar|> <#>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Agathe color="red">
+<#>
+
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<|Block color="red">
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<|Agathe color="red">
+<Code#>
+
+<#Code language="javascript"><|Block color="red">#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Agathe color="red">
+<Code#>
