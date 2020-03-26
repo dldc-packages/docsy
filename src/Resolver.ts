@@ -83,12 +83,13 @@ export function resolve<I extends ResolveValues>(node: Node, values: I): any {
   function resolveProps(items: Array<PropItem>): any {
     const obj: any = {};
     items.forEach(prop => {
-      const key: string = prop.name.name;
       if (NodeIs.NoValueProp(prop)) {
+        const key: string = prop.name.name;
         obj[key] = true;
         return;
       }
       if (NodeIs.Prop(prop)) {
+        const key: string = prop.name.name;
         obj[key] = resolveInternal(prop.value);
         return;
       }
