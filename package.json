@@ -13,10 +13,6 @@
   },
   "license": "MIT",
   "author": "Etienne Dldc",
-  "files": [
-    "dist",
-    "bin"
-  ],
   "main": "dist/index.js",
   "module": "dist/docsy.esm.js",
   "typings": "dist/index.d.ts",
@@ -24,6 +20,10 @@
     "example": "example",
     "test": "test"
   },
+  "files": [
+    "dist",
+    "bin"
+  ],
   "scripts": {
     "build": "tsdx build --target web",
     "lint": "tsdx lint",
@@ -46,12 +46,12 @@
   "dependencies": {},
   "devDependencies": {
     "@types/fs-extra": "^8.1.0",
-    "@types/jest": "^25.1.3",
-    "fs-extra": "^8.1.0",
+    "@types/jest": "^25.1.4",
+    "fs-extra": "^9.0.0",
     "husky": "^4.2.3",
-    "np": "^6.1.0",
-    "tsdx": "^0.12.3",
-    "tslib": "^1.10.0",
-    "typescript": "^3.7.5"
+    "np": "^5.2.1",
+    "tsdx": "^0.13.0",
+    "tslib": "^1.11.1",
+    "typescript": "^3.8.3"
   }
 }

@@ -49,6 +49,18 @@ export function resolve<I extends ResolveValues>(node: Node, values: I): any {
       return undefined;
     }
     if (NodeIs.DotMember(item)) {
+      const target = resolveInternal(item.target);
+      if (target === undefined) {
+        throw new Error(
+          `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
+        );
+      }
+      const keys = Object.keys(target);
+      if (keys.indexOf(item.property.name) === -1) {
+        throw new Error(
+          `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
+        );
+      }
       return resolveInternal(item.target)[item.property.name];
     }
     if (NodeIs.BracketMember(item)) {

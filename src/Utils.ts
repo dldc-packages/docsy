@@ -100,8 +100,17 @@ export function traverse(node: Node, onNode: (item: Node, path: TraversePath) =>
       traverseInternal(item.value, [...path, 'value']);
       return;
     }
+    if (NodeIs.NoValueProp(item)) {
+      traverseInternal(item.name, [...path, 'name']);
+      return;
+    }
     if (NodeIs.Object(item)) {
       traverseMany(item.items, [...path, 'items']);
+      return;
+    }
+    if (NodeIs.DotMember(item)) {
+      traverseInternal(item.target, [...path, 'target']);
+      traverseInternal(item.property, [...path, 'property']);
       return;
     }
     if (NodeIs.Array(item)) {
