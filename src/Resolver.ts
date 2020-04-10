@@ -24,6 +24,17 @@ export function resolve<I extends ResolveValues>(node: Node, values: I): any {
       }
       return values.createElement(type, props, ...children);
     }
+    if (NodeIs.RawElement(item)) {
+      const props = resolveInternal(item.props);
+      const children = resolveChildren(item.children);
+      const type = resolveInternal(item.component);
+      if (type === undefined) {
+        throw new Error(
+          `Invalid type, you probably forgot to provide a value for ${serialize(item.component)}`
+        );
+      }
+      return values.createElement(type, props, ...children);
+    }
     if (NodeIs.Props(item)) {
       return resolveProps(item.items);
     }
