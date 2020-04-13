@@ -13,7 +13,11 @@ const CHILDREN_TYPE = [
   'RawElement',
 ] as const;
 
-export function serialize(node: Node): string {
+export const DocsySerializer = {
+  serialize,
+};
+
+function serialize(node: Node): string {
   return serializeInternal(node);
 
   function serializeInternal(item: Node): string {

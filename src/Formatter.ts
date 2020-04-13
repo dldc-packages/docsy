@@ -1,8 +1,11 @@
 import { Node, NodeIs, NodeType, Nodes } from './utils/Node';
 import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './utils/constants';
-import { Position } from './utils/InputStream';
 
-export function format(node: Node): Node {
+export const DocsyFomatter = {
+  format,
+};
+
+function format(node: Node): Node {
   return formatInternal(node);
 
   function formatInternal(item: Node): Node {
@@ -25,7 +28,7 @@ export function format(node: Node): Node {
       if (item.quote !== 'Single') {
         return item;
       }
-      return createNode('Str', item.position, {
+      return createNode('Str', {
         value: item.value,
         quote: 'Single',
       });
@@ -35,7 +38,7 @@ export function format(node: Node): Node {
       if (item.quote !== 'Double') {
         return item;
       }
-      return createNode('Str', item.position, {
+      return createNode('Str', {
         value: item.value,
         quote: 'Double',
       });
@@ -46,7 +49,7 @@ export function format(node: Node): Node {
       if (item.quote !== 'Backtick') {
         return item;
       }
-      return createNode('Str', item.position, {
+      return createNode('Str', {
         value: item.value,
         quote: 'Backtick',
       });
@@ -56,26 +59,16 @@ export function format(node: Node): Node {
       return item;
     }
     // escape unscaped single quote
-    return createNode('Str', item.position, {
+    return createNode('Str', {
       value: item.value.replace(/([^\\]')/g, "\\'"),
       quote: 'Single',
     });
   }
 
-  function createNode<K extends NodeType>(
-    type: K,
-    position:
-      | {
-          start: Position;
-          end: Position;
-        }
-      | undefined,
-    data: Nodes[K]
-  ): Node<K> {
+  function createNode<K extends NodeType>(type: K, data: Nodes[K]): Node<K> {
     return {
       type,
       ...data,
-      position,
     } as any;
   }
 }

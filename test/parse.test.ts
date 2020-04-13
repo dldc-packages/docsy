@@ -1,4 +1,4 @@
-import { parse } from '../src';
+import { DocsyParser } from '../src';
 import {
   readFile,
   // @ts-ignore
@@ -8,24 +8,20 @@ import {
 
 it(`Parse an element`, () => {
   const file = `<|Demo|>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('SelfClosingElement');
   expect(result.children[0].component).toEqual({
     name: 'Demo',
-    position: {
-      end: { column: 6, line: 1, offset: 6 },
-      start: { column: 2, line: 1, offset: 2 },
-    },
     type: 'Identifier',
   });
 });
 
 it(`Parse many elements`, () => {
   const file = readFile('elements');
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(8);
   expect(result.children.map((v: any) => v.type)).toEqual([
     'SelfClosingElement',
@@ -42,8 +38,8 @@ it(`Parse many elements`, () => {
 
 it(`Parse open/close tag`, () => {
   const file = readFile('open-close');
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(2);
   expect(result.children[0].type).toBe('Element');
   const component = result.children[0].component;
@@ -56,8 +52,8 @@ it(`Parse open/close tag`, () => {
 
 it(`Parse named close tag`, () => {
   const file = readFile('open-close-named');
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(2);
   expect(result.children[0].type).toBe('Element');
   const component = result.children[0].component;
@@ -70,13 +66,13 @@ it(`Parse named close tag`, () => {
 
 it(`Throw when you close the wrong tag`, () => {
   const file = `<|Demo>Something<Yolo|>`;
-  expect(() => parse(file)).toThrow();
+  expect(() => DocsyParser.parseDocument(file)).toThrow();
 });
 
 it(`Parse props`, () => {
   const file = readFile('props');
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(2);
   expect(result.children[0].type).toBe('Element');
   expect(result.children[0].component.name).toBe('Title');
@@ -99,8 +95,8 @@ it(`Parse props`, () => {
 
 it(`Parse props with object`, () => {
   const file = readFile('props-object');
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children[0].type).toBe('Element');
   expect(result.children[0].props.items.length).toBe(1);
   expect(result.children[0].props.items[0].type).toBe('Prop');
@@ -117,15 +113,15 @@ it(`Parse props with object`, () => {
 
 it(`Parse a line comment`, () => {
   const file = `// some comment`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children[0].type).toBe('LineComment');
 });
 
 it(`Parse ending <`, () => {
   const file = `<|Foo|><`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children[0].type).toBe('SelfClosingElement');
   expect(result.children[1].type).toBe('Text');
   expect(result.children[1].content).toBe('<');
@@ -133,8 +129,8 @@ it(`Parse ending <`, () => {
 
 it(`Parse ending /`, () => {
   const file = `<|Foo|>/`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children[0].type).toBe('SelfClosingElement');
   expect(result.children[1].type).toBe('Text');
   expect(result.children[1].content).toBe('/');
@@ -142,8 +138,8 @@ it(`Parse ending /`, () => {
 
 it(`Parse a line in context`, () => {
   const file = [`// some comment`, '<|Foo|> // demo'].join('\n');
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children[0].type).toBe('LineComment');
   expect(result.children[0].content).toBe(' some comment');
   expect(result.children[2].type).toBe('Text');
@@ -154,8 +150,8 @@ it(`Parse a line in context`, () => {
 
 it(`Does not parse element in comment`, () => {
   const file = `// <|Foo|>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children[0].type).toBe('LineComment');
   expect(result.children[0].content).toBe(' <|Foo|>');
 });
@@ -170,8 +166,8 @@ it('Parse more comments', () => {
     `More comments !`,
     `*/`,
   ].join('\n');
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(5);
   expect(result.children.map((v: any) => v.type)).toEqual([
     'Element',
@@ -184,13 +180,13 @@ it('Parse more comments', () => {
 
 it(`Parse all.docsy file`, () => {
   const file = readFile('all');
-  expect(() => parse(file)).not.toThrow();
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
 });
 
 it(`Fragment`, () => {
   const file = `<|>Demo<|>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('Fragment');
   expect(result.children[0].children.length).toEqual(1);
@@ -200,8 +196,8 @@ it(`Fragment`, () => {
 
 it(`Fragment with content`, () => {
   const file = `<|>Foo <|Demo|> Bar <|>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('Fragment');
   expect(result.children[0].children.length).toEqual(3);
@@ -214,8 +210,8 @@ it(`Fragment with content`, () => {
 
 it(`Two Fragment side by side`, () => {
   const file = `<|>Foo<|><|>Bar<|>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(2);
   expect(result.children[0].type).toEqual('Fragment');
   expect(result.children[1].type).toEqual('Fragment');
@@ -223,8 +219,8 @@ it(`Two Fragment side by side`, () => {
 
 it(`Fragment > Element > Fragment`, () => {
   const file = `<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('Fragment');
   expect(result.children[0].children.length).toEqual(3);
@@ -235,8 +231,8 @@ it(`Fragment > Element > Fragment`, () => {
 
 it('RawFragment <#>', () => {
   const file = `<#>Foo<#>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('RawFragment');
   expect(result.children[0].children.length).toEqual(1);
@@ -246,8 +242,8 @@ it('RawFragment <#>', () => {
 
 it('Element in Raw Fragment is text', () => {
   const file = `<#> <|Demo|> <#>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file).document).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('RawFragment');
   expect(result.children[0].children.length).toEqual(1);
@@ -257,8 +253,8 @@ it('Element in Raw Fragment is text', () => {
 
 it('RawElement', () => {
   const file = `<#Foo> Hello #>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('RawElement');
   expect(result.children[0].children.length).toEqual(1);
@@ -268,8 +264,8 @@ it('RawElement', () => {
 
 it('RawElement name close', () => {
   const file = `<#Foo> Hello <Foo#>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('RawElement');
   expect(result.children[0].children.length).toEqual(1);
@@ -279,8 +275,8 @@ it('RawElement name close', () => {
 
 it('Element in RawElement is text', () => {
   const file = `<#Foo> <|Hello|> <Foo#>`;
-  expect(() => parse(file)).not.toThrow();
-  const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].type).toEqual('RawElement');
   expect(result.children[0].children.length).toEqual(1);
@@ -290,11 +286,11 @@ it('Element in RawElement is text', () => {
 
 it(`Parse raw.docsy file`, () => {
   const file = readFile('raw');
-  expect(() => parse(file)).not.toThrow();
-  // const result = parse(file) as any;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  // const result = DocsyParser.parseDocument(file).document as any;
 });
 
 it(`Parse complete.docsy file`, () => {
   const file = readFile('complete');
-  expect(() => parse(file)).not.toThrow();
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
 });

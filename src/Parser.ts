@@ -27,10 +27,29 @@ type CurrentComponent =
   | { type: 'DOCUMENT' | 'UNRAW' }
   | { type: 'NORMAL' | 'RAW'; tag: ComponentType | null }; // null === Fragment
 
-export function parse(file: string): Document {
+export type Ranges = Map<Node, Range>;
+
+export const DocsyParser = {
+  parseDocument,
+};
+
+export interface Range {
+  start: Position;
+  end: Position;
+}
+
+export interface ParseDocumentResult {
+  document: Document;
+  ranges: Ranges;
+}
+
+function parseDocument(file: string): ParseDocumentResult {
   const input = InputStream(file);
 
-  return parseDocument();
+  const ranges: Ranges = new Map<Node, Range>();
+  const document = parseDocument();
+
+  return { document, ranges };
 
   function parseDocument(): Document {
     const startPos = input.position();
@@ -86,7 +105,7 @@ export function parse(file: string): Document {
       if (NodeIs.Text(last) && NodeIs.Text(item)) {
         acc.pop();
         acc.push(
-          createNode('Text', last.position!.start, item.position!.end, {
+          createNode('Text', ranges.get(last)!.start, ranges.get(item)!.end, {
             content: last.content + item.content,
           })
         );
@@ -372,15 +391,20 @@ export function parse(file: string): Document {
 
   function parsePropOrComment(): PropItem {
     if (peek('//')) {
-      const { content, position } = parseLineComment();
+      const lineComment = parseLineComment();
+      const position = ranges.get(lineComment)!;
       const whitespace = parseWhitespaces() || '';
-      return createNode('PropLineComment', position!.start, position!.end, { content, whitespace });
+      return createNode('PropLineComment', position!.start, position!.end, {
+        content: lineComment.content,
+        whitespace,
+      });
     }
     if (peek('/*')) {
-      const { content, position } = parseBlockComment();
+      const blockComment = parseBlockComment();
+      const position = ranges.get(blockComment)!;
       const whitespace = parseWhitespaces();
       return createNode('PropBlockComment', position!.start, position!.end, {
-        content,
+        content: blockComment.content,
         whitespace,
       });
     }
@@ -442,7 +466,7 @@ export function parse(file: string): Document {
     if (peek('.')) {
       skip('.');
       const property = parseIdentifier();
-      const next = createNode('DotMember', identifier.position!.start, input.position(), {
+      const next = createNode('DotMember', ranges.get(identifier)!.start, input.position(), {
         target: identifier,
         property,
       });
@@ -452,7 +476,7 @@ export function parse(file: string): Document {
       skip('[');
       const property = parseExpression();
       skip(']');
-      const next = createNode('BracketMember', identifier.position!.start, input.position(), {
+      const next = createNode('BracketMember', ranges.get(identifier)!.start, input.position(), {
         target: identifier,
         property,
       });
@@ -460,7 +484,7 @@ export function parse(file: string): Document {
     }
     if (peek('(')) {
       const args = parseFunctionCall();
-      const next = createNode('FunctionCall', identifier.position!.start, input.position(), {
+      const next = createNode('FunctionCall', ranges.get(identifier)!.start, input.position(), {
         target: identifier,
         arguments: args,
       });
@@ -651,10 +675,15 @@ export function parse(file: string): Document {
     if (input.peek() === '.') {
       skip('.');
       const nextId = parseIdentifier();
-      const nextParent = createNode('ElementTypeMember', parent.position!.start, input.position(), {
-        target: parent,
-        property: nextId,
-      });
+      const nextParent = createNode(
+        'ElementTypeMember',
+        ranges.get(parent)!.start,
+        input.position(),
+        {
+          target: parent,
+          property: nextId,
+        }
+      );
       return maybeParseElementTypeMember(nextParent);
     }
     return parent;
@@ -733,13 +762,14 @@ export function parse(file: string): Document {
     end: Position,
     data: Nodes[K]
   ): Node<K> {
-    return {
+    const node: Node<K> = {
       type,
       ...data,
-      position: {
-        start,
-        end,
-      },
     } as any;
+    ranges.set(node, {
+      start,
+      end,
+    });
+    return node;
   }
 }

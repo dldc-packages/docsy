@@ -1,12 +1,16 @@
 import { Node, NodeIs, PropItem, ObjectItem, ArrayItem } from './utils/Node';
-import { serialize } from './Serializer';
+import { DocsySerializer } from './Serializer';
 
 export type ResolveValues = {
   createElement: (type: any, props: any, ...children: any) => any;
   [key: string]: any;
 };
 
-export function resolve<I extends ResolveValues>(node: Node, values: I): any {
+export const DocsyResolver = {
+  resolve,
+};
+
+function resolve<I extends ResolveValues>(node: Node, values: I): any {
   return resolveInternal(node);
 
   function resolveInternal(item: Node): any {
@@ -19,7 +23,9 @@ export function resolve<I extends ResolveValues>(node: Node, values: I): any {
       const type = resolveInternal(item.component);
       if (type === undefined) {
         throw new Error(
-          `Invalid type, you probably forgot to provide a value for ${serialize(item.component)}`
+          `Invalid type, you probably forgot to provide a value for ${DocsySerializer.serialize(
+            item.component
+          )}`
         );
       }
       return values.createElement(type, props, ...children);
@@ -30,7 +36,9 @@ export function resolve<I extends ResolveValues>(node: Node, values: I): any {
       const type = resolveInternal(item.component);
       if (type === undefined) {
         throw new Error(
-          `Invalid type, you probably forgot to provide a value for ${serialize(item.component)}`
+          `Invalid type, you probably forgot to provide a value for ${DocsySerializer.serialize(
+            item.component
+          )}`
         );
       }
       return values.createElement(type, props, ...children);
@@ -63,13 +71,17 @@ export function resolve<I extends ResolveValues>(node: Node, values: I): any {
       const target = resolveInternal(item.target);
       if (target === undefined) {
         throw new Error(
-          `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
+          `Cannot access property "${DocsySerializer.serialize(
+            item.property
+          )}" of \`${DocsySerializer.serialize(item.target)}\``
         );
       }
       const keys = Object.keys(target);
       if (keys.indexOf(item.property.name) === -1) {
         throw new Error(
-          `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
+          `Cannot access property "${DocsySerializer.serialize(
+            item.property
+          )}" of \`${DocsySerializer.serialize(item.target)}\``
         );
       }
       return resolveInternal(item.target)[item.property.name];

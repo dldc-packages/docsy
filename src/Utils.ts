@@ -7,6 +7,13 @@ type TransformResult<T> = {
   changed: boolean;
 };
 
+export const DocsyUtils = {
+  traverse,
+  transform,
+  transformDeep,
+  createNodeFromValue,
+};
+
 /**
  * If the onNode return a different node, we replace the node and don't go deeper
  */
@@ -69,6 +76,44 @@ export function transformDeep(node: Node, onNode: (item: Node, path: TraversePat
       return transformDeepInternal(next, path);
     });
   }
+}
+
+export function getChildren(item: Node): Array<Node> {
+  if (NodeIs.Document(item)) {
+    return [...item.children];
+  }
+  if (NodeIs.Element(item)) {
+    return [item.component, item.props, ...item.children];
+  }
+  if (NodeIs.SelfClosingElement(item)) {
+    return [item.component, item.props];
+  }
+  if (NodeIs.Props(item)) {
+    return [...item.items];
+  }
+  if (NodeIs.Prop(item)) {
+    return [item.name, item.value];
+  }
+  if (NodeIs.NoValueProp(item)) {
+    return [item.name];
+  }
+  if (NodeIs.Object(item)) {
+    return [...item.items];
+  }
+  if (NodeIs.DotMember(item)) {
+    return [item.target, item.property];
+  }
+  if (NodeIs.Array(item)) {
+    return [...item.items];
+  }
+  if (NodeIs.Property(item)) {
+    return [item.name, item.value];
+  }
+  if (NodeIs.Identifier(item) || NodeIs.Str(item) || NodeIs.Text(item) || NodeIs.Num(item)) {
+    return [];
+  }
+
+  throw new Error(`Unsuported node ${item.type}`);
 }
 
 export function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void) {

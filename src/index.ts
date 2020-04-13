@@ -1,8 +1,8 @@
-export { parse } from './Parser';
-export { serialize } from './Serializer';
-export { resolve, ResolveValues } from './Resolver';
-export { format } from './Formatter';
-export { traverse, transform, transformDeep, createNodeFromValue } from './Utils';
+export { DocsyParser, Range } from './Parser';
+export { DocsySerializer } from './Serializer';
+export { DocsyResolver, ResolveValues } from './Resolver';
+export { DocsyFomatter } from './Formatter';
+export { DocsyUtils } from './Utils';
 export {
   Node,
   NodeIs,
@@ -16,3 +16,4 @@ export {
   ObjectItem,
   PropItem,
 } from './utils/Node';
+export { Position } from './utils/InputStream';

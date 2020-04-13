@@ -1,5 +1,3 @@
-import { Position } from './InputStream';
-
 export type QuoteType = 'Single' | 'Double' | 'Backtick';
 
 export interface Nodes {
@@ -121,12 +119,7 @@ export interface Nodes {
 
 export type NodeType = keyof Nodes;
 
-type NodeCommon = {
-  position?: {
-    start: Position;
-    end: Position;
-  };
-};
+type NodeCommon = {};
 
 // export type Node<K extends NodeType = NodeType> = {
 //   [K in NodeType]: Nodes[K] & { type: K } & NodeCommon;
