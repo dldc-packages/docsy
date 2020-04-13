@@ -46,11 +46,11 @@
   "dependencies": {},
   "devDependencies": {
     "@types/fs-extra": "^8.1.0",
-    "@types/jest": "^25.1.4",
+    "@types/jest": "^25.2.1",
     "fs-extra": "^9.0.0",
-    "husky": "^4.2.3",
+    "husky": "^4.2.5",
     "np": "^5.2.1",
-    "tsdx": "^0.13.0",
+    "tsdx": "^0.13.2",
     "tslib": "^1.11.1",
     "typescript": "^3.8.3"
   }
