@@ -1,4 +1,11 @@
-import { Node, NodeIs, NodeType, CreateNode, Expression } from './utils/Node';
+import {
+  Node,
+  NodeType,
+  CreateNode,
+  Expression,
+  NodeNodesItem,
+  isValidNodeType,
+} from './utils/Node';
 
 type TraversePath = Array<number | string>;
 
@@ -28,30 +35,30 @@ export function transform(node: Node, onNode: (item: Node, path: TraversePath) =
     if (result !== item) {
       return { changed: true, value: result };
     }
-    if (NodeIs.Document(item)) {
-      const childRes = transformArray(item.children, [...path, 'children']);
-      const value: Node<'Document'> = childRes.changed
-        ? { ...item, children: childRes.value }
-        : item;
-      return { changed: childRes.changed, value };
-    }
+    // if (NodeIs.Document(item)) {
+    //   const childRes = transformArray(item.children, [...path, 'children']);
+    //   const value: Node<'Document'> = childRes.changed
+    //     ? { ...item, children: childRes.value }
+    //     : item;
+    //   return { changed: childRes.changed, value };
+    // }
     throw new Error(`Unsuported node ${item.type}`);
   }
 
-  function transformArray<K extends NodeType>(
-    items: Array<Node<K>>,
-    path: TraversePath
-  ): TransformResult<Array<Node>> {
-    let changed = false;
-    const updated = items.map((node, i) => {
-      const res = transformInternal(node, [...path, i]);
-      if (res.changed && changed === false) {
-        changed = true;
-      }
-      return res.value;
-    });
-    return { changed, value: changed ? updated : items };
-  }
+  // function transformArray<K extends NodeType>(
+  //   items: Array<Node<K>>,
+  //   path: TraversePath
+  // ): TransformResult<Array<Node>> {
+  //   let changed = false;
+  //   const updated = items.map((node, i) => {
+  //     const res = transformInternal(node, [...path, i]);
+  //     if (res.changed && changed === false) {
+  //       changed = true;
+  //     }
+  //     return res.value;
+  //   });
+  //   return { changed, value: changed ? updated : items };
+  // }
 }
 
 export function transformDeep(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
@@ -78,42 +85,29 @@ export function transformDeep(node: Node, onNode: (item: Node, path: TraversePat
   }
 }
 
-export function getChildren(item: Node): Array<Node> {
-  if (NodeIs.Document(item)) {
-    return [...item.children];
-  }
-  if (NodeIs.Element(item)) {
-    return [item.component, item.props, ...item.children];
-  }
-  if (NodeIs.SelfClosingElement(item)) {
-    return [item.component, item.props];
-  }
-  if (NodeIs.Props(item)) {
-    return [...item.items];
-  }
-  if (NodeIs.Prop(item)) {
-    return [item.name, item.value];
-  }
-  if (NodeIs.NoValueProp(item)) {
-    return [item.name];
-  }
-  if (NodeIs.Object(item)) {
-    return [...item.items];
-  }
-  if (NodeIs.DotMember(item)) {
-    return [item.target, item.property];
-  }
-  if (NodeIs.Array(item)) {
-    return [...item.items];
-  }
-  if (NodeIs.Property(item)) {
-    return [item.name, item.value];
-  }
-  if (NodeIs.Identifier(item) || NodeIs.Str(item) || NodeIs.Text(item) || NodeIs.Num(item)) {
-    return [];
-  }
+export type NodePath = Array<string | number>;
+export interface NodeWithPath {
+  node: Node;
+  path: NodePath;
+}
 
-  throw new Error(`Unsuported node ${item.type}`);
+function getNodesFromNodes(nodes: NodeNodesItem, path: NodePath): Array<NodeWithPath> {
+  if (Array.isArray(nodes)) {
+    return nodes.map((node, index) => ({ node, path: [...path, index] }));
+  }
+  if (nodes.type && isValidNodeType(nodes.type)) {
+    // is node
+    return [{ node: nodes as any, path }];
+  }
+  // Object
+  return Object.keys(nodes).reduce<Array<NodeWithPath>>((acc, key) => {
+    acc.push(...getNodesFromNodes((nodes as any)[key], [...path, key]));
+    return acc;
+  }, []);
+}
+
+export function getNodeNodes(item: Node): Array<NodeWithPath> {
+  return getNodesFromNodes(item.nodes, []);
 }
 
 export function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void) {
@@ -121,92 +115,52 @@ export function traverse(node: Node, onNode: (item: Node, path: TraversePath) =>
 
   function traverseInternal(item: Node, path: TraversePath) {
     onNode(item, path);
-    if (NodeIs.Document(item)) {
-      traverseMany(item.children, [...path, 'children']);
-      return;
-    }
-    if (NodeIs.Element(item)) {
-      traverseInternal(item.component, [...path, 'component']);
-      traverseInternal(item.props, [...path, 'props']);
-      traverseMany(item.children, [...path, 'children']);
-      return;
-    }
-    if (NodeIs.SelfClosingElement(item)) {
-      traverseInternal(item.component, [...path, 'component']);
-      traverseInternal(item.props, [...path, 'props']);
-      return;
-    }
-    if (NodeIs.Props(item)) {
-      traverseMany(item.items, [...path, 'items']);
-      return;
-    }
-    if (NodeIs.Prop(item)) {
-      traverseInternal(item.name, [...path, 'name']);
-      traverseInternal(item.value, [...path, 'value']);
-      return;
-    }
-    if (NodeIs.NoValueProp(item)) {
-      traverseInternal(item.name, [...path, 'name']);
-      return;
-    }
-    if (NodeIs.Object(item)) {
-      traverseMany(item.items, [...path, 'items']);
-      return;
-    }
-    if (NodeIs.DotMember(item)) {
-      traverseInternal(item.target, [...path, 'target']);
-      traverseInternal(item.property, [...path, 'property']);
-      return;
-    }
-    if (NodeIs.Array(item)) {
-      traverseMany(item.items, [...path, 'items']);
-      return;
-    }
-    if (NodeIs.Property(item)) {
-      traverseInternal(item.name, [...path, 'name']);
-      traverseInternal(item.value, [...path, 'value']);
-      return;
-    }
-    if (NodeIs.Identifier(item) || NodeIs.Str(item) || NodeIs.Text(item) || NodeIs.Num(item)) {
-      return;
-    }
-
-    throw new Error(`Unsuported node ${item.type}`);
-  }
-
-  function traverseMany(items: Array<Node>, path: TraversePath): void {
-    items.forEach((node, i) => traverseInternal(node, [...path, i]));
+    getNodeNodes(item).forEach(child => {
+      traverseInternal(child.node, [...path, ...child.path]);
+    });
   }
 }
 
 export function createNodeFromValue(value: any): Expression {
   if (value === null) {
-    return CreateNode.Null({});
+    return CreateNode.Null({}, {});
   }
   if (value === undefined) {
-    return CreateNode.Undefined({});
+    return CreateNode.Undefined({}, {});
   }
   if (typeof value === 'boolean') {
-    return CreateNode.Bool({ value });
+    return CreateNode.Bool({}, { value });
   }
   if (typeof value === 'number') {
-    return CreateNode.Num({ value, rawValue: String(value) });
+    return CreateNode.Num({}, { value, rawValue: String(value) });
   }
   if (typeof value === 'string') {
-    return CreateNode.Str({ value, quote: 'Single' });
+    return CreateNode.Str({}, { value, quote: 'Single' });
   }
   if (Array.isArray(value)) {
-    return CreateNode.Array({ items: value.map(val => createNodeFromValue(val)) });
+    return CreateNode.Array({ items: value.map(val => createNodeFromValue(val)) }, {});
   }
   if (isPlainObject(value)) {
-    return CreateNode.Object({
-      items: Object.keys(value).map(key => {
-        return CreateNode.Property({
-          name: CreateNode.Str({ value: key, quote: 'Single' }),
-          value: createNodeFromValue(value[key]),
-        });
-      }),
-    });
+    return CreateNode.Object(
+      {
+        items: Object.keys(value).map(key => {
+          return CreateNode.Property(
+            {
+              name: CreateNode.Str(
+                {},
+                {
+                  value: key,
+                  quote: 'Single',
+                }
+              ),
+              value: createNodeFromValue(value[key]),
+            },
+            {}
+          );
+        }),
+      },
+      {}
+    );
   }
 
   throw new Error(`Unsuported value ${value} (${typeof value})`);

@@ -55,9 +55,15 @@ function parseDocument(file: string): ParseDocumentResult {
     const startPos = input.position();
     const children = parseChildren({ type: 'DOCUMENT' });
     const endPos = input.position();
-    return createNode('Document', startPos, endPos, {
-      children,
-    });
+    return createNode(
+      'Document',
+      startPos,
+      endPos,
+      {
+        children,
+      },
+      {}
+    );
   }
 
   function parseChildren(currentComponent: CurrentComponent): Array<Children> {
@@ -83,12 +89,13 @@ function parseDocument(file: string): ParseDocumentResult {
     if (left.type !== right.type) {
       return false;
     }
-    if (NodeIs.Identifier(left) && NodeIs.Identifier(right) && left.name === right.name) {
+    if (NodeIs.Identifier(left) && NodeIs.Identifier(right) && left.meta.name === right.meta.name) {
       return true;
     }
     if (NodeIs.ElementTypeMember(left) && NodeIs.ElementTypeMember(right)) {
       return (
-        sameComponent(left.target, right.target) && sameComponent(left.property, right.property)
+        sameComponent(left.nodes.target, right.nodes.target) &&
+        sameComponent(left.nodes.property, right.nodes.property)
       );
     }
     return false;
@@ -105,9 +112,15 @@ function parseDocument(file: string): ParseDocumentResult {
       if (NodeIs.Text(last) && NodeIs.Text(item)) {
         acc.pop();
         acc.push(
-          createNode('Text', ranges.get(last)!.start, ranges.get(item)!.end, {
-            content: last.content + item.content,
-          })
+          createNode(
+            'Text',
+            ranges.get(last)!.start,
+            ranges.get(item)!.end,
+            {},
+            {
+              content: last.meta.content + item.meta.content,
+            }
+          )
         );
       } else {
         acc.push(item);
@@ -219,21 +232,21 @@ function parseDocument(file: string): ParseDocumentResult {
     skip('<|>');
     const children = parseChildren({ type: 'NORMAL', tag: null });
     skip('<|>');
-    return createNode('Fragment', start, input.position(), { children });
+    return createNode('Fragment', start, input.position(), { children }, {});
   }
 
   function parseRawFragment(start: Position): Node<'RawFragment'> {
     skip('<#>');
     const children = parseChildren({ type: 'RAW', tag: null });
     skip('<#>');
-    return createNode('RawFragment', start, input.position(), { children });
+    return createNode('RawFragment', start, input.position(), { children }, {});
   }
 
   function parseUnrawFragment(start: Position): Node<'Fragment'> {
     skip('<#>');
     const children = parseChildren({ type: 'UNRAW' });
     skip('<#>');
-    return createNode('Fragment', start, input.position(), { children });
+    return createNode('Fragment', start, input.position(), { children }, {});
   }
 
   function parseTextChildren(start: Position): Node<'Text'> {
@@ -241,13 +254,25 @@ function parseDocument(file: string): ParseDocumentResult {
       // the next char is text
       const firstChar = input.next();
       const content = firstChar + readWhile(isText);
-      return createNode('Text', start, input.position(), {
-        content,
-      });
+      return createNode(
+        'Text',
+        start,
+        input.position(),
+        {},
+        {
+          content,
+        }
+      );
     }
-    return createNode('Text', start, input.position(), {
-      content: input.get(start, input.position()),
-    });
+    return createNode(
+      'Text',
+      start,
+      input.position(),
+      {},
+      {
+        content: input.get(start, input.position()),
+      }
+    );
   }
 
   function parseBlockComment(): Node<'BlockComment'> {
@@ -261,9 +286,15 @@ function parseDocument(file: string): ParseDocumentResult {
       content += readWhile(char => char !== '*');
     }
     skip('*/');
-    const elem = createNode('BlockComment', start, input.position(), {
-      content,
-    });
+    const elem = createNode(
+      'BlockComment',
+      start,
+      input.position(),
+      {},
+      {
+        content,
+      }
+    );
     return elem;
   }
 
@@ -271,9 +302,15 @@ function parseDocument(file: string): ParseDocumentResult {
     const start = input.position();
     skip('//');
     const content = readWhile(char => char !== '\n');
-    const elem = createNode('LineComment', start, input.position(), {
-      content,
-    });
+    const elem = createNode(
+      'LineComment',
+      start,
+      input.position(),
+      {},
+      {
+        content,
+      }
+    );
     if (!input.eof()) {
       skip('\n');
     }
@@ -289,10 +326,16 @@ function parseDocument(file: string): ParseDocumentResult {
     const props = parseProps(true);
     if (peek('|>')) {
       skip('|>');
-      return createNode('SelfClosingElement', start, input.position(), {
-        component: tag as any,
-        props,
-      });
+      return createNode(
+        'SelfClosingElement',
+        start,
+        input.position(),
+        {
+          component: tag as any,
+          props,
+        },
+        {}
+      );
     }
     skip('>');
     const children = parseChildren({ type: 'NORMAL', tag: tag });
@@ -308,12 +351,19 @@ function parseDocument(file: string): ParseDocumentResult {
       skip('|>');
       return true;
     })();
-    return createNode('Element', start, input.position(), {
-      component: tag,
-      props,
-      children,
-      namedCloseTag: namedClose,
-    });
+    return createNode(
+      'Element',
+      start,
+      input.position(),
+      {
+        component: tag,
+        props,
+        children,
+      },
+      {
+        namedCloseTag: namedClose,
+      }
+    );
   }
 
   function maybeParseElementStart(): ComponentType | false {
@@ -346,12 +396,19 @@ function parseDocument(file: string): ParseDocumentResult {
       skip('#>');
       return true;
     })();
-    return createNode('RawElement', start, input.position(), {
-      component: tag,
-      props,
-      children,
-      namedCloseTag: namedClose,
-    });
+    return createNode(
+      'RawElement',
+      start,
+      input.position(),
+      {
+        component: tag,
+        props,
+        children,
+      },
+      {
+        namedCloseTag: namedClose,
+      }
+    );
   }
 
   function maybeParseRawElementStart(): ComponentType | false {
@@ -368,10 +425,17 @@ function parseDocument(file: string): ParseDocumentResult {
     const propsState = input.position();
     const whitespace = parseWhitespaces();
     if (peek('>') || (canSelfClose && peek('|>'))) {
-      return createNode('Props', propsState, input.position(), {
-        items: propItems,
-        whitespace: whitespace || '',
-      });
+      return createNode(
+        'Props',
+        propsState,
+        input.position(),
+        {
+          items: propItems,
+        },
+        {
+          whitespace: whitespace || '',
+        }
+      );
     }
     if (!whitespace) {
       return input.croak(`Expected at least one whitespace`);
@@ -382,11 +446,11 @@ function parseDocument(file: string): ParseDocumentResult {
       if (peek('>') || (canSelfClose && peek('|>'))) {
         break;
       }
-      if (!nextPropItem.whitespace) {
+      if (!nextPropItem.meta.whitespace) {
         break;
       }
     }
-    return createNode('Props', propsState, input.position(), { items: propItems, whitespace });
+    return createNode('Props', propsState, input.position(), { items: propItems }, { whitespace });
   }
 
   function parsePropOrComment(): PropItem {
@@ -394,30 +458,42 @@ function parseDocument(file: string): ParseDocumentResult {
       const lineComment = parseLineComment();
       const position = ranges.get(lineComment)!;
       const whitespace = parseWhitespaces() || '';
-      return createNode('PropLineComment', position!.start, position!.end, {
-        content: lineComment.content,
-        whitespace,
-      });
+      return createNode(
+        'PropLineComment',
+        position!.start,
+        position!.end,
+        {},
+        {
+          content: lineComment.meta.content,
+          whitespace,
+        }
+      );
     }
     if (peek('/*')) {
       const blockComment = parseBlockComment();
       const position = ranges.get(blockComment)!;
       const whitespace = parseWhitespaces();
-      return createNode('PropBlockComment', position!.start, position!.end, {
-        content: blockComment.content,
-        whitespace,
-      });
+      return createNode(
+        'PropBlockComment',
+        position!.start,
+        position!.end,
+        {},
+        {
+          content: blockComment.meta.content,
+          whitespace,
+        }
+      );
     }
     const propStart = input.position();
     const name = parseIdentifier();
     if (!peek('=')) {
       const whitespace = parseWhitespaces();
-      return createNode('NoValueProp', propStart, input.position(), { name, whitespace });
+      return createNode('NoValueProp', propStart, input.position(), { name }, { whitespace });
     }
     skip('=');
     const value = parseExpression();
     const whitespace = parseWhitespaces();
-    return createNode('Prop', propStart, input.position(), { name, value, whitespace });
+    return createNode('Prop', propStart, input.position(), { name, value }, { whitespace });
   }
 
   function parseExpression(): Expression {
@@ -430,7 +506,7 @@ function parseDocument(file: string): ParseDocumentResult {
       skip('(');
       const value = parseExpression();
       skip(')');
-      return createNode('Parenthesis', start, input.position(), { value });
+      return createNode('Parenthesis', start, input.position(), { value }, {});
     }
     if (peek('[')) {
       return parseArray();
@@ -443,17 +519,17 @@ function parseDocument(file: string): ParseDocumentResult {
     }
     const start = input.position();
     const identifier = parseIdentifier();
-    if (identifier.name === 'true') {
-      return createNode('Bool', start, input.position(), { value: true });
+    if (identifier.meta.name === 'true') {
+      return createNode('Bool', start, input.position(), {}, { value: true });
     }
-    if (identifier.name === 'false') {
-      return createNode('Bool', start, input.position(), { value: false });
+    if (identifier.meta.name === 'false') {
+      return createNode('Bool', start, input.position(), {}, { value: false });
     }
-    if (identifier.name === 'null') {
-      return createNode('Null', start, input.position(), {});
+    if (identifier.meta.name === 'null') {
+      return createNode('Null', start, input.position(), {}, {});
     }
-    if (identifier.name === 'undefined') {
-      return createNode('Undefined', start, input.position(), {});
+    if (identifier.meta.name === 'undefined') {
+      return createNode('Undefined', start, input.position(), {}, {});
     }
     return maybeParseMember(identifier);
     // if (input.eof()) {
@@ -466,28 +542,46 @@ function parseDocument(file: string): ParseDocumentResult {
     if (peek('.')) {
       skip('.');
       const property = parseIdentifier();
-      const next = createNode('DotMember', ranges.get(identifier)!.start, input.position(), {
-        target: identifier,
-        property,
-      });
+      const next = createNode(
+        'DotMember',
+        ranges.get(identifier)!.start,
+        input.position(),
+        {
+          target: identifier,
+          property,
+        },
+        {}
+      );
       return maybeParseMember(next);
     }
     if (peek('[')) {
       skip('[');
       const property = parseExpression();
       skip(']');
-      const next = createNode('BracketMember', ranges.get(identifier)!.start, input.position(), {
-        target: identifier,
-        property,
-      });
+      const next = createNode(
+        'BracketMember',
+        ranges.get(identifier)!.start,
+        input.position(),
+        {
+          target: identifier,
+          property,
+        },
+        {}
+      );
       return maybeParseMember(next);
     }
     if (peek('(')) {
       const args = parseFunctionCall();
-      const next = createNode('FunctionCall', ranges.get(identifier)!.start, input.position(), {
-        target: identifier,
-        arguments: args,
-      });
+      const next = createNode(
+        'FunctionCall',
+        ranges.get(identifier)!.start,
+        input.position(),
+        {
+          target: identifier,
+          arguments: args,
+        },
+        {}
+      );
       return maybeParseMember(next);
     }
     return identifier;
@@ -528,7 +622,7 @@ function parseDocument(file: string): ParseDocumentResult {
     }
     parseWhitespaces();
     skip('}');
-    return createNode('Object', start, input.position(), { items });
+    return createNode('Object', start, input.position(), { items }, {});
   }
 
   function parseObjectItem(): ObjectItem {
@@ -538,7 +632,7 @@ function parseDocument(file: string): ParseDocumentResult {
       skip(':');
       parseWhitespaces();
       const value = parseExpression();
-      return createNode('Property', start, input.position(), { name, value });
+      return createNode('Property', start, input.position(), { name, value }, {});
     }
     if (peek('...')) {
       return parseSpread();
@@ -551,27 +645,33 @@ function parseDocument(file: string): ParseDocumentResult {
       skip(':');
       parseWhitespaces();
       const value = parseExpression();
-      return createNode('ComputedProperty', computedStart, input.position(), {
-        expression: computedValue,
-        value,
-      });
+      return createNode(
+        'ComputedProperty',
+        computedStart,
+        input.position(),
+        {
+          expression: computedValue,
+          value,
+        },
+        {}
+      );
     }
     // simple property
     const name = parseIdentifier();
     if (!peek(':')) {
-      return createNode('PropertyShorthand', start, input.position(), { name });
+      return createNode('PropertyShorthand', start, input.position(), { name }, {});
     }
     skip(':');
     parseWhitespaces();
     const value = parseExpression();
-    return createNode('Property', start, input.position(), { name, value });
+    return createNode('Property', start, input.position(), { name, value }, {});
   }
 
   function parseSpread(): Node<'Spread'> {
     const start = input.position();
     skip('...');
     const target = parseExpression();
-    return createNode('Spread', start, input.position(), { target });
+    return createNode('Spread', start, input.position(), { target }, {});
   }
 
   function parseArray(): Node<'Array'> {
@@ -595,7 +695,7 @@ function parseDocument(file: string): ParseDocumentResult {
     }
     parseWhitespaces();
     skip(']');
-    return createNode('Array', start, input.position(), { items });
+    return createNode('Array', start, input.position(), { items }, {});
   }
 
   function parseNumber(): Node<'Num'> {
@@ -616,10 +716,16 @@ function parseDocument(file: string): ParseDocumentResult {
       return isDigit(ch);
     });
     const value = parseFloat(number) * (negative ? -1 : 1);
-    return createNode('Num', start, input.position(), {
-      value,
-      rawValue: input.get(start, input.position()),
-    });
+    return createNode(
+      'Num',
+      start,
+      input.position(),
+      {},
+      {
+        value,
+        rawValue: input.get(start, input.position()),
+      }
+    );
   }
 
   function parseString(): Node<'Str'> {
@@ -645,7 +751,7 @@ function parseDocument(file: string): ParseDocumentResult {
     }
     const quoteType: QuoteType =
       end === BACKTICK ? 'Backtick' : end === SINGLE_QUOTE ? 'Single' : 'Double';
-    return createNode('Str', start, input.position(), { value: str, quote: quoteType });
+    return createNode('Str', start, input.position(), {}, { value: str, quote: quoteType });
   }
 
   function isDigit(ch: string): boolean {
@@ -682,7 +788,8 @@ function parseDocument(file: string): ParseDocumentResult {
         {
           target: parent,
           property: nextId,
-        }
+        },
+        {}
       );
       return maybeParseElementTypeMember(nextParent);
     }
@@ -693,7 +800,7 @@ function parseDocument(file: string): ParseDocumentResult {
     if (isIdentifierStart(input.peek())) {
       const startPos = input.position();
       const name = readWhile(isIdentifier);
-      return createNode('Identifier', startPos, input.position(), { name });
+      return createNode('Identifier', startPos, input.position(), {}, { name });
     }
     return input.croak(`Unexpected "${input.peek()}"`);
   }
@@ -760,11 +867,13 @@ function parseDocument(file: string): ParseDocumentResult {
     type: K,
     start: Position,
     end: Position,
-    data: Nodes[K]
+    nodes: Nodes[K]['nodes'],
+    meta: Nodes[K]['meta']
   ): Node<K> {
     const node: Node<K> = {
       type,
-      ...data,
+      nodes,
+      meta,
     } as any;
     ranges.set(node, {
       start,

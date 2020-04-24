@@ -15,51 +15,51 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
 
   function resolveInternal(item: Node): any {
     if (NodeIs.Document(item)) {
-      return resolveChildren(item.children);
+      return resolveChildren(item.nodes.children);
     }
     if (NodeIs.Element(item) || NodeIs.SelfClosingElement(item)) {
-      const props = resolveInternal(item.props);
-      const children = NodeIs.SelfClosingElement(item) ? [] : resolveChildren(item.children);
-      const type = resolveInternal(item.component);
+      const props = resolveInternal(item.nodes.props);
+      const children = NodeIs.SelfClosingElement(item) ? [] : resolveChildren(item.nodes.children);
+      const type = resolveInternal(item.nodes.component);
       if (type === undefined) {
         throw new Error(
           `Invalid type, you probably forgot to provide a value for ${DocsySerializer.serialize(
-            item.component
+            item.nodes.component
           )}`
         );
       }
       return values.createElement(type, props, ...children);
     }
     if (NodeIs.RawElement(item)) {
-      const props = resolveInternal(item.props);
-      const children = resolveChildren(item.children);
-      const type = resolveInternal(item.component);
+      const props = resolveInternal(item.nodes.props);
+      const children = resolveChildren(item.nodes.children);
+      const type = resolveInternal(item.nodes.component);
       if (type === undefined) {
         throw new Error(
           `Invalid type, you probably forgot to provide a value for ${DocsySerializer.serialize(
-            item.component
+            item.nodes.component
           )}`
         );
       }
       return values.createElement(type, props, ...children);
     }
     if (NodeIs.Props(item)) {
-      return resolveProps(item.items);
+      return resolveProps(item.nodes.items);
     }
     if (NodeIs.Text(item)) {
-      return item.content;
+      return item.meta.content;
     }
     if (NodeIs.Identifier(item)) {
-      return values[item.name];
+      return values[item.meta.name];
     }
     if (NodeIs.Bool(item)) {
-      return item.value;
+      return item.meta.value;
     }
     if (NodeIs.Str(item)) {
-      return item.value;
+      return item.meta.value;
     }
     if (NodeIs.Num(item)) {
-      return item.value;
+      return item.meta.value;
     }
     if (NodeIs.Null(item)) {
       return null;
@@ -68,32 +68,32 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
       return undefined;
     }
     if (NodeIs.DotMember(item)) {
-      const target = resolveInternal(item.target);
+      const target = resolveInternal(item.nodes.target);
       if (target === undefined) {
         throw new Error(
           `Cannot access property "${DocsySerializer.serialize(
-            item.property
-          )}" of \`${DocsySerializer.serialize(item.target)}\``
+            item.nodes.property
+          )}" of \`${DocsySerializer.serialize(item.nodes.target)}\``
         );
       }
       const keys = Object.keys(target);
-      if (keys.indexOf(item.property.name) === -1) {
+      if (keys.indexOf(item.nodes.property.meta.name) === -1) {
         throw new Error(
           `Cannot access property "${DocsySerializer.serialize(
-            item.property
-          )}" of \`${DocsySerializer.serialize(item.target)}\``
+            item.nodes.property
+          )}" of \`${DocsySerializer.serialize(item.nodes.target)}\``
         );
       }
-      return resolveInternal(item.target)[item.property.name];
+      return resolveInternal(item.nodes.target)[item.nodes.property.meta.name];
     }
     if (NodeIs.BracketMember(item)) {
-      return resolveInternal(item.target)[resolveInternal(item.property)];
+      return resolveInternal(item.nodes.target)[resolveInternal(item.nodes.property)];
     }
     if (NodeIs.Object(item)) {
-      return resolveObject(item.items);
+      return resolveObject(item.nodes.items);
     }
     if (NodeIs.Array(item)) {
-      return resolveArray(item.items);
+      return resolveArray(item.nodes.items);
     }
     console.log(item);
     throw new Error(`Unsuported node ${item.type}`);
@@ -107,13 +107,13 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
     const obj: any = {};
     items.forEach(prop => {
       if (NodeIs.NoValueProp(prop)) {
-        const key: string = prop.name.name;
+        const key: string = prop.nodes.name.meta.name;
         obj[key] = true;
         return;
       }
       if (NodeIs.Prop(prop)) {
-        const key: string = prop.name.name;
-        obj[key] = resolveInternal(prop.value);
+        const key: string = prop.nodes.name.meta.name;
+        obj[key] = resolveInternal(prop.nodes.value);
         return;
       }
       throw new Error(`Unsuported props ${prop.type}`);
@@ -125,7 +125,7 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
     let obj: any = {};
     items.forEach(prop => {
       if (NodeIs.Spread(prop)) {
-        const value = resolveInternal(prop.target);
+        const value = resolveInternal(prop.nodes.target);
         obj = {
           ...obj,
           ...value,
@@ -133,26 +133,26 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
         return;
       }
       if (NodeIs.Property(prop)) {
-        const value = resolveInternal(prop.value);
-        if (NodeIs.Identifier(prop.name)) {
-          obj[prop.name.name] = value;
+        const value = resolveInternal(prop.nodes.value);
+        if (NodeIs.Identifier(prop.nodes.name)) {
+          obj[prop.nodes.name.meta.name] = value;
           return;
         }
-        if (NodeIs.Str(prop.name)) {
-          obj[prop.name.value] = value;
+        if (NodeIs.Str(prop.nodes.name)) {
+          obj[prop.nodes.name.meta.value] = value;
           return;
         }
         return;
       }
       if (NodeIs.ComputedProperty(prop)) {
-        const key = resolveInternal(prop.expression);
-        const value = resolveInternal(prop.value);
+        const key = resolveInternal(prop.nodes.expression);
+        const value = resolveInternal(prop.nodes.value);
         obj[key] = value;
         return;
       }
       if (NodeIs.PropertyShorthand(prop)) {
-        const key = prop.name.name;
-        const value = resolveInternal(prop.name);
+        const key = prop.nodes.name.meta.name;
+        const value = resolveInternal(prop.nodes.name);
         obj[key] = value;
         return;
       }
@@ -165,7 +165,7 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
     let arr: Array<any> = [];
     items.forEach(prop => {
       if (NodeIs.Spread(prop)) {
-        const value = resolveInternal(prop.target);
+        const value = resolveInternal(prop.nodes.target);
         arr = [...arr, ...value];
         return;
       }

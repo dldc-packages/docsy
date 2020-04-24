@@ -22,10 +22,10 @@ function serialize(node: Node): string {
 
   function serializeInternal(item: Node): string {
     if (NodeIs.Document(item)) {
-      return serializeChildren(item.children, false);
+      return serializeChildren(item.nodes.children, false);
     }
     if (NodeIs.Identifier(item)) {
-      return item.name;
+      return item.meta.name;
     }
     if (NodeIs.Str(item)) {
       return serializeString(item);
@@ -37,25 +37,25 @@ function serialize(node: Node): string {
       return serializeArray(item);
     }
     if (NodeIs.Bool(item)) {
-      return item.value ? 'true' : 'false';
+      return item.meta.value ? 'true' : 'false';
     }
     if (NodeIs.Num(item)) {
-      return item.rawValue;
+      return item.meta.rawValue;
     }
     if (NodeIs.Null(item)) {
       return `null`;
     }
     if (NodeIs.DotMember(item)) {
-      return serializeInternal(item.target) + '.' + serializeInternal(item.property);
+      return serializeInternal(item.nodes.target) + '.' + serializeInternal(item.nodes.property);
     }
     if (NodeIs.BracketMember(item)) {
-      return serializeInternal(item.target) + `[${serializeInternal(item.property)}]`;
+      return serializeInternal(item.nodes.target) + `[${serializeInternal(item.nodes.property)}]`;
     }
     if (NodeIs.FunctionCall(item)) {
-      return serializeInternal(item.target) + serializeArguments(item.arguments);
+      return serializeInternal(item.nodes.target) + serializeArguments(item.nodes.arguments);
     }
     if (NodeIs.ElementTypeMember(item)) {
-      return serializeInternal(item.target) + '.' + serializeInternal(item.property);
+      return serializeInternal(item.nodes.target) + '.' + serializeInternal(item.nodes.property);
     }
     if (NodeIs.oneOf(item, CHILDREN_TYPE)) {
       return serializeChild(item, false);
@@ -64,39 +64,44 @@ function serialize(node: Node): string {
   }
 
   function serializeElement(elem: Node<'Element'>): string {
-    let childrenStr = serializeChildren(elem.children, false);
+    let childrenStr = serializeChildren(elem.nodes.children, false);
     return [
       `<|`,
-      serializeInternal(elem.component),
-      serializeProps(elem.props),
+      serializeInternal(elem.nodes.component),
+      serializeProps(elem.nodes.props),
       '>',
       childrenStr,
-      elem.namedCloseTag ? `<${serializeInternal(elem.component)}|>` : `|>`,
+      elem.meta.namedCloseTag ? `<${serializeInternal(elem.nodes.component)}|>` : `|>`,
     ].join('');
   }
 
   function serializeRawElement(elem: Node<'RawElement'>): string {
-    let childrenStr = serializeChildren(elem.children, true);
+    let childrenStr = serializeChildren(elem.nodes.children, true);
     return [
       `<#`,
-      serializeInternal(elem.component),
-      serializeProps(elem.props),
+      serializeInternal(elem.nodes.component),
+      serializeProps(elem.nodes.props),
       '>',
       childrenStr,
-      elem.namedCloseTag ? `<${serializeInternal(elem.component)}#>` : `#>`,
+      elem.meta.namedCloseTag ? `<${serializeInternal(elem.nodes.component)}#>` : `#>`,
     ].join('');
   }
 
   function serializeSelfClosingElement(elem: Node<'SelfClosingElement'>): string {
-    return [`<|`, serializeInternal(elem.component), serializeProps(elem.props), '|>'].join('');
+    return [
+      `<|`,
+      serializeInternal(elem.nodes.component),
+      serializeProps(elem.nodes.props),
+      '|>',
+    ].join('');
   }
 
   function serializeObject(item: Node<'Object'>): string {
-    return `{ ` + item.items.map(serializeObjectItem).join(', ') + ` }`;
+    return `{ ` + item.nodes.items.map(serializeObjectItem).join(', ') + ` }`;
   }
 
   function serializeArray(item: Node<'Array'>): string {
-    return `[` + item.items.map(serializeInternal).join(', ') + `]`;
+    return `[` + item.nodes.items.map(serializeInternal).join(', ') + `]`;
   }
 
   function serializeArguments(items: Array<ArrayItem>): string {
@@ -105,29 +110,31 @@ function serialize(node: Node): string {
 
   function serializeObjectItem(item: ObjectItem): string {
     if (NodeIs.Spread(item)) {
-      return `...${serializeInternal(item.target)}`;
+      return `...${serializeInternal(item.nodes.target)}`;
     }
     if (NodeIs.PropertyShorthand(item)) {
-      return serializeInternal(item.name);
+      return serializeInternal(item.nodes.name);
     }
     if (NodeIs.Property(item)) {
-      return serializeInternal(item.name) + ': ' + serializeInternal(item.value);
+      return serializeInternal(item.nodes.name) + ': ' + serializeInternal(item.nodes.value);
     }
     if (NodeIs.ComputedProperty(item)) {
-      return `[${serializeInternal(item.expression)}]: ${serializeInternal(item.value)}`;
+      return `[${serializeInternal(item.nodes.expression)}]: ${serializeInternal(
+        item.nodes.value
+      )}`;
     }
     throw new Error(`Unsuported node ${(item as any).type}`);
   }
 
   function serializeString(item: Node<'Str'>) {
-    if (item.quote === 'Single') {
-      return SINGLE_QUOTE + item.value.replace(/'/g, `\\'`) + SINGLE_QUOTE;
+    if (item.meta.quote === 'Single') {
+      return SINGLE_QUOTE + item.meta.value.replace(/'/g, `\\'`) + SINGLE_QUOTE;
     }
-    if (item.quote === 'Double') {
-      return DOUBLE_QUOTE + item.value.replace(/"/g, `\\"`) + DOUBLE_QUOTE;
+    if (item.meta.quote === 'Double') {
+      return DOUBLE_QUOTE + item.meta.value.replace(/"/g, `\\"`) + DOUBLE_QUOTE;
     }
-    if (item.quote === 'Backtick') {
-      return BACKTICK + item.value.replace(/`/g, '\\`') + BACKTICK;
+    if (item.meta.quote === 'Backtick') {
+      return BACKTICK + item.meta.value.replace(/`/g, '\\`') + BACKTICK;
     }
     throw new Error(`Invalid Qutote type on Str`);
   }
@@ -141,7 +148,7 @@ function serialize(node: Node): string {
 
   function serializeChild(item: Children, isInRaw: boolean): string {
     if (NodeIs.Text(item)) {
-      return item.content;
+      return item.meta.content;
     }
     if (NodeIs.Element(item)) {
       return serializeElement(item);
@@ -151,12 +158,12 @@ function serialize(node: Node): string {
     }
     if (NodeIs.Fragment(item)) {
       if (isInRaw) {
-        return `<#>${serializeChildren(item.children, false)}<#>`;
+        return `<#>${serializeChildren(item.nodes.children, false)}<#>`;
       }
-      return `<|>${serializeChildren(item.children, false)}<|>`;
+      return `<|>${serializeChildren(item.nodes.children, false)}<|>`;
     }
     if (NodeIs.RawFragment(item)) {
-      return `<#>${serializeChildren(item.children, false)}<#>`;
+      return `<#>${serializeChildren(item.nodes.children, false)}<#>`;
     }
     if (NodeIs.SelfClosingElement(item)) {
       return serializeSelfClosingElement(item);
@@ -170,31 +177,34 @@ function serialize(node: Node): string {
   function serializeComment(item: Node<'BlockComment' | 'LineComment'>): string {
     if (NodeIs.LineComment(item)) {
       // TODO: should not add \n if eof
-      return `//${item.content}\n`;
+      return `//${item.meta.content}\n`;
     }
     if (NodeIs.BlockComment(item)) {
-      return `/*${item.content}*/`;
+      return `/*${item.meta.content}*/`;
     }
     throw new Error(`Unsuported node ${item.type}`);
   }
 
   function serializeProps(props: Node<'Props'>): string {
     return (
-      (props.whitespace || '') +
-      props.items
+      (props.meta.whitespace || '') +
+      props.nodes.items
         .map(prop => {
-          const whitespace = prop.whitespace || '';
+          const whitespace = prop.meta.whitespace || '';
           if (NodeIs.Prop(prop)) {
-            return `${serializeInternal(prop.name)}=${serializeInternal(prop.value)}` + whitespace;
+            return (
+              `${serializeInternal(prop.nodes.name)}=${serializeInternal(prop.nodes.value)}` +
+              whitespace
+            );
           }
           if (NodeIs.NoValueProp(prop)) {
-            return `${serializeInternal(prop.name)}` + whitespace;
+            return `${serializeInternal(prop.nodes.name)}` + whitespace;
           }
           if (NodeIs.PropLineComment(prop)) {
-            return `//${prop.content}\n` + whitespace;
+            return `//${prop.meta.content}\n` + whitespace;
           }
           if (NodeIs.PropBlockComment(prop)) {
-            return `/*${prop.content}*/` + whitespace;
+            return `/*${prop.meta.content}*/` + whitespace;
           }
           throw new Error(`Unsuported ${(prop as any).type}`);
         })
