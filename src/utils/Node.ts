@@ -2,7 +2,7 @@ export type QuoteType = 'Single' | 'Double' | 'Backtick';
 
 type ArrayOfNodes = Array<Node>;
 
-export type NodeNodesItem = Node | ArrayOfNodes | NodeNodesBase;
+export type NodeNodesItem = null | Node | ArrayOfNodes | NodeNodesBase;
 
 export type NodeNodesBase = { [key: string]: NodeNodesItem };
 
@@ -22,10 +22,7 @@ type CreateNodes<Nodes extends { [key: string]: NodeBase }> = Nodes;
 
 export type Nodes = CreateNodes<{
   Document: CreateNode<{ children: Array<Children> }>;
-  SelfClosingElement: CreateNode<{
-    component: ComponentType;
-    props: Node<'Props'>;
-  }>;
+  SelfClosingElement: CreateNode<{ component: ComponentType; props: Node<'Props'> }>;
   Element: CreateNode<
     {
       component: ComponentType;
@@ -46,76 +43,43 @@ export type Nodes = CreateNodes<{
       namedCloseTag: boolean;
     }
   >;
+  Whitespace: CreateNode<{}, { content: string }>;
   Fragment: CreateNode<{ children: Array<Children> }>;
   RawFragment: CreateNode<{ children: Array<Children> }>;
-  Props: CreateNode<
-    { items: Array<PropItem> },
-    {
-      // space before the props
-      whitespace: string;
-    }
-  >;
-  Prop: CreateNode<
-    {
-      name: Node<'Identifier'>;
-      value: Expression;
-    },
-    { whitespace: string | false }
-  >;
-  NoValueProp: CreateNode<{ name: Node<'Identifier'> }, { whitespace: string | false }>;
-  PropLineComment: CreateNode<{}, { content: string; whitespace: string | false }>;
-  PropBlockComment: CreateNode<
-    {},
-    {
-      content: string;
-      whitespace: string | false;
-    }
-  >;
+  Props: CreateNode<{ items: Array<PropItem> }, {}>;
+  Prop: CreateNode<{ name: Node<'Identifier'>; value: Expression }, {}>;
+  NoValueProp: CreateNode<{ name: Node<'Identifier'> }, {}>;
+  PropLineComment: CreateNode<{}, { content: string }>;
+  PropBlockComment: CreateNode<{}, { content: string }>;
   LineComment: CreateNode<{}, { content: string }>;
   BlockComment: CreateNode<{}, { content: string }>;
   Null: CreateNode<{}>;
   Undefined: CreateNode<{}>;
   Text: CreateNode<{}, { content: string }>;
-  Str: CreateNode<
-    {},
-    {
-      value: string;
-      quote: QuoteType;
-    }
-  >;
+  Str: CreateNode<{}, { value: string; quote: QuoteType }>;
   Bool: CreateNode<{}, { value: boolean }>;
-  Num: CreateNode<
-    {},
-    {
-      value: number;
-      rawValue: string;
-    }
-  >;
+  Num: CreateNode<{}, { value: number; rawValue: string }>;
   Object: CreateNode<{ items: Array<ObjectItem> }>;
   PropertyShorthand: CreateNode<{ name: Node<'Identifier'> }>;
   Property: CreateNode<{ name: Node<'Str' | 'Identifier'>; value: Expression }>;
-  Array: CreateNode<{ items: Array<ArrayItem> }>;
+  Array: CreateNode<{ items: Array<Node<'ArrayItem'>> }>;
   ObjectSpread: CreateNode<{ target: Expression }>;
-  FunctionCall: CreateNode<{ target: Expression; arguments: Array<ArrayItem> }>;
-  ComputedProperty: CreateNode<{
-    expression: Expression;
-    value: Expression;
-  }>;
+  FunctionCall: CreateNode<{ target: Expression; arguments: Array<Node<'ArrayItem'>> }>;
+  ComputedProperty: CreateNode<{ expression: Expression; value: Expression }>;
   Identifier: CreateNode<{}, { name: string }>;
-  DotMember: CreateNode<{
-    target: DottableExpression;
-    property: Node<'Identifier'>;
-  }>;
+  DotMember: CreateNode<{ target: DottableExpression; property: Node<'Identifier'> }>;
   Parenthesis: CreateNode<{ value: Expression }>;
-  BracketMember: CreateNode<{
-    target: Expression;
-    property: Expression;
-  }>;
+  BracketMember: CreateNode<{ target: Expression; property: Expression }>;
   ElementTypeMember: CreateNode<{
     target: Node<'Identifier' | 'ElementTypeMember'>;
     property: Node<'Identifier'>;
   }>;
   Spread: CreateNode<{ target: Expression }>;
+  ArrayItem: CreateNode<{
+    whitespaceBefore: Node<'Whitespace'> | null;
+    item: Expression | Node<'Spread'>;
+    whitespaceAfter: Node<'Whitespace'> | null;
+  }>;
 }>;
 
 export type NodeType = keyof Nodes;
@@ -132,6 +96,7 @@ const NODES_OBJ: { [K in NodeType]: null } = {
   ComputedProperty: null,
   Document: null,
   DotMember: null,
+  Whitespace: null,
   Element: null,
   RawElement: null,
   Fragment: null,
@@ -140,6 +105,7 @@ const NODES_OBJ: { [K in NodeType]: null } = {
   ElementTypeMember: null,
   FunctionCall: null,
   Identifier: null,
+  ArrayItem: null,
   LineComment: null,
   NoValueProp: null,
   Null: null,
@@ -194,10 +160,14 @@ export const CreateNode: {
 export type Document = Node<'Document'>;
 export type ComponentType = Node<'ElementTypeMember' | 'Identifier'>;
 export type DottableExpression = Node<Exclude<Expression['type'], 'Num'>>; // cannot . on number
-export type PropItem = Node<'NoValueProp' | 'Prop' | 'PropLineComment' | 'PropBlockComment'>;
-export type ObjectItem = Node<'PropertyShorthand' | 'Property' | 'ComputedProperty' | 'Spread'>;
-export type ArrayItem = Expression | Node<'Spread'>;
+export type PropItem = Node<
+  'Whitespace' | 'NoValueProp' | 'Prop' | 'PropLineComment' | 'PropBlockComment'
+>;
+export type ObjectItem = Node<
+  'Whitespace' | 'PropertyShorthand' | 'Property' | 'ComputedProperty' | 'Spread'
+>;
 export type Children = Node<
+  | 'Whitespace'
   | 'Text'
   | 'Element'
   | 'SelfClosingElement'

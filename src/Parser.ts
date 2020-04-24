@@ -11,7 +11,6 @@ import {
   QuoteType,
   NodeIs,
   PropItem,
-  ArrayItem,
 } from './utils/Node';
 import { InputStream, Position } from './utils/InputStream';
 import {
@@ -69,7 +68,7 @@ function parseDocument(file: string): ParseDocumentResult {
   function parseChildren(currentComponent: CurrentComponent): Array<Children> {
     let limit = 2000;
     const children: Array<Children> = [];
-    while (!input.eof() && limit > 0) {
+    while (!input.eof()) {
       limit--;
       if (limit <= 0) {
         input.croak('Infinit loop !');
@@ -102,31 +101,54 @@ function parseDocument(file: string): ParseDocumentResult {
   }
 
   function normalizeChildren(nodes: Array<Children>): Array<Children> {
-    return nodes.reduce<Array<Children>>((acc, item) => {
-      if (acc.length === 0) {
-        acc.push(item);
-        return acc;
-      }
-      // join Text nodes
-      const last = acc[acc.length - 1];
-      if (NodeIs.Text(last) && NodeIs.Text(item)) {
-        acc.pop();
-        acc.push(
-          createNode(
-            'Text',
-            ranges.get(last)!.start,
-            ranges.get(item)!.end,
-            {},
-            {
-              content: last.meta.content + item.meta.content,
+    return (
+      nodes
+        // join neighbour Text nodes
+        .reduce<Array<Children>>((acc, item) => {
+          if (acc.length === 0) {
+            acc.push(item);
+            return acc;
+          }
+          // join Text nodes
+          const last = acc[acc.length - 1];
+          if (NodeIs.Text(last) && NodeIs.Text(item)) {
+            acc.pop();
+            acc.push(
+              createNode(
+                'Text',
+                ranges.get(last)!.start,
+                ranges.get(item)!.end,
+                {},
+                {
+                  content: last.meta.content + item.meta.content,
+                }
+              )
+            );
+          } else {
+            acc.push(item);
+          }
+          return acc;
+        }, [])
+        // convert single whitespace text to Whitespace node
+        .map((item) => {
+          if (NodeIs.Text(item)) {
+            if (item.meta.content.length === 1 && isWhitespace(item.meta.content)) {
+              const pos = ranges.get(item);
+              if (!pos) {
+                throw new Error('Missing range');
+              }
+              return createNode(
+                'Whitespace',
+                pos.start,
+                pos.end,
+                {},
+                { content: item.meta.content }
+              );
             }
-          )
-        );
-      } else {
-        acc.push(item);
-      }
-      return acc;
-    }, []);
+          }
+          return item;
+        })
+    );
   }
 
   function parseNextChildren(currentComponent: CurrentComponent): Children | 'CLOSE' {
@@ -136,27 +158,30 @@ function parseDocument(file: string): ParseDocumentResult {
       if (tag === null) {
         // in RawFragment
         if (peek('<#>')) {
+          // close RawFragment
           skip('<#>');
           return 'CLOSE';
         }
-        return parseTextChildren(start);
+        return parseTextChildren({ mode: 'raw', skipFirst: !isText(input.peek()) });
       }
       // in RawElement
-
       if (peek('#>')) {
         skip('#>');
         return 'CLOSE';
       }
       if (peek('<#>')) {
-        return parseUnrawFragment(start);
+        return parseUnrawFragment();
       }
       if (peek('<')) {
         const close = maybeParseRawCloseTag();
-        if (close && sameComponent(close, tag)) {
+        if (close) {
+          if (!sameComponent(close, tag)) {
+            input.croak(`Unexpected close tag, wrong tag !`);
+          }
           return 'CLOSE';
         }
       }
-      return parseTextChildren(start);
+      return parseTextChildren({ mode: 'raw', skipFirst: !isText(input.peek()) });
     }
     // Not in a RAW tag
     if (peek('<#>')) {
@@ -186,20 +211,26 @@ function parseDocument(file: string): ParseDocumentResult {
       if (elem) {
         return elem;
       }
+      return parseTextChildren({ skipFirst: true });
     }
     if (peek('<#')) {
       const elem = maybeParseRawElement();
       if (elem) {
         return elem;
       }
+      return parseTextChildren({ skipFirst: true });
     }
     if (peek('<')) {
       if (currentComponent.type === 'NORMAL' && currentComponent.tag !== null) {
         const close = maybeParseCloseTag();
-        if (close && sameComponent(close, currentComponent.tag)) {
+        if (close) {
+          if (!sameComponent(close, currentComponent.tag)) {
+            input.croak(`Unexpected close tag, wrong tag !`);
+          }
           return 'CLOSE';
         }
       }
+      return parseTextChildren({ skipFirst: true });
     }
     if (peek('|>')) {
       skip('|>');
@@ -213,10 +244,15 @@ function parseDocument(file: string): ParseDocumentResult {
     if (peek('/*')) {
       return parseBlockComment();
     }
-    return parseTextChildren(start);
+    const whitespace = parseTextWhitespace();
+    if (whitespace) {
+      return whitespace;
+    }
+    return parseTextChildren({ skipFirst: !isText(input.peek()) });
   }
 
   function maybeParseRawCloseTag(): ComponentType | false {
+    const state = input.saveState();
     try {
       skip('<');
       const identifier = parseIdentifier();
@@ -224,6 +260,7 @@ function parseDocument(file: string): ParseDocumentResult {
       skip('#>');
       return component;
     } catch (err) {
+      input.restoreState(state);
       return false;
     }
   }
@@ -242,37 +279,62 @@ function parseDocument(file: string): ParseDocumentResult {
     return createNode('RawFragment', start, input.position(), { children }, {});
   }
 
-  function parseUnrawFragment(start: Position): Node<'Fragment'> {
+  function parseUnrawFragment(): Node<'Fragment'> {
+    const start = input.position();
     skip('<#>');
     const children = parseChildren({ type: 'UNRAW' });
     skip('<#>');
     return createNode('Fragment', start, input.position(), { children }, {});
   }
 
-  function parseTextChildren(start: Position): Node<'Text'> {
-    if (input.position().offset === start.offset) {
-      // the next char is text
-      const firstChar = input.next();
-      const content = firstChar + readWhile(isText);
-      return createNode(
-        'Text',
-        start,
-        input.position(),
-        {},
-        {
-          content,
-        }
-      );
+  function parseTextChildren({
+    mode = 'normal',
+    skipFirst = false,
+  }: { mode?: 'normal' | 'raw'; skipFirst?: boolean } = {}): Node<'Text'> {
+    const start = input.position();
+    let text = '';
+    if (skipFirst) {
+      text += input.next();
     }
-    return createNode(
-      'Text',
-      start,
-      input.position(),
-      {},
-      {
-        content: input.get(start, input.position()),
+    text += parseText(mode);
+    return createNode('Text', start, input.position(), {}, { content: text });
+  }
+
+  function parseText(mode: 'normal' | 'raw'): string {
+    let text = '';
+    let limit = 2000;
+    while (!input.eof()) {
+      limit--;
+      if (limit <= 0) {
+        input.croak('Infinit loop !');
       }
-    );
+      text += readWhile(isText);
+      if (input.eof()) {
+        break;
+      }
+      if (!isWhitespace(input.peek())) {
+        break;
+      }
+      if (mode === 'normal') {
+        const nextTwo = input.peek(2);
+        if (nextTwo.length < 2) {
+          // eof
+          text += nextTwo;
+          break;
+        }
+
+        if (nextTwo.split('').every(isWhitespace)) {
+          // two consecutive whitespaces => end
+          break;
+        }
+        // otherwise add the whitespace and keep going
+        text += input.next();
+      } else {
+        // next is a whitespace, keep parsing
+        text += input.next();
+      }
+    }
+    return text;
   }
 
   function parseBlockComment(): Node<'BlockComment'> {
@@ -423,30 +485,29 @@ function parseDocument(file: string): ParseDocumentResult {
   function parseProps(canSelfClose: boolean): Node<'Props'> {
     const propItems: Array<PropItem> = [];
     const propsStart = input.position();
-    const whitespace = parseWhitespaces();
+    const whitespace = parseWhitespace();
+    if (whitespace) {
+      propItems.push(whitespace);
+    }
     if (peek('>') || (canSelfClose && peek('|>'))) {
-      return createNode(
-        'Props',
-        propsStart,
-        input.position(),
-        {
-          items: propItems,
-        },
-        {
-          whitespace: whitespace || '',
-        }
-      );
+      return createNode('Props', propsStart, input.position(), { items: propItems }, {});
     }
     if (!whitespace) {
       return input.croak(`Expected at least one whitespace`);
     }
     while (!peek('>') && (canSelfClose === true ? !peek('|>') : true)) {
+      const whitespaceBefore = parseWhitespace();
+      if (whitespaceBefore) {
+        propItems.push(whitespaceBefore);
+      }
       const nextPropItem = parsePropOrComment();
       propItems.push(nextPropItem);
-      if (peek('>') || (canSelfClose && peek('|>'))) {
+      const whitespaceAfter = parseWhitespace();
+      if (!whitespaceAfter) {
         break;
       }
-      if (!nextPropItem.meta.whitespace) {
+      propItems.push(whitespaceAfter);
+      if (peek('>') || (canSelfClose && peek('|>'))) {
         break;
       }
     }
@@ -457,43 +518,33 @@ function parseDocument(file: string): ParseDocumentResult {
     if (peek('//')) {
       const lineComment = parseLineComment();
       const position = ranges.get(lineComment)!;
-      const whitespace = parseWhitespaces() || '';
       return createNode(
         'PropLineComment',
         position!.start,
         position!.end,
         {},
-        {
-          content: lineComment.meta.content,
-          whitespace,
-        }
+        { content: lineComment.meta.content }
       );
     }
     if (peek('/*')) {
       const blockComment = parseBlockComment();
       const position = ranges.get(blockComment)!;
-      const whitespace = parseWhitespaces();
       return createNode(
         'PropBlockComment',
         position!.start,
         position!.end,
         {},
-        {
-          content: blockComment.meta.content,
-          whitespace,
-        }
+        { content: blockComment.meta.content }
       );
     }
     const propStart = input.position();
     const name = parseIdentifier();
     if (!peek('=')) {
-      const whitespace = parseWhitespaces();
-      return createNode('NoValueProp', propStart, input.position(), { name }, { whitespace });
+      return createNode('NoValueProp', propStart, input.position(), { name }, {});
     }
     skip('=');
     const value = parseExpression();
-    const whitespace = parseWhitespaces();
-    return createNode('Prop', propStart, input.position(), { name, value }, { whitespace });
+    return createNode('Prop', propStart, input.position(), { name, value }, {});
   }
 
   function parseExpression(): Expression {
@@ -571,7 +622,9 @@ function parseDocument(file: string): ParseDocumentResult {
       return maybeParseMember(next);
     }
     if (peek('(')) {
-      const args = parseFunctionCall();
+      skip('(');
+      const args = parseArrayItems(')');
+      skip(')');
       const next = createNode(
         'FunctionCall',
         ranges.get(identifier)!.start,
@@ -587,40 +640,21 @@ function parseDocument(file: string): ParseDocumentResult {
     return identifier;
   }
 
-  function parseFunctionCall(): Array<Expression> {
-    skip('(');
-    const items: Array<Expression> = [];
-    while (!input.eof() && input.peek() !== ')') {
-      parseWhitespaces();
-      maybeSkip(',');
-      parseWhitespaces();
-      if (!input.eof() && input.peek() === ')') {
-        break;
-      }
-      const value = parseExpression();
-      parseWhitespaces();
-      items.push(value);
-    }
-    parseWhitespaces();
-    skip(')');
-    return items;
-  }
-
   function parseObject(): Node<'Object'> {
     const start = input.position();
     skip('{');
     const items: Array<ObjectItem> = [];
     while (!input.eof() && input.peek() !== '}') {
-      parseWhitespaces();
+      parseWhitespace();
       maybeSkip(',');
-      parseWhitespaces();
+      parseWhitespace();
       if (!input.eof() && input.peek() === '}') {
         break;
       }
-      parseWhitespaces();
+      parseWhitespace();
       items.push(parseObjectItem());
     }
-    parseWhitespaces();
+    parseWhitespace();
     skip('}');
     return createNode('Object', start, input.position(), { items }, {});
   }
@@ -630,7 +664,7 @@ function parseDocument(file: string): ParseDocumentResult {
     if (peek(SINGLE_QUOTE) || peek(DOUBLE_QUOTE) || peek(BACKTICK)) {
       const name = parseString();
       skip(':');
-      parseWhitespaces();
+      parseWhitespace();
       const value = parseExpression();
       return createNode('Property', start, input.position(), { name, value }, {});
     }
@@ -643,7 +677,7 @@ function parseDocument(file: string): ParseDocumentResult {
       const computedValue = parseExpression();
       skip(']');
       skip(':');
-      parseWhitespaces();
+      parseWhitespace();
       const value = parseExpression();
       return createNode(
         'ComputedProperty',
@@ -662,7 +696,7 @@ function parseDocument(file: string): ParseDocumentResult {
       return createNode('PropertyShorthand', start, input.position(), { name }, {});
     }
     skip(':');
-    parseWhitespaces();
+    parseWhitespace();
     const value = parseExpression();
     return createNode('Property', start, input.position(), { name, value }, {});
   }
@@ -674,26 +708,40 @@ function parseDocument(file: string): ParseDocumentResult {
     return createNode('Spread', start, input.position(), { target }, {});
   }
 
+  function parseArrayItems(endChar: string): Array<Node<'ArrayItem'>> {
+    const items: Array<Node<'ArrayItem'>> = [];
+    while (!input.eof() && input.peek() !== endChar) {
+      const isFirst = items.length === 0;
+      if (isFirst === false) {
+        maybeSkip(',');
+      }
+      const itemStart = input.position();
+      const whitespaceBefore = parseWhitespace() || null;
+      if (!input.eof() && input.peek() === endChar) {
+        break;
+      }
+      const value = parseExpression();
+      const whitespaceAfter = parseWhitespace() || null;
+      const item = createNode(
+        'ArrayItem',
+        itemStart,
+        input.position(),
+        {
+          whitespaceBefore,
+          item: value,
+          whitespaceAfter,
+        },
+        {}
+      );
+      items.push(item);
+    }
+    return items;
+  }
+
   function parseArray(): Node<'Array'> {
     const start = input.position();
     skip('[');
-    const items: Array<ArrayItem> = [];
-    while (!input.eof() && input.peek() !== ']') {
-      parseWhitespaces();
-      maybeSkip(',');
-      parseWhitespaces();
-      if (!input.eof() && input.peek() === ']') {
-        break;
-      }
-      if (peek('...')) {
-        items.push(parseSpread());
-      } else {
-        const value = parseExpression();
-        parseWhitespaces();
-        items.push(value);
-      }
-    }
-    parseWhitespaces();
+    const items = parseArrayItems(']');
     skip(']');
     return createNode('Array', start, input.position(), { items }, {});
   }
@@ -759,6 +807,7 @@ function parseDocument(file: string): ParseDocumentResult {
   }
 
   function maybeParseCloseTag(): ComponentType | false {
+    const state = input.saveState();
     try {
       skip('<');
       const identifier = parseIdentifier();
@@ -766,6 +815,7 @@ function parseDocument(file: string): ParseDocumentResult {
       skip('|>');
       return component;
     } catch (err) {
+      input.restoreState(state);
       return false;
     }
   }
@@ -824,13 +874,14 @@ function parseDocument(file: string): ParseDocumentResult {
     return str;
   }
 
-  function parseWhitespaces(): string | false {
+  function parseWhitespace(): Node<'Whitespace'> | false {
     if (input.eof()) {
       return false;
     }
     if (!isWhitespace(input.peek())) {
       return false;
     }
+    const start = input.position();
     let content = '';
     while (!input.eof() && isWhitespace(input.peek())) {
       content += input.next();
@@ -838,15 +889,41 @@ function parseDocument(file: string): ParseDocumentResult {
     if (content.length === 0) {
       return false;
     }
-    return content;
+    return createNode('Whitespace', start, input.position(), {}, { content });
+  }
+
+  // start by at least two whitespaces
+  function parseTextWhitespace(): Node<'Whitespace'> | false {
+    if (input.eof()) {
+      return false;
+    }
+    const start = input.position();
+    let content = '';
+    const nextTwo = input.peek(2);
+    if (nextTwo.length < 2) {
+      // eof
+      return false;
+    }
+    if (!nextTwo.split('').every(isWhitespace)) {
+      return false;
+    }
+    while (!input.eof() && isWhitespace(input.peek())) {
+      content += input.next();
+    }
+    if (content.length === 0) {
+      return false;
+    }
+    return createNode('Whitespace', start, input.position(), {}, { content });
   }
 
   function isWhitespace(char: string): boolean {
-    return char === ' ' || char === '\t' || char === '\n';
+    return char === ' ' || char === '\t' || char === '\n' || char === '\r';
   }
 
   function isText(char: string) {
-    return char !== '#' && char !== '<' && char !== '|' && char !== '/';
+    return (
+      char !== '#' && char !== '<' && char !== '|' && char !== '/' && isWhitespace(char) === false
+    );
   }
 
   function isIdentifierStart(ch: string): boolean {

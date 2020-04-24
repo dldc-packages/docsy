@@ -1,4 +1,4 @@
-import { Node, NodeIs, ObjectItem, Children, ArrayItem } from './utils/Node';
+import { Node, NodeIs, ObjectItem, Children } from './utils/Node';
 import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './utils/constants';
 
 const COMMONT_TYPE = ['LineComment', 'BlockComment'] as const;
@@ -20,9 +20,15 @@ export const DocsySerializer = {
 function serialize(node: Node): string {
   return serializeInternal(node);
 
-  function serializeInternal(item: Node): string {
+  function serializeInternal(item: Node | null): string {
+    if (item === null) {
+      return '';
+    }
     if (NodeIs.Document(item)) {
       return serializeChildren(item.nodes.children, false);
+    }
+    if (NodeIs.Whitespace(item)) {
+      return item.meta.content;
     }
     if (NodeIs.Identifier(item)) {
       return item.meta.name;
@@ -35,6 +41,13 @@ function serialize(node: Node): string {
     }
     if (NodeIs.Array(item)) {
       return serializeArray(item);
+    }
+    if (NodeIs.ArrayItem(item)) {
+      return (
+        serializeInternal(item.nodes.whitespaceBefore) +
+        serializeInternal(item.nodes.item) +
+        serializeInternal(item.nodes.whitespaceAfter)
+      );
     }
     if (NodeIs.Bool(item)) {
       return item.meta.value ? 'true' : 'false';
@@ -101,11 +114,11 @@ function serialize(node: Node): string {
   }
 
   function serializeArray(item: Node<'Array'>): string {
-    return `[` + item.nodes.items.map(serializeInternal).join(', ') + `]`;
+    return `[` + item.nodes.items.map(serializeInternal).join(',') + `]`;
   }
 
-  function serializeArguments(items: Array<ArrayItem>): string {
-    return `(` + items.map(serializeInternal).join(', ') + `)`;
+  function serializeArguments(items: Array<Node<'ArrayItem'>>): string {
+    return `(` + items.map(serializeInternal).join(',') + `)`;
   }
 
   function serializeObjectItem(item: ObjectItem): string {
@@ -147,6 +160,9 @@ function serialize(node: Node): string {
   }
 
   function serializeChild(item: Children, isInRaw: boolean): string {
+    if (NodeIs.Whitespace(item)) {
+      return item.meta.content;
+    }
     if (NodeIs.Text(item)) {
       return item.meta.content;
     }
@@ -186,29 +202,25 @@ function serialize(node: Node): string {
   }
 
   function serializeProps(props: Node<'Props'>): string {
-    return (
-      (props.meta.whitespace || '') +
-      props.nodes.items
-        .map((prop) => {
-          const whitespace = prop.meta.whitespace || '';
-          if (NodeIs.Prop(prop)) {
-            return (
-              `${serializeInternal(prop.nodes.name)}=${serializeInternal(prop.nodes.value)}` +
-              whitespace
-            );
-          }
-          if (NodeIs.NoValueProp(prop)) {
-            return `${serializeInternal(prop.nodes.name)}` + whitespace;
-          }
-          if (NodeIs.PropLineComment(prop)) {
-            return `//${prop.meta.content}\n` + whitespace;
-          }
-          if (NodeIs.PropBlockComment(prop)) {
-            return `/*${prop.meta.content}*/` + whitespace;
-          }
-          throw new Error(`Unsuported ${(prop as any).type}`);
-        })
-        .join('')
-    );
+    return props.nodes.items
+      .map((prop) => {
+        if (NodeIs.Prop(prop)) {
+          return `${serializeInternal(prop.nodes.name)}=${serializeInternal(prop.nodes.value)}`;
+        }
+        if (NodeIs.NoValueProp(prop)) {
+          return `${serializeInternal(prop.nodes.name)}`;
+        }
+        if (NodeIs.PropLineComment(prop)) {
+          return `//${prop.meta.content}\n`;
+        }
+        if (NodeIs.PropBlockComment(prop)) {
+          return `/*${prop.meta.content}*/`;
+        }
+        if (NodeIs.Whitespace(prop)) {
+          return prop.meta.content;
+        }
+        throw new Error(`Unsuported ${(prop as any).type}`);
+      })
+      .join('');
   }
 }
