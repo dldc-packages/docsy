@@ -17,13 +17,13 @@ export function removePositions(item: any): any {
   if (item && item.type && (NodeIs as any)[item.type]) {
     delete item.position;
     let res: any = {};
-    Object.keys(item).forEach(key => {
+    Object.keys(item).forEach((key) => {
       res[key] = removePositions(item[key]);
     });
     return res;
   }
   if (Array.isArray(item)) {
-    return item.map(sub => removePositions(sub));
+    return item.map((sub) => removePositions(sub));
   }
   return item;
 }

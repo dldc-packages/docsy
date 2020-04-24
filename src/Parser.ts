@@ -283,7 +283,7 @@ function parseDocument(file: string): ParseDocumentResult {
       if (peek('*')) {
         content += input.next();
       }
-      content += readWhile(char => char !== '*');
+      content += readWhile((char) => char !== '*');
     }
     skip('*/');
     const elem = createNode(
@@ -301,7 +301,7 @@ function parseDocument(file: string): ParseDocumentResult {
   function parseLineComment(): Node<'LineComment'> {
     const start = input.position();
     skip('//');
-    const content = readWhile(char => char !== '\n');
+    const content = readWhile((char) => char !== '\n');
     const elem = createNode(
       'LineComment',
       start,
@@ -422,12 +422,12 @@ function parseDocument(file: string): ParseDocumentResult {
 
   function parseProps(canSelfClose: boolean): Node<'Props'> {
     const propItems: Array<PropItem> = [];
-    const propsState = input.position();
+    const propsStart = input.position();
     const whitespace = parseWhitespaces();
     if (peek('>') || (canSelfClose && peek('|>'))) {
       return createNode(
         'Props',
-        propsState,
+        propsStart,
         input.position(),
         {
           items: propItems,
@@ -450,7 +450,7 @@ function parseDocument(file: string): ParseDocumentResult {
         break;
       }
     }
-    return createNode('Props', propsState, input.position(), { items: propItems }, { whitespace });
+    return createNode('Props', propsStart, input.position(), { items: propItems }, { whitespace });
   }
 
   function parsePropOrComment(): PropItem {
@@ -705,7 +705,7 @@ function parseDocument(file: string): ParseDocumentResult {
       skip('-');
     }
     let hasDot = false;
-    const number = readWhile(ch => {
+    const number = readWhile((ch) => {
       if (ch === '.') {
         if (hasDot) {
           return false;

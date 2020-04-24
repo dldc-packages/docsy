@@ -24,7 +24,7 @@ export interface State {
 export function InputStream(input: string): InputStream {
   let pos = 0;
   let line = 1;
-  let col = 0;
+  let col = 1;
 
   return {
     get,
@@ -71,7 +71,7 @@ export function InputStream(input: string): InputStream {
       const ch = input.charAt(pos++);
       if (ch === '\n') {
         line++;
-        col = 0;
+        col = 1;
       } else {
         col++;
       }

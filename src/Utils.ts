@@ -19,6 +19,7 @@ export const DocsyUtils = {
   transform,
   transformDeep,
   createNodeFromValue,
+  getNodeNodes,
 };
 
 /**
@@ -115,7 +116,7 @@ export function traverse(node: Node, onNode: (item: Node, path: TraversePath) =>
 
   function traverseInternal(item: Node, path: TraversePath) {
     onNode(item, path);
-    getNodeNodes(item).forEach(child => {
+    getNodeNodes(item).forEach((child) => {
       traverseInternal(child.node, [...path, ...child.path]);
     });
   }
@@ -138,12 +139,12 @@ export function createNodeFromValue(value: any): Expression {
     return CreateNode.Str({}, { value, quote: 'Single' });
   }
   if (Array.isArray(value)) {
-    return CreateNode.Array({ items: value.map(val => createNodeFromValue(val)) }, {});
+    return CreateNode.Array({ items: value.map((val) => createNodeFromValue(val)) }, {});
   }
   if (isPlainObject(value)) {
     return CreateNode.Object(
       {
-        items: Object.keys(value).map(key => {
+        items: Object.keys(value).map((key) => {
           return CreateNode.Property(
             {
               name: CreateNode.Str(

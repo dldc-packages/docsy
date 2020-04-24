@@ -100,12 +100,12 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
   }
 
   function resolveChildren(items: Array<Node>): Array<any> {
-    return items.map(child => resolveInternal(child));
+    return items.map((child) => resolveInternal(child));
   }
 
   function resolveProps(items: Array<PropItem>): any {
     const obj: any = {};
-    items.forEach(prop => {
+    items.forEach((prop) => {
       if (NodeIs.NoValueProp(prop)) {
         const key: string = prop.nodes.name.meta.name;
         obj[key] = true;
@@ -123,7 +123,7 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
 
   function resolveObject(items: Array<ObjectItem>): any {
     let obj: any = {};
-    items.forEach(prop => {
+    items.forEach((prop) => {
       if (NodeIs.Spread(prop)) {
         const value = resolveInternal(prop.nodes.target);
         obj = {
@@ -163,7 +163,7 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
 
   function resolveArray(items: Array<ArrayItem>): any {
     let arr: Array<any> = [];
-    items.forEach(prop => {
+    items.forEach((prop) => {
       if (NodeIs.Spread(prop)) {
         const value = resolveInternal(prop.nodes.target);
         arr = [...arr, ...value];

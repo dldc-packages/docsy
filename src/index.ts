@@ -2,7 +2,7 @@ export * from './Parser';
 export * from './Serializer';
 export * from './Resolver';
 export * from './Formatter';
-export { DocsyUtils } from './Utils';
+export { DocsyUtils, NodePath, NodeWithPath } from './Utils';
 export {
   Node,
   NodeIs,

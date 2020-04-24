@@ -143,7 +143,7 @@ function serialize(node: Node): string {
     if (!items || items.length === 0) {
       return '';
     }
-    return items.map(sub => serializeChild(sub, isInRaw)).join('');
+    return items.map((sub) => serializeChild(sub, isInRaw)).join('');
   }
 
   function serializeChild(item: Children, isInRaw: boolean): string {
@@ -189,7 +189,7 @@ function serialize(node: Node): string {
     return (
       (props.meta.whitespace || '') +
       props.nodes.items
-        .map(prop => {
+        .map((prop) => {
           const whitespace = prop.meta.whitespace || '';
           if (NodeIs.Prop(prop)) {
             return (
