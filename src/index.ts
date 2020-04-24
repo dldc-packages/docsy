@@ -1,7 +1,7 @@
-export { DocsyParser, Range } from './Parser';
-export { DocsySerializer } from './Serializer';
-export { DocsyResolver, ResolveValues } from './Resolver';
-export { DocsyFomatter } from './Formatter';
+export * from './Parser';
+export * from './Serializer';
+export * from './Resolver';
+export * from './Formatter';
 export { DocsyUtils } from './Utils';
 export {
   Node,
