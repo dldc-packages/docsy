@@ -138,32 +138,34 @@ it(`Parse props`, () => {
   expect(result.nodes.children[0].nodes.component.meta.name).toBe('Title');
   expect(result.nodes.children[0].nodes.children.length).toBe(1);
   const props = result.nodes.children[0].nodes.props.nodes.items;
-  expect(props.length).toBe(13);
+  expect(props.length).toBe(6);
   expect(props.map((item: any) => item.type)).toEqual([
-    'Whitespace',
-    'NoValueProp',
-    'Whitespace',
-    'Prop',
-    'Whitespace',
-    'Prop',
-    'Whitespace',
-    'Prop',
-    'Whitespace',
-    'Prop',
-    'Whitespace',
-    'Prop',
-    'Whitespace',
+    'PropItem',
+    'PropItem',
+    'PropItem',
+    'PropItem',
+    'PropItem',
+    'PropItem',
   ]);
-  expect(props[1].nodes.name.meta.name).toBe('bold');
-  expect(props[3].nodes.name.meta.name).toBe('foo');
-  expect(props[3].nodes.value.type).toBe('Str');
-  expect(props[3].nodes.value.meta.value).toBe('bar');
-  expect(props[5].nodes.value.type).toBe('Num');
-  expect(props[5].nodes.value.meta.value).toBe(-3.14);
-  expect(props[7].nodes.value.type).toBe('Bool');
-  expect(props[7].nodes.value.meta.value).toBe(true);
-  expect(props[9].nodes.value.type).toBe('Null');
-  expect(props[11].nodes.value.type).toBe('Undefined');
+  const propsInner = props.map((item: any) => item.nodes.item);
+  expect(propsInner.map((item: any) => item.type)).toEqual([
+    'PropNoValue',
+    'PropValue',
+    'PropValue',
+    'PropValue',
+    'PropValue',
+    'PropValue',
+  ]);
+  expect(propsInner[0].nodes.name.meta.name).toBe('bold');
+  expect(propsInner[1].nodes.name.meta.name).toBe('foo');
+  expect(propsInner[1].nodes.value.type).toBe('Str');
+  expect(propsInner[1].nodes.value.meta.value).toBe('bar');
+  expect(propsInner[2].nodes.value.type).toBe('Num');
+  expect(propsInner[2].nodes.value.meta.value).toBe(-3.14);
+  expect(propsInner[3].nodes.value.type).toBe('Bool');
+  expect(propsInner[3].nodes.value.meta.value).toBe(true);
+  expect(propsInner[4].nodes.value.type).toBe('Null');
+  expect(propsInner[5].nodes.value.type).toBe('Undefined');
 });
 
 it(`Parse props with object`, () => {
@@ -173,18 +175,13 @@ it(`Parse props with object`, () => {
   const firstChild = result.nodes.children[0];
   expect(firstChild.type).toBe('Element');
   const propsItems = firstChild.nodes.props.nodes.items;
-  expect(propsItems.length).toBe(3);
-  expect(propsItems[0].type).toBe('Whitespace');
-  expect(propsItems[1].type).toBe('Prop');
-  expect(propsItems[1].nodes.value.type).toBe('Object');
-  expect(propsItems[1].nodes.value.nodes.items.length).toBe(5);
-  expect(propsItems[1].nodes.value.nodes.items.map((v: any) => v.type)).toEqual([
-    'Property',
-    'ComputedProperty',
-    'PropertyShorthand',
-    'Spread',
-    'Property',
-  ]);
+  expect(propsItems.length).toBe(1);
+  expect(propsItems[0].type).toBe('PropItem');
+  expect(propsItems[0].nodes.item.nodes.value.type).toBe('Object');
+  expect(propsItems[0].nodes.item.nodes.value.nodes.items.length).toBe(5);
+  expect(
+    propsItems[0].nodes.item.nodes.value.nodes.items.map((v: any) => v.nodes.item.type)
+  ).toEqual(['Property', 'ComputedProperty', 'PropertyShorthand', 'Spread', 'Property']);
 });
 
 it(`Parse a line comment`, () => {
@@ -369,4 +366,26 @@ it(`Parse raw.docsy file`, () => {
 it(`Parse complete.docsy file`, () => {
   const file = readFile('complete');
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
+
+it(`Parse inject`, () => {
+  const file = '{34}';
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.type).toBe('Document');
+  expect(result.nodes.children.length).toBe(1);
+  expect(result.nodes.children[0].type).toBe('Inject');
+  expect(result.nodes.children[0].nodes.value.type).toBe('Num');
+  expect(result.nodes.children[0].nodes.value.meta.value).toBe(34);
+});
+
+it(`Parse inject with spaces`, () => {
+  const file = '{\n34   \n}';
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.type).toBe('Document');
+  expect(result.nodes.children.length).toBe(1);
+  expect(result.nodes.children[0].type).toBe('Inject');
+  expect(result.nodes.children[0].nodes.value.type).toBe('Num');
+  expect(result.nodes.children[0].nodes.value.meta.value).toBe(34);
 });

@@ -46,9 +46,16 @@ export type Nodes = CreateNodes<{
   Whitespace: CreateNode<{}, { content: string }>;
   Fragment: CreateNode<{ children: Array<Children> }>;
   RawFragment: CreateNode<{ children: Array<Children> }>;
-  Props: CreateNode<{ items: Array<PropItem> }, {}>;
-  Prop: CreateNode<{ name: Node<'Identifier'>; value: Expression }, {}>;
-  NoValueProp: CreateNode<{ name: Node<'Identifier'> }, {}>;
+  Props: CreateNode<{ items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace }, {}>;
+  PropItem: CreateNode<
+    {
+      whitespaceBefore: Node<'Whitespace'>;
+      item: Prop;
+    },
+    {}
+  >;
+  PropValue: CreateNode<{ name: Node<'Identifier'>; value: Expression }, {}>;
+  PropNoValue: CreateNode<{ name: Node<'Identifier'> }, {}>;
   PropLineComment: CreateNode<{}, { content: string }>;
   PropBlockComment: CreateNode<{}, { content: string }>;
   LineComment: CreateNode<{}, { content: string }>;
@@ -59,10 +66,17 @@ export type Nodes = CreateNodes<{
   Str: CreateNode<{}, { value: string; quote: QuoteType }>;
   Bool: CreateNode<{}, { value: boolean }>;
   Num: CreateNode<{}, { value: number; rawValue: string }>;
-  Object: CreateNode<{ items: Array<ObjectItem> }>;
+  Object: CreateNode<{ items: Array<Node<'ObjectItem'>> }>;
+  EmptyObject: CreateNode<{ whitespace: MaybeWhitespace }>;
+  ObjectItem: CreateNode<{
+    whitespaceBefore: MaybeWhitespace;
+    item: ObjectPart;
+    whitespaceAfter: MaybeWhitespace;
+  }>;
   PropertyShorthand: CreateNode<{ name: Node<'Identifier'> }>;
   Property: CreateNode<{ name: Node<'Str' | 'Identifier'>; value: Expression }>;
   Array: CreateNode<{ items: Array<Node<'ArrayItem'>> }>;
+  EmptyArray: CreateNode<{ whitespace: MaybeWhitespace }>;
   ObjectSpread: CreateNode<{ target: Expression }>;
   FunctionCall: CreateNode<{ target: Expression; arguments: Array<Node<'ArrayItem'>> }>;
   ComputedProperty: CreateNode<{ expression: Expression; value: Expression }>;
@@ -76,10 +90,18 @@ export type Nodes = CreateNodes<{
   }>;
   Spread: CreateNode<{ target: Expression }>;
   ArrayItem: CreateNode<{
-    whitespaceBefore: Node<'Whitespace'> | null;
+    whitespaceBefore: MaybeWhitespace;
     item: Expression | Node<'Spread'>;
-    whitespaceAfter: Node<'Whitespace'> | null;
+    whitespaceAfter: MaybeWhitespace;
   }>;
+  Inject: CreateNode<
+    {
+      whitespaceBefore: MaybeWhitespace;
+      value: Expression;
+      whitespaceAfter: MaybeWhitespace;
+    },
+    {}
+  >;
 }>;
 
 export type NodeType = keyof Nodes;
@@ -90,39 +112,44 @@ export type Node<K extends NodeType = NodeType> = {
 
 const NODES_OBJ: { [K in NodeType]: null } = {
   Array: null,
+  ArrayItem: null,
   BlockComment: null,
+  Inject: null,
   Bool: null,
   BracketMember: null,
   ComputedProperty: null,
   Document: null,
   DotMember: null,
-  Whitespace: null,
   Element: null,
-  RawElement: null,
-  Fragment: null,
-  RawFragment: null,
-  Props: null,
   ElementTypeMember: null,
+  Fragment: null,
   FunctionCall: null,
+  EmptyArray: null,
+  EmptyObject: null,
   Identifier: null,
-  ArrayItem: null,
   LineComment: null,
-  NoValueProp: null,
   Null: null,
   Num: null,
   Object: null,
+  ObjectItem: null,
   ObjectSpread: null,
   Parenthesis: null,
-  Prop: null,
   PropBlockComment: null,
-  PropLineComment: null,
   Property: null,
   PropertyShorthand: null,
+  PropItem: null,
+  PropLineComment: null,
+  PropNoValue: null,
+  Props: null,
+  PropValue: null,
+  RawElement: null,
+  RawFragment: null,
   SelfClosingElement: null,
   Spread: null,
   Str: null,
   Text: null,
   Undefined: null,
+  Whitespace: null,
 };
 
 const NODES = Object.keys(NODES_OBJ) as Array<NodeType>;
@@ -160,14 +187,10 @@ export const CreateNode: {
 export type Document = Node<'Document'>;
 export type ComponentType = Node<'ElementTypeMember' | 'Identifier'>;
 export type DottableExpression = Node<Exclude<Expression['type'], 'Num'>>; // cannot . on number
-export type PropItem = Node<
-  'Whitespace' | 'NoValueProp' | 'Prop' | 'PropLineComment' | 'PropBlockComment'
->;
-export type ObjectItem = Node<
-  'Whitespace' | 'PropertyShorthand' | 'Property' | 'ComputedProperty' | 'Spread'
->;
+export type Prop = Node<'PropNoValue' | 'PropValue' | 'PropLineComment' | 'PropBlockComment'>;
 export type Children = Node<
   | 'Whitespace'
+  | 'Inject'
   | 'Text'
   | 'Element'
   | 'SelfClosingElement'
@@ -184,7 +207,9 @@ export type Expression = Node<
   | 'Num'
   | 'Str'
   | 'Array'
+  | 'EmptyArray'
   | 'Object'
+  | 'EmptyObject'
   | 'Element'
   | 'DotMember'
   | 'BracketMember'
@@ -192,3 +217,5 @@ export type Expression = Node<
   | 'FunctionCall'
   | 'Parenthesis'
 >;
+export type ObjectPart = Node<'PropertyShorthand' | 'Property' | 'ComputedProperty' | 'Spread'>;
+export type MaybeWhitespace = Node<'Whitespace'> | null;

@@ -13,7 +13,8 @@ export {
   DottableExpression,
   Expression,
   NodeType,
-  ObjectItem,
-  PropItem,
+  ObjectPart,
+  Prop,
+  QuoteType,
 } from './utils/Node';
 export { Position } from './utils/InputStream';

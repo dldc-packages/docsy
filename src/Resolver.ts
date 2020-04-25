@@ -1,4 +1,4 @@
-import { Node, NodeIs, PropItem, ObjectItem, ArrayItem } from './utils/Node';
+import { Node, NodeIs } from './utils/Node';
 import { DocsySerializer } from './Serializer';
 
 export type ResolveValues = {
@@ -103,27 +103,29 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
     return items.map((child) => resolveInternal(child));
   }
 
-  function resolveProps(items: Array<PropItem>): any {
+  function resolveProps(items: Array<Node<'PropItem'>>): any {
     const obj: any = {};
     items.forEach((prop) => {
-      if (NodeIs.NoValueProp(prop)) {
-        const key: string = prop.nodes.name.meta.name;
+      const inner = prop.nodes.item;
+      if (NodeIs.PropNoValue(inner)) {
+        const key: string = inner.nodes.name.meta.name;
         obj[key] = true;
         return;
       }
-      if (NodeIs.Prop(prop)) {
-        const key: string = prop.nodes.name.meta.name;
-        obj[key] = resolveInternal(prop.nodes.value);
+      if (NodeIs.PropValue(inner)) {
+        const key: string = inner.nodes.name.meta.name;
+        obj[key] = resolveInternal(inner.nodes.value);
         return;
       }
-      throw new Error(`Unsuported props ${prop.type}`);
+      throw new Error(`Unsuported props ${inner.type}`);
     });
     return obj;
   }
 
-  function resolveObject(items: Array<ObjectItem>): any {
+  function resolveObject(items: Array<Node<'ObjectItem'>>): any {
     let obj: any = {};
-    items.forEach((prop) => {
+    items.forEach((propItem) => {
+      const prop = propItem.nodes.item;
       if (NodeIs.Spread(prop)) {
         const value = resolveInternal(prop.nodes.target);
         obj = {
@@ -161,15 +163,16 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
     return obj;
   }
 
-  function resolveArray(items: Array<ArrayItem>): any {
+  function resolveArray(items: Array<Node<'ArrayItem'>>): any {
     let arr: Array<any> = [];
-    items.forEach((prop) => {
-      if (NodeIs.Spread(prop)) {
-        const value = resolveInternal(prop.nodes.target);
+    items.forEach((arrayItem) => {
+      const item = arrayItem.nodes.item;
+      if (NodeIs.Spread(item)) {
+        const value = resolveInternal(item.nodes.target);
         arr = [...arr, ...value];
         return;
       }
-      arr.push(resolveInternal(prop));
+      arr.push(resolveInternal(item));
     });
     return arr;
   }

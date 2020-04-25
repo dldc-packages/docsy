@@ -1,4 +1,4 @@
-import { Node, NodeIs, ObjectItem, Children } from './utils/Node';
+import { Node, NodeIs, Children, ObjectPart, Prop } from './utils/Node';
 import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './utils/constants';
 
 const COMMONT_TYPE = ['LineComment', 'BlockComment'] as const;
@@ -110,7 +110,19 @@ function serialize(node: Node): string {
   }
 
   function serializeObject(item: Node<'Object'>): string {
-    return `{ ` + item.nodes.items.map(serializeObjectItem).join(', ') + ` }`;
+    return (
+      `{` +
+      item.nodes.items
+        .map((objectItem) => {
+          return (
+            serializeInternal(objectItem.nodes.whitespaceBefore) +
+            serializeObjectPart(objectItem.nodes.item) +
+            serializeInternal(objectItem.nodes.whitespaceAfter)
+          );
+        })
+        .join(',') +
+      `}`
+    );
   }
 
   function serializeArray(item: Node<'Array'>): string {
@@ -121,7 +133,7 @@ function serialize(node: Node): string {
     return `(` + items.map(serializeInternal).join(',') + `)`;
   }
 
-  function serializeObjectItem(item: ObjectItem): string {
+  function serializeObjectPart(item: ObjectPart): string {
     if (NodeIs.Spread(item)) {
       return `...${serializeInternal(item.nodes.target)}`;
     }
@@ -166,6 +178,15 @@ function serialize(node: Node): string {
     if (NodeIs.Text(item)) {
       return item.meta.content;
     }
+    if (NodeIs.Inject(item)) {
+      return (
+        '{' +
+        serializeInternal(item.nodes.whitespaceBefore) +
+        serializeInternal(item.nodes.value) +
+        serializeInternal(item.nodes.whitespaceAfter) +
+        '}'
+      );
+    }
     if (NodeIs.Element(item)) {
       return serializeElement(item);
     }
@@ -202,25 +223,31 @@ function serialize(node: Node): string {
   }
 
   function serializeProps(props: Node<'Props'>): string {
-    return props.nodes.items
-      .map((prop) => {
-        if (NodeIs.Prop(prop)) {
-          return `${serializeInternal(prop.nodes.name)}=${serializeInternal(prop.nodes.value)}`;
-        }
-        if (NodeIs.NoValueProp(prop)) {
-          return `${serializeInternal(prop.nodes.name)}`;
-        }
-        if (NodeIs.PropLineComment(prop)) {
-          return `//${prop.meta.content}\n`;
-        }
-        if (NodeIs.PropBlockComment(prop)) {
-          return `/*${prop.meta.content}*/`;
-        }
-        if (NodeIs.Whitespace(prop)) {
-          return prop.meta.content;
-        }
-        throw new Error(`Unsuported ${(prop as any).type}`);
-      })
-      .join('');
+    return (
+      props.nodes.items
+        .map((prop) => {
+          return serializeInternal(prop.nodes.whitespaceBefore) + serializeProp(prop.nodes.item);
+        })
+        .join('') + serializeInternal(props.nodes.whitespaceAfter)
+    );
+  }
+
+  function serializeProp(prop: Prop): string {
+    if (NodeIs.PropValue(prop)) {
+      return `${serializeInternal(prop.nodes.name)}=${serializeInternal(prop.nodes.value)}`;
+    }
+    if (NodeIs.PropNoValue(prop)) {
+      return `${serializeInternal(prop.nodes.name)}`;
+    }
+    if (NodeIs.PropLineComment(prop)) {
+      return `//${prop.meta.content}\n`;
+    }
+    if (NodeIs.PropBlockComment(prop)) {
+      return `/*${prop.meta.content}*/`;
+    }
+    if (NodeIs.Whitespace(prop)) {
+      return prop.meta.content;
+    }
+    throw new Error(`Unsuported ${(prop as any).type}`);
   }
 }

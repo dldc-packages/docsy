@@ -6,11 +6,11 @@ import {
   Node,
   ComponentType,
   Expression,
-  ObjectItem,
   DottableExpression,
   QuoteType,
   NodeIs,
-  PropItem,
+  Prop,
+  ObjectPart,
 } from './utils/Node';
 import { InputStream, Position } from './utils/InputStream';
 import {
@@ -244,6 +244,9 @@ function parseDocument(file: string): ParseDocumentResult {
     if (peek('/*')) {
       return parseBlockComment();
     }
+    if (peek('{')) {
+      return parseInject();
+    }
     const whitespace = parseTextWhitespace();
     if (whitespace) {
       return whitespace;
@@ -379,6 +382,22 @@ function parseDocument(file: string): ParseDocumentResult {
     return elem;
   }
 
+  function parseInject(): Node<'Inject'> {
+    const start = input.position();
+    skip('{');
+    const whitespaceBefore = parseWhitespace();
+    const value = parseExpression();
+    const whitespaceAfter = parseWhitespace();
+    skip('}');
+    return createNode(
+      'Inject',
+      start,
+      input.position(),
+      { value, whitespaceAfter, whitespaceBefore },
+      {}
+    );
+  }
+
   function maybeParseElement(): false | Node<'Element' | 'SelfClosingElement'> {
     const start = input.position();
     const tag = maybeParseElementStart();
@@ -483,38 +502,45 @@ function parseDocument(file: string): ParseDocumentResult {
   }
 
   function parseProps(canSelfClose: boolean): Node<'Props'> {
-    const propItems: Array<PropItem> = [];
+    const propItems: Array<Node<'PropItem'>> = [];
     const propsStart = input.position();
-    const whitespace = parseWhitespace();
-    if (whitespace) {
-      propItems.push(whitespace);
-    }
-    if (peek('>') || (canSelfClose && peek('|>'))) {
-      return createNode('Props', propsStart, input.position(), { items: propItems }, {});
-    }
-    if (!whitespace) {
-      return input.croak(`Expected at least one whitespace`);
-    }
     while (!peek('>') && (canSelfClose === true ? !peek('|>') : true)) {
-      const whitespaceBefore = parseWhitespace();
-      if (whitespaceBefore) {
-        propItems.push(whitespaceBefore);
+      const propItemStart = input.position();
+      const whitespace = parseWhitespace();
+      if (peek('>') || (canSelfClose && peek('|>'))) {
+        // stop
+        return createNode(
+          'Props',
+          propsStart,
+          input.position(),
+          { items: propItems, whitespaceAfter: whitespace },
+          {}
+        );
+      }
+      if (!whitespace) {
+        return input.croak('Expecting whitespace between props');
       }
       const nextPropItem = parsePropOrComment();
-      propItems.push(nextPropItem);
-      const whitespaceAfter = parseWhitespace();
-      if (!whitespaceAfter) {
-        break;
-      }
-      propItems.push(whitespaceAfter);
-      if (peek('>') || (canSelfClose && peek('|>'))) {
-        break;
-      }
+      propItems.push(
+        createNode(
+          'PropItem',
+          propItemStart,
+          input.position(),
+          { whitespaceBefore: whitespace, item: nextPropItem },
+          {}
+        )
+      );
     }
-    return createNode('Props', propsStart, input.position(), { items: propItems }, { whitespace });
+    return createNode(
+      'Props',
+      propsStart,
+      input.position(),
+      { items: propItems, whitespaceAfter: null },
+      {}
+    );
   }
 
-  function parsePropOrComment(): PropItem {
+  function parsePropOrComment(): Prop {
     if (peek('//')) {
       const lineComment = parseLineComment();
       const position = ranges.get(lineComment)!;
@@ -540,11 +566,11 @@ function parseDocument(file: string): ParseDocumentResult {
     const propStart = input.position();
     const name = parseIdentifier();
     if (!peek('=')) {
-      return createNode('NoValueProp', propStart, input.position(), { name }, {});
+      return createNode('PropNoValue', propStart, input.position(), { name }, {});
     }
     skip('=');
     const value = parseExpression();
-    return createNode('Prop', propStart, input.position(), { name, value }, {});
+    return createNode('PropValue', propStart, input.position(), { name, value }, {});
   }
 
   function parseExpression(): Expression {
@@ -640,26 +666,41 @@ function parseDocument(file: string): ParseDocumentResult {
     return identifier;
   }
 
-  function parseObject(): Node<'Object'> {
+  function parseObject(): Node<'Object' | 'EmptyObject'> {
     const start = input.position();
     skip('{');
-    const items: Array<ObjectItem> = [];
+    const beforeSpace = input.saveState();
+    const firstWhispace = parseWhitespace();
+    if (peek(']')) {
+      skip(']');
+      return createNode('EmptyObject', start, input.position(), { whitespace: firstWhispace }, {});
+    }
+    input.restoreState(beforeSpace);
+    const items: Array<Node<'ObjectItem'>> = [];
     while (!input.eof() && input.peek() !== '}') {
-      parseWhitespace();
-      maybeSkip(',');
-      parseWhitespace();
-      if (!input.eof() && input.peek() === '}') {
-        break;
+      if (items.length > 0) {
+        maybeSkip(',');
       }
-      parseWhitespace();
-      items.push(parseObjectItem());
+      const itemStart = input.position();
+      const whitespaceBefore = parseWhitespace();
+      const item = parseObjectPart();
+      const whitespaceAfter = parseWhitespace();
+      items.push(
+        createNode(
+          'ObjectItem',
+          itemStart,
+          input.position(),
+          { whitespaceAfter, item, whitespaceBefore },
+          {}
+        )
+      );
     }
     parseWhitespace();
     skip('}');
     return createNode('Object', start, input.position(), { items }, {});
   }
 
-  function parseObjectItem(): ObjectItem {
+  function parseObjectPart(): ObjectPart {
     const start = input.position();
     if (peek(SINGLE_QUOTE) || peek(DOUBLE_QUOTE) || peek(BACKTICK)) {
       const name = parseString();
@@ -711,17 +752,13 @@ function parseDocument(file: string): ParseDocumentResult {
   function parseArrayItems(endChar: string): Array<Node<'ArrayItem'>> {
     const items: Array<Node<'ArrayItem'>> = [];
     while (!input.eof() && input.peek() !== endChar) {
-      const isFirst = items.length === 0;
-      if (isFirst === false) {
+      if (items.length > 0) {
         maybeSkip(',');
       }
       const itemStart = input.position();
-      const whitespaceBefore = parseWhitespace() || null;
-      if (!input.eof() && input.peek() === endChar) {
-        break;
-      }
+      const whitespaceBefore = parseWhitespace();
       const value = parseExpression();
-      const whitespaceAfter = parseWhitespace() || null;
+      const whitespaceAfter = parseWhitespace();
       const item = createNode(
         'ArrayItem',
         itemStart,
@@ -738,9 +775,16 @@ function parseDocument(file: string): ParseDocumentResult {
     return items;
   }
 
-  function parseArray(): Node<'Array'> {
+  function parseArray(): Node<'Array' | 'EmptyArray'> {
     const start = input.position();
     skip('[');
+    const beforeSpace = input.saveState();
+    const firstWhispace = parseWhitespace();
+    if (peek(']')) {
+      skip(']');
+      return createNode('EmptyArray', start, input.position(), { whitespace: firstWhispace }, {});
+    }
+    input.restoreState(beforeSpace);
     const items = parseArrayItems(']');
     skip(']');
     return createNode('Array', start, input.position(), { items }, {});
@@ -874,12 +918,12 @@ function parseDocument(file: string): ParseDocumentResult {
     return str;
   }
 
-  function parseWhitespace(): Node<'Whitespace'> | false {
+  function parseWhitespace(): Node<'Whitespace'> | null {
     if (input.eof()) {
-      return false;
+      return null;
     }
     if (!isWhitespace(input.peek())) {
-      return false;
+      return null;
     }
     const start = input.position();
     let content = '';
@@ -887,31 +931,31 @@ function parseDocument(file: string): ParseDocumentResult {
       content += input.next();
     }
     if (content.length === 0) {
-      return false;
+      return null;
     }
     return createNode('Whitespace', start, input.position(), {}, { content });
   }
 
   // start by at least two whitespaces
-  function parseTextWhitespace(): Node<'Whitespace'> | false {
+  function parseTextWhitespace(): Node<'Whitespace'> | null {
     if (input.eof()) {
-      return false;
+      return null;
     }
     const start = input.position();
     let content = '';
     const nextTwo = input.peek(2);
     if (nextTwo.length < 2) {
       // eof
-      return false;
+      return null;
     }
     if (!nextTwo.split('').every(isWhitespace)) {
-      return false;
+      return null;
     }
     while (!input.eof() && isWhitespace(input.peek())) {
       content += input.next();
     }
     if (content.length === 0) {
-      return false;
+      return null;
     }
     return createNode('Whitespace', start, input.position(), {}, { content });
   }
@@ -922,7 +966,12 @@ function parseDocument(file: string): ParseDocumentResult {
 
   function isText(char: string) {
     return (
-      char !== '#' && char !== '<' && char !== '|' && char !== '/' && isWhitespace(char) === false
+      char !== '#' &&
+      char !== '<' &&
+      char !== '|' &&
+      char !== '/' &&
+      char !== '{' &&
+      isWhitespace(char) === false
     );
   }
 
