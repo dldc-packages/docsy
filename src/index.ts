@@ -16,5 +16,5 @@ export {
   ObjectPart,
   Prop,
   QuoteType,
-} from './utils/Node';
-export { Position } from './utils/InputStream';
+} from './internal/Node';
+export { Position } from './internal/InputStream';

@@ -1,4 +1,4 @@
-import { Node, NodeIs } from './utils/Node';
+import { Node, NodeIs } from './internal/Node';
 import { DocsySerializer } from './Serializer';
 
 export type ResolveValues = {

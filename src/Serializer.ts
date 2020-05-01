@@ -1,5 +1,5 @@
-import { Node, NodeIs, Children, ObjectPart, Prop } from './utils/Node';
-import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './utils/constants';
+import { Node, NodeIs, Children, ObjectPart, Prop } from './internal/Node';
+import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './internal/constants';
 
 const COMMONT_TYPE = ['LineComment', 'BlockComment'] as const;
 

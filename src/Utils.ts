@@ -5,7 +5,7 @@ import {
   Expression,
   NodeNodesItem,
   isValidNodeType,
-} from './utils/Node';
+} from './internal/Node';
 
 type TraversePath = Array<number | string>;
 
@@ -93,6 +93,9 @@ export interface NodeWithPath {
 }
 
 function getNodesFromNodes(nodes: NodeNodesItem, path: NodePath): Array<NodeWithPath> {
+  if (nodes === null) {
+    return [];
+  }
   if (Array.isArray(nodes)) {
     return nodes.map((node, index) => ({ node, path: [...path, index] }));
   }
@@ -139,22 +142,43 @@ export function createNodeFromValue(value: any): Expression {
     return CreateNode.Str({}, { value, quote: 'Single' });
   }
   if (Array.isArray(value)) {
-    return CreateNode.Array({ items: value.map((val) => createNodeFromValue(val)) }, {});
+    return CreateNode.Array(
+      {
+        items: value.map((val) =>
+          CreateNode.ArrayItem(
+            {
+              item: createNodeFromValue(val),
+              whitespaceAfter: null,
+              whitespaceBefore: null,
+            },
+            {}
+          )
+        ),
+      },
+      {}
+    );
   }
   if (isPlainObject(value)) {
     return CreateNode.Object(
       {
         items: Object.keys(value).map((key) => {
-          return CreateNode.Property(
+          return CreateNode.ObjectItem(
             {
-              name: CreateNode.Str(
-                {},
+              item: CreateNode.Property(
                 {
-                  value: key,
-                  quote: 'Single',
-                }
+                  name: CreateNode.Str(
+                    {},
+                    {
+                      value: key,
+                      quote: 'Single',
+                    }
+                  ),
+                  value: createNodeFromValue(value[key]),
+                },
+                {}
               ),
-              value: createNodeFromValue(value[key]),
+              whitespaceAfter: null,
+              whitespaceBefore: null,
             },
             {}
           );

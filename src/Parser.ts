@@ -11,8 +11,8 @@ import {
   NodeIs,
   Prop,
   ObjectPart,
-} from './utils/Node';
-import { InputStream, Position } from './utils/InputStream';
+} from './internal/Node';
+import { InputStream, Position } from './internal/InputStream';
 import {
   BACKTICK,
   DIGIT_REGEX,
@@ -20,7 +20,7 @@ import {
   IDENTIFIER_REGEX,
   IDENTIFIER_START_REGEX,
   SINGLE_QUOTE,
-} from './utils/constants';
+} from './internal/constants';
 
 type CurrentComponent =
   | { type: 'DOCUMENT' | 'UNRAW' }
