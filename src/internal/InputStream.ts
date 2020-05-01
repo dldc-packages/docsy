@@ -5,6 +5,7 @@ export interface InputStream {
   eof(): boolean;
   croak(msg: string): never;
   position(): Position;
+  rangeSinceLastRange(): Range;
   saveState(): State;
   restoreState(state: State): void;
 }
@@ -14,6 +15,11 @@ export type Position = {
   column: number;
   offset: number;
 };
+
+export interface Range {
+  start: Position;
+  end: Position;
+}
 
 export interface State {
   pos: number;
@@ -26,16 +32,29 @@ export function InputStream(input: string): InputStream {
   let line = 1;
   let col = 1;
 
+  let lastRangePosition: Position = position();
+
   return {
-    get,
     next,
     peek,
+    get,
     eof,
     croak,
     position,
     saveState,
     restoreState,
+    rangeSinceLastRange,
   };
+
+  function rangeSinceLastRange(): Range {
+    const newPos = position();
+    const range: Range = {
+      start: lastRangePosition,
+      end: newPos,
+    };
+    lastRangePosition = newPos;
+    return range;
+  }
 
   function get(start: Position, end: Position): string {
     const [startOff, endOff] =
