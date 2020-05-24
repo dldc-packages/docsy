@@ -43,7 +43,7 @@ export type Nodes = CreateNodes<{
       namedCloseTag: boolean;
     }
   >;
-  Whitespace: CreateNode<{}, { content: string }>;
+  Whitespace: CreateNode<{}, { content: string; hasNewLine: boolean }>;
   Fragment: CreateNode<{ children: Array<Children> }>;
   RawFragment: CreateNode<{ children: Array<Children> }>;
   Props: CreateNode<{ items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace }, {}>;

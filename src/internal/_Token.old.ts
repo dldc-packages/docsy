@@ -1,4 +1,4 @@
-import { Range } from './InputStream';
+import { Range } from './types';
 import { IDENTIFIER_START_REGEX, IDENTIFIER_REGEX } from './constants';
 export type QuoteType = 'Single' | 'Double' | 'Backtick';
 
@@ -25,6 +25,7 @@ export const PONCTUATIONS = [
   '*',
   '+',
   '/',
+  '\\',
   '|',
   '!',
 ] as const;
@@ -32,21 +33,11 @@ export const PONCTUATIONS = [
 type Ponctuations = typeof PONCTUATIONS extends ReadonlyArray<infer T> ? T : never;
 
 export type Tokens = CreateTokens<{
+  Eof: {};
   Text: { value: string };
-  Whitespace: { value: string };
+  Whitespace: { value: string; hasNewLine: boolean };
   Num: { value: string };
-  Ponctuation: {
-    ponctuation: Ponctuations;
-  };
-  // Collapsed
-  PipeBackward: {};
-  ElementOpen: {
-    component: Token<'Text'>;
-  };
-  ElementWithProps: {
-    component: Token<'Text'>;
-    props: Array<Token<'Whitespace'>>;
-  };
+  Ponctuation: { value: Ponctuations };
 }>;
 
 export type TokenType = keyof Tokens;
@@ -56,13 +47,11 @@ export type Token<K extends TokenType = TokenType> = {
 } & { type: K; range: Range };
 
 const TOKENS_OBJ: { [K in TokenType]: null } = {
+  Eof: null,
   Num: null,
   Ponctuation: null,
   Text: null,
   Whitespace: null,
-  PipeBackward: null,
-  ElementOpen: null,
-  ElementWithProps: null,
 };
 
 const TOKENS = Object.keys(TOKENS_OBJ) as Array<TokenType>;
@@ -108,7 +97,7 @@ function tokenIsPonctuation<T extends Ponctuations>(
   token: Token,
   ponct: T | null = null
 ): token is Token<'Ponctuation'> {
-  return TokenIsType.Ponctuation(token) && (ponct === null ? true : token.ponctuation === ponct);
+  return TokenIsType.Ponctuation(token) && (ponct === null ? true : token.value === ponct);
 }
 
 function tokenIsIdentifier(token: Token): token is Token<'Text'> {

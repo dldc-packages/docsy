@@ -2,7 +2,7 @@ export * from './Parser';
 export * from './Serializer';
 export * from './Resolver';
 export * from './Formatter';
-export { DocsyUtils, NodePath, NodeWithPath } from './Utils';
+export { DocsyUtils, NodePath, NodeWithPath } from './DocsyUtils';
 export {
   Node,
   NodeIs,
@@ -17,4 +17,4 @@ export {
   Prop,
   QuoteType,
 } from './internal/Node';
-export { Position } from './internal/InputStream';
+export { Position, Range } from './internal/types';

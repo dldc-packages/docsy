@@ -32,6 +32,8 @@ Hello <|B>world|> !
 Hello <|B>world|> !
 <Title|>
 
+<|Block template=`Some template string with inject value`|>
+
 <|Block color='red'>
 <|Agathe color='red'>
 bla bla bla

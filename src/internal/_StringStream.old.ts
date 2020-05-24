@@ -1,4 +1,6 @@
-export interface InputStream {
+import { Position, Range } from './types';
+
+export interface StringStream {
   get(start: Position, end: Position): string;
   next(count?: number): string;
   peek(length?: number): string;
@@ -10,27 +12,16 @@ export interface InputStream {
   restoreState(state: State): void;
 }
 
-export type Position = {
+export interface State {
+  offset: number;
   line: number;
   column: number;
-  offset: number;
-};
-
-export interface Range {
-  start: Position;
-  end: Position;
 }
 
-export interface State {
-  pos: number;
-  line: number;
-  col: number;
-}
-
-export function InputStream(input: string): InputStream {
-  let pos = 0;
+export function StringStream(input: string): StringStream {
+  let offset = 0;
   let line = 1;
-  let col = 1;
+  let column = 1;
 
   let lastRangePosition: Position = position();
 
@@ -64,35 +55,35 @@ export function InputStream(input: string): InputStream {
 
   function saveState(): State {
     return {
-      col,
+      column,
       line,
-      pos,
+      offset,
     };
   }
 
   function restoreState(state: State): void {
-    col = state.col;
+    column = state.column;
     line = state.line;
-    pos = state.pos;
+    offset = state.offset;
   }
 
   function position(): Position {
     return {
       line,
-      column: col,
-      offset: pos,
+      column,
+      offset,
     };
   }
 
   function next(count: number = 1): string {
     let val = '';
     for (let i = 0; i < count; i++) {
-      const ch = input.charAt(pos++);
+      const ch = input.charAt(offset++);
       if (ch === '\n') {
         line++;
-        col = 1;
+        column = 1;
       } else {
-        col++;
+        column++;
       }
       val += ch;
     }
@@ -101,11 +92,11 @@ export function InputStream(input: string): InputStream {
 
   function peek(length: number = 1): string {
     if (length === 1) {
-      return input.charAt(pos);
+      return input.charAt(offset);
     }
     let val: string = '';
     for (let i = 0; i < length; i++) {
-      val += input.charAt(pos + i);
+      val += input.charAt(offset + i);
     }
     return val;
   }
@@ -115,6 +106,6 @@ export function InputStream(input: string): InputStream {
   }
 
   function croak(msg: string): never {
-    throw new Error(msg + ' (' + line + ':' + col + ')');
+    throw new Error(msg + ' (' + line + ':' + column + ')');
   }
 }
