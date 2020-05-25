@@ -141,6 +141,14 @@ it(`Parse array of array`, () => {
   expect(result.nodes.children[0].type).toEqual('SelfClosingElement');
 });
 
+it(`Parse object`, () => {
+  const file = `<|Title obj={ foo: true, bar: 34 } |>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children.length).toBe(1);
+  expect(result.nodes.children[0].type).toEqual('SelfClosingElement');
+});
+
 // it(`Parse many elements`, () => {
 //   const file = readFile('elements');
 //   expect(() => DocsyParser.parseDocument(file)).not.toThrow();

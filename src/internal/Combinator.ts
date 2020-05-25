@@ -152,6 +152,14 @@ export function oneOf<R1, R2, R3, R4, R5>(p1: Parser<R1>, p2: Parser<R2>, p3: Pa
 export function oneOf<R1, R2, R3, R4, R5, R6>(p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>): Parser<R1 | R2 | R3 | R4 | R5 | R6>;
 // prettier-ignore
 export function oneOf<R1, R2, R3, R4, R5, R6, R7>(p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7>;
+// prettier-ignore
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8>(p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8>;
+// prettier-ignore
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9>(p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>, p9: Parser<R9>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9>;
+// prettier-ignore
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10>(p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>, p9: Parser<R9>, p10: Parser<R10>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10>;
+// prettier-ignore
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11>(p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>, p9: Parser<R9>, p10: Parser<R10>, p11: Parser<R11>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11>;
 export function oneOf<V>(...parsers: Array<Parser<V>>): Parser<V> {
   const name = `OneOf(${parsers.map((p) => p.ParserName).join(',')})`;
   return createParser(

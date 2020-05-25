@@ -74,12 +74,21 @@ export type Nodes = CreateNodes<{
     whitespaceAfter: MaybeWhitespace;
   }>;
   PropertyShorthand: CreateNode<{ name: Node<'Identifier'> }>;
-  Property: CreateNode<{ name: Node<'Str' | 'Identifier'>; value: Expression }>;
+  Property: CreateNode<{
+    name: Node<'Str' | 'Identifier'>;
+    whitespaceBeforeColon: MaybeWhitespace;
+    whitespaceAfterColon: MaybeWhitespace;
+    value: Expression;
+  }>;
+  ComputedProperty: CreateNode<{
+    expression: Expression;
+    whitespaceBeforeColon: MaybeWhitespace;
+    whitespaceAfterColon: MaybeWhitespace;
+    value: Expression;
+  }>;
   Array: CreateNode<{ items: Array<Node<'ArrayItem'>> }>;
   EmptyArray: CreateNode<{ whitespace: MaybeWhitespace }>;
-  ObjectSpread: CreateNode<{ target: Expression }>;
   FunctionCall: CreateNode<{ target: Expression; arguments: Array<Node<'ArrayItem'>> }>;
-  ComputedProperty: CreateNode<{ expression: Expression; value: Expression }>;
   Identifier: CreateNode<{}, { name: string }>;
   DotMember: CreateNode<{ target: DottableExpression; property: Node<'Identifier'> }>;
   Parenthesis: CreateNode<{ value: Expression }>;
@@ -132,7 +141,6 @@ const NODES_OBJ: { [K in NodeType]: null } = {
   Num: null,
   Object: null,
   ObjectItem: null,
-  ObjectSpread: null,
   Parenthesis: null,
   PropBlockComment: null,
   Property: null,

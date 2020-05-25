@@ -33,12 +33,40 @@ function parseDocument(file: string): ParseDocumentResult {
   const commaParser = Combinator.exact(',');
   const squareBracketOpenParser = Combinator.exact('[');
   const squareBracketCloseParser = Combinator.exact(']');
+  const curlyBracketOpenParser = Combinator.exact('{');
+  const curlyBracketCloseParser = Combinator.exact('}');
+  const colonParser = Combinator.exact(':');
   const singleQuoteParser = Combinator.exact(SINGLE_QUOTE);
   const backslashParser = Combinator.exact(BACKSLASH);
   const doubleQuoteParser = Combinator.exact(DOUBLE_QUOTE);
   const backtickParser = Combinator.exact(BACKTICK);
 
   const lazyExpression = Combinator.lazy(() => expressionParser);
+
+  const identifierParser = Combinator.transform(
+    Combinator.pipe(
+      Combinator.singleChar('IdentifierStart', isIdentifierStart),
+      Combinator.whileMatch('Identifier', isIdentifier)
+    ),
+    ([idenitifierStart, content], start, end) =>
+      createNode('Identifier', start, end, {}, { name: idenitifierStart + content })
+  );
+
+  const intergerParser = Combinator.whileMatch('Integer', isDigit);
+
+  const numberParser = Combinator.transform(
+    Combinator.pipe(
+      Combinator.maybe(dashParser),
+      intergerParser,
+      Combinator.maybe(Combinator.pipe(dotParser, intergerParser))
+    ),
+    ([minus, integerPart, maybeDecimal], start, end) => {
+      const rawValue =
+        (minus || '') + integerPart + (maybeDecimal === null ? '' : '.' + maybeDecimal[1]);
+      const value = parseFloat(rawValue);
+      return createNode('Num', start, end, {}, { value, rawValue });
+    }
+  );
 
   const whitespaceParser = Combinator.named(
     'WhiteSpace',
@@ -110,6 +138,17 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
+  const emptyObjectParser = Combinator.transform(
+    Combinator.pipe(
+      curlyBracketOpenParser,
+      Combinator.maybe(whitespaceParser),
+      curlyBracketCloseParser
+    ),
+    ([_open, whitespace, _close], start, end) => {
+      return createNode('EmptyObject', start, end, { whitespace }, {});
+    }
+  );
+
   const spreadParser = Combinator.transform(
     Combinator.pipe(spreadOperatorParser, lazyExpression),
     ([_op, target], start, end) => {
@@ -139,6 +178,89 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
+  const propertyShorthandParser = Combinator.transform(identifierParser, (name, start, end) => {
+    return createNode('PropertyShorthand', start, end, { name }, {});
+  });
+
+  const propertyParser = Combinator.transform(
+    Combinator.pipe(
+      identifierParser,
+      maybeWhitespaceParser,
+      colonParser,
+      maybeWhitespaceParser,
+      lazyExpression
+    ),
+    ([name, whitespaceBeforeColon, _colon, whitespaceAfterColon, value], start, end) => {
+      return createNode(
+        'Property',
+        start,
+        end,
+        { name, value, whitespaceAfterColon, whitespaceBeforeColon },
+        {}
+      );
+    }
+  );
+
+  const computedPropertyParser = Combinator.transform(
+    Combinator.pipe(
+      squareBracketOpenParser,
+      lazyExpression,
+      squareBracketCloseParser,
+      maybeWhitespaceParser,
+      colonParser,
+      maybeWhitespaceParser,
+      lazyExpression
+    ),
+    (
+      [
+        _openBracket,
+        expression,
+        _closeBracket,
+        whitespaceBeforeColon,
+        _colon,
+        whitespaceAfterColon,
+        value,
+      ],
+      start,
+      end
+    ) => {
+      return createNode(
+        'ComputedProperty',
+        start,
+        end,
+        { expression, whitespaceBeforeColon, value, whitespaceAfterColon },
+        {}
+      );
+    }
+  );
+
+  const objectItemParser = Combinator.transform(
+    Combinator.pipe(
+      maybeWhitespaceParser,
+      Combinator.oneOf(
+        propertyParser,
+        propertyShorthandParser,
+        spreadParser,
+        computedPropertyParser
+      ),
+      maybeWhitespaceParser
+    ),
+    ([whitespaceBefore, item, whitespaceAfter], start, end) => {
+      return createNode('ObjectItem', start, end, { whitespaceBefore, item, whitespaceAfter }, {});
+    }
+  );
+
+  const objectParser = Combinator.transform(
+    Combinator.pipe(
+      curlyBracketOpenParser,
+      Combinator.manySepBy(objectItemParser, commaParser),
+      curlyBracketCloseParser
+    ),
+    ([_open, items, _close], start, end) => {
+      return createNode('Object', start, end, { items }, {});
+    }
+  );
+
   const booleanParser = Combinator.transform(
     Combinator.oneOf(Combinator.exact('true'), Combinator.exact('false')),
     (val, start, end) => {
@@ -161,31 +283,6 @@ function parseDocument(file: string): ParseDocumentResult {
     })
   );
 
-  const identifierParser = Combinator.transform(
-    Combinator.pipe(
-      Combinator.singleChar('IdentifierStart', isIdentifierStart),
-      Combinator.whileMatch('Identifier', isIdentifier)
-    ),
-    ([idenitifierStart, content], start, end) =>
-      createNode('Identifier', start, end, {}, { name: idenitifierStart + content })
-  );
-
-  const intergerParser = Combinator.whileMatch('Integer', isDigit);
-
-  const numberParser = Combinator.transform(
-    Combinator.pipe(
-      Combinator.maybe(dashParser),
-      intergerParser,
-      Combinator.maybe(Combinator.pipe(dotParser, intergerParser))
-    ),
-    ([minus, integerPart, maybeDecimal], start, end) => {
-      const rawValue =
-        (minus || '') + integerPart + (maybeDecimal === null ? '' : '.' + maybeDecimal[1]);
-      const value = parseFloat(rawValue);
-      return createNode('Num', start, end, {}, { value, rawValue });
-    }
-  );
-
   const elementTypeMemberParser: Combinator.Parser<Node<
     'ElementTypeMember'
   >> = Combinator.reduceRight(
@@ -201,16 +298,22 @@ function parseDocument(file: string): ParseDocumentResult {
     Combinator.oneOf(elementTypeMemberParser, identifierParser)
   );
 
+  const primitiveParser = Combinator.oneOf(
+    numberParser,
+    booleanParser,
+    nullParser,
+    undefinedParser,
+    stringParser
+  );
+
   const expressionParser: Combinator.Parser<Expression> = Combinator.named<Expression>(
     'Expression',
     Combinator.oneOf(
-      numberParser,
-      booleanParser,
-      nullParser,
-      undefinedParser,
-      stringParser,
+      primitiveParser,
       emptyArrayParser,
-      arrayParser
+      arrayParser,
+      emptyObjectParser,
+      objectParser
     )
   );
 
