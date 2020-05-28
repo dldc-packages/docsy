@@ -1,7 +1,6 @@
 import fse from 'fs-extra';
 import path from 'path';
 import { NodeIs } from '../../src';
-import { TokenIs } from '../../src/internal/Token';
 
 export function readFile(name: string): string {
   const testFileFolder = path.resolve(process.cwd(), 'test/files');
@@ -19,17 +18,17 @@ export function logToken(node: any) {
 }
 
 export function removeRange(item: any): any {
-  if (item && item.type && (TokenIs as any)[item.type]) {
-    delete item.range;
-    let res: any = {};
-    Object.keys(item).forEach((key) => {
-      res[key] = removePositions(item[key]);
-    });
-    return res;
-  }
-  if (Array.isArray(item)) {
-    return item.map((sub) => removeRange(sub));
-  }
+  // if (item && item.type && (TokenIs as any)[item.type]) {
+  //   delete item.range;
+  //   let res: any = {};
+  //   Object.keys(item).forEach((key) => {
+  //     res[key] = removePositions(item[key]);
+  //   });
+  //   return res;
+  // }
+  // if (Array.isArray(item)) {
+  //   return item.map((sub) => removeRange(sub));
+  // }
   return item;
 }
 

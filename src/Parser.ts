@@ -1,4 +1,15 @@
-import { Document, Nodes, NodeType, Node, Children, NodeIs, Expression } from './internal/Node';
+import {
+  Document,
+  Nodes,
+  NodeType,
+  Node,
+  Children,
+  NodeIs,
+  Expression,
+  ComponentType,
+  ElementAny,
+  DottableExpression,
+} from './internal/Node';
 import * as Combinator from './internal/Combinator';
 import { StringReader } from './internal/StringReader';
 import {
@@ -24,8 +35,10 @@ export interface ParseDocumentResult {
 }
 
 function parseDocument(file: string): ParseDocumentResult {
-  const tagOpenParser = Combinator.exact('<|');
-  const tagCloseParser = Combinator.exact('|>');
+  const backwardPipeOperatorParser = Combinator.exact('<|');
+  const pipeOperatorParser = Combinator.exact('|>');
+  const lessThanParser = Combinator.exact('<');
+  const greaterThanParser = Combinator.exact('>');
   const spreadOperatorParser = Combinator.exact('...');
   const equalParser = Combinator.exact('=');
   const dashParser = Combinator.exact('-');
@@ -35,16 +48,32 @@ function parseDocument(file: string): ParseDocumentResult {
   const squareBracketCloseParser = Combinator.exact(']');
   const curlyBracketOpenParser = Combinator.exact('{');
   const curlyBracketCloseParser = Combinator.exact('}');
+  const parenthesisOpenParser = Combinator.exact('(');
+  const parenthesisCloseParser = Combinator.exact(')');
   const colonParser = Combinator.exact(':');
   const singleQuoteParser = Combinator.exact(SINGLE_QUOTE);
   const backslashParser = Combinator.exact(BACKSLASH);
   const doubleQuoteParser = Combinator.exact(DOUBLE_QUOTE);
   const backtickParser = Combinator.exact(BACKTICK);
 
-  const lazyExpression = Combinator.lazy(() => expressionParser);
+  const intergerParser = Combinator.whileMatch('Integer', isDigit);
 
-  const identifierParser = Combinator.transform(
+  const lazyExpression: Combinator.Parser<Expression> = Combinator.lazy(
+    'LazyExpression',
+    () => expressionParser
+  );
+  const lazyDottableExpression: Combinator.Parser<DottableExpression> = Combinator.lazy(
+    'LazyDottableExpression',
+    () => dottableExpressionParser
+  );
+  const lazyElementAnyParser: Combinator.Parser<ElementAny> = Combinator.lazy(
+    'LazyElementAnyParser',
+    () => elementAnyParser
+  );
+
+  const identifierParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'Identifier',
       Combinator.singleChar('IdentifierStart', isIdentifierStart),
       Combinator.whileMatch('Identifier', isIdentifier)
     ),
@@ -52,13 +81,12 @@ function parseDocument(file: string): ParseDocumentResult {
       createNode('Identifier', start, end, {}, { name: idenitifierStart + content })
   );
 
-  const intergerParser = Combinator.whileMatch('Integer', isDigit);
-
-  const numberParser = Combinator.transform(
+  const numberParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'Num',
       Combinator.maybe(dashParser),
       intergerParser,
-      Combinator.maybe(Combinator.pipe(dotParser, intergerParser))
+      Combinator.maybe(Combinator.pipe(null, dotParser, intergerParser))
     ),
     ([minus, integerPart, maybeDecimal], start, end) => {
       const rawValue =
@@ -68,9 +96,31 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
+  const booleanParser = Combinator.transformSuccess(
+    Combinator.oneOf('Bool', Combinator.exact('true'), Combinator.exact('false')),
+    (val, start, end) => {
+      const value = val === 'true' ? true : false;
+      return createNode('Bool', start, end, {}, { value });
+    }
+  );
+
+  const nullParser = Combinator.named(
+    'Null',
+    Combinator.transformSuccess(Combinator.exact('null'), (_null, start, end) => {
+      return createNode('Null', start, end, {}, {});
+    })
+  );
+
+  const undefinedParser = Combinator.named(
+    'Undefined',
+    Combinator.transformSuccess(Combinator.exact('undefined'), (_null, start, end) => {
+      return createNode('Undefined', start, end, {}, {});
+    })
+  );
+
   const whitespaceParser = Combinator.named(
     'WhiteSpace',
-    Combinator.transform(
+    Combinator.transformSuccess(
       Combinator.whileMatch('Whitespace', isWhitespace),
       (content, start, end) => {
         const hasNewLine = content.indexOf('\n') >= 0;
@@ -83,8 +133,8 @@ function parseDocument(file: string): ParseDocumentResult {
 
   const notNewLineParser = Combinator.singleChar('NotNewLine', (char) => char !== '\n');
 
-  const escapedStringValue = Combinator.transform(
-    Combinator.pipe(backslashParser, notNewLineParser),
+  const escapedStringValue = Combinator.transformSuccess(
+    Combinator.pipe(null, backslashParser, notNewLineParser),
     ([_backslash, char]) => {
       return char;
     }
@@ -94,11 +144,16 @@ function parseDocument(file: string): ParseDocumentResult {
     quote: Combinator.Parser<Q>,
     isContent: (char: string) => boolean
   ) =>
-    Combinator.transform(
+    Combinator.transformSuccess(
       Combinator.pipe(
+        'Str',
         quote,
         Combinator.many(
-          Combinator.oneOf(escapedStringValue, Combinator.whileMatch('StringContent', isContent))
+          Combinator.oneOf(
+            null,
+            escapedStringValue,
+            Combinator.whileMatch('StringContent', isContent)
+          )
         ),
         quote
       ),
@@ -111,11 +166,8 @@ function parseDocument(file: string): ParseDocumentResult {
 
   const backtickStringParser = createStringParser(backtickParser, isBacktickContent);
 
-  const stringParser = Combinator.transform(
-    Combinator.named(
-      'String',
-      Combinator.oneOf(singleQuoteStringParser, doubleQuoteStringParser, backtickStringParser)
-    ),
+  const stringParser = Combinator.transformSuccess(
+    Combinator.oneOf('Str', singleQuoteStringParser, doubleQuoteStringParser, backtickStringParser),
     (data, start, end) => {
       const quote =
         data.quote === SINGLE_QUOTE
@@ -127,8 +179,9 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const emptyArrayParser = Combinator.transform(
+  const emptyArrayParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'EmptyArray',
       squareBracketOpenParser,
       Combinator.maybe(whitespaceParser),
       squareBracketCloseParser
@@ -138,8 +191,9 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const emptyObjectParser = Combinator.transform(
+  const emptyObjectParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'EmptyObject',
       curlyBracketOpenParser,
       Combinator.maybe(whitespaceParser),
       curlyBracketCloseParser
@@ -149,17 +203,25 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const spreadParser = Combinator.transform(
-    Combinator.pipe(spreadOperatorParser, lazyExpression),
+  const parenthesisParser = Combinator.transformSuccess(
+    Combinator.pipe('Parenthesis', parenthesisOpenParser, lazyExpression, parenthesisCloseParser),
+    ([_open, value], start, end) => {
+      return createNode('Parenthesis', start, end, { value }, {});
+    }
+  );
+
+  const spreadParser = Combinator.transformSuccess(
+    Combinator.pipe('Spread', spreadOperatorParser, lazyExpression),
     ([_op, target], start, end) => {
       return createNode('Spread', start, end, { target }, {});
     }
   );
 
-  const arrayItemParser = Combinator.transform(
+  const arrayItemParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'ArrayItem',
       maybeWhitespaceParser,
-      Combinator.oneOf(spreadParser, lazyExpression),
+      Combinator.oneOf(null, spreadParser, lazyExpression),
       maybeWhitespaceParser
     ),
     ([whitespaceBefore, item, whitespaceAfter], start, end) => {
@@ -167,23 +229,25 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const arrayParser = Combinator.transform(
-    Combinator.pipe(
-      squareBracketOpenParser,
-      Combinator.manySepBy(arrayItemParser, commaParser),
-      squareBracketCloseParser
-    ),
+  const arrayItemsParser = Combinator.manySepBy(arrayItemParser, commaParser);
+
+  const arrayParser = Combinator.transformSuccess(
+    Combinator.pipe('Array', squareBracketOpenParser, arrayItemsParser, squareBracketCloseParser),
     ([_open, items, _close], start, end) => {
       return createNode('Array', start, end, { items }, {});
     }
   );
 
-  const propertyShorthandParser = Combinator.transform(identifierParser, (name, start, end) => {
-    return createNode('PropertyShorthand', start, end, { name }, {});
-  });
+  const propertyShorthandParser = Combinator.transformSuccess(
+    identifierParser,
+    (name, start, end) => {
+      return createNode('PropertyShorthand', start, end, { name }, {});
+    }
+  );
 
-  const propertyParser = Combinator.transform(
+  const propertyParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'Property',
       identifierParser,
       maybeWhitespaceParser,
       colonParser,
@@ -201,8 +265,9 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const computedPropertyParser = Combinator.transform(
+  const computedPropertyParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'ComputedProperty',
       squareBracketOpenParser,
       lazyExpression,
       squareBracketCloseParser,
@@ -234,10 +299,12 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const objectItemParser = Combinator.transform(
+  const objectItemParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'ObjectItem',
       maybeWhitespaceParser,
       Combinator.oneOf(
+        'ObjectItem',
         propertyParser,
         propertyShorthandParser,
         spreadParser,
@@ -250,8 +317,9 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const objectParser = Combinator.transform(
+  const objectParser = Combinator.transformSuccess(
     Combinator.pipe(
+      'Object',
       curlyBracketOpenParser,
       Combinator.manySepBy(objectItemParser, commaParser),
       curlyBracketCloseParser
@@ -261,44 +329,42 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const booleanParser = Combinator.transform(
-    Combinator.oneOf(Combinator.exact('true'), Combinator.exact('false')),
-    (val, start, end) => {
-      const value = val === 'true' ? true : false;
-      return createNode('Bool', start, end, {}, { value });
-    }
-  );
-
-  const nullParser = Combinator.named(
-    'Null',
-    Combinator.transform(Combinator.exact('null'), (_null, start, end) => {
-      return createNode('Null', start, end, {}, {});
-    })
-  );
-
-  const undefinedParser = Combinator.named(
-    'Undefined',
-    Combinator.transform(Combinator.exact('undefined'), (_null, start, end) => {
-      return createNode('Undefined', start, end, {}, {});
-    })
-  );
-
   const elementTypeMemberParser: Combinator.Parser<Node<
     'ElementTypeMember'
   >> = Combinator.reduceRight(
+    'ElementTypeMember',
     identifierParser,
-    Combinator.pipe(dotParser, identifierParser),
-    (left, [, right], start, end): Node<'ElementTypeMember'> => {
-      return createNode('ElementTypeMember', start, end, { target: left, property: right }, {});
+    Combinator.pipe(null, dotParser, identifierParser),
+    (left, right): Combinator.ParseResult<Node<'ElementTypeMember'>> => {
+      const [, identifier] = right.value;
+      const start = left.start;
+      const end = right.end;
+
+      return {
+        type: 'Success',
+        start,
+        end,
+        value: createNode(
+          'ElementTypeMember',
+          start,
+          end,
+          { target: left.value, property: identifier },
+          {}
+        ),
+        rest: right.rest,
+        stack: [],
+      };
     }
   );
 
-  const componentTypeParser = Combinator.named(
+  const componentTypeParser = Combinator.oneOf(
     'ComponentType',
-    Combinator.oneOf(elementTypeMemberParser, identifierParser)
+    elementTypeMemberParser,
+    identifierParser
   );
 
   const primitiveParser = Combinator.oneOf(
+    'Primitive',
     numberParser,
     booleanParser,
     nullParser,
@@ -306,52 +372,41 @@ function parseDocument(file: string): ParseDocumentResult {
     stringParser
   );
 
-  const expressionParser: Combinator.Parser<Expression> = Combinator.named<Expression>(
-    'Expression',
-    Combinator.oneOf(
-      primitiveParser,
-      emptyArrayParser,
-      arrayParser,
-      emptyObjectParser,
-      objectParser
-    )
-  );
-
-  const propNoValue = Combinator.transform(identifierParser, (name, start, end) => {
+  const propNoValue = Combinator.transformSuccess(identifierParser, (name, start, end) => {
     return createNode('PropNoValue', start, end, { name }, {});
   });
 
-  const propValue = Combinator.transform(
-    Combinator.pipe(identifierParser, equalParser, expressionParser),
+  const propValue = Combinator.transformSuccess(
+    Combinator.pipe('PropValue', identifierParser, equalParser, lazyExpression),
     ([name, _equal, value], start, end) => {
       return createNode('PropValue', start, end, { name, value }, {});
     }
   );
 
-  const propParser = Combinator.oneOf(propValue, propNoValue);
+  const propParser = Combinator.oneOf('Props', propValue, propNoValue);
 
-  const propItemParser = Combinator.named(
-    'PropItem',
-    Combinator.transform(
-      Combinator.pipe(whitespaceParser, propParser),
-      ([whitespace, item], start, end) => {
-        return createNode('PropItem', start, end, { item, whitespaceBefore: whitespace }, {});
-      }
-    )
+  const propItemParser = Combinator.transformSuccess(
+    Combinator.pipe('PropItem', whitespaceParser, propParser),
+    ([whitespace, item], start, end) => {
+      return createNode('PropItem', start, end, { item, whitespaceBefore: whitespace }, {});
+    }
   );
 
-  const propsParser = Combinator.named(
-    'Props',
-    Combinator.transform(
-      Combinator.pipe(Combinator.many(propItemParser), Combinator.maybe(whitespaceParser)),
-      ([items, whitespaceAfter], start, end) => {
-        return createNode('Props', start, end, { items, whitespaceAfter }, {});
-      }
-    )
+  const propsParser = Combinator.transformSuccess(
+    Combinator.pipe('Props', Combinator.many(propItemParser), Combinator.maybe(whitespaceParser)),
+    ([items, whitespaceAfter], start, end) => {
+      return createNode('Props', start, end, { items, whitespaceAfter }, {});
+    }
   );
 
-  const selfClosingElementParser = Combinator.transform(
-    Combinator.pipe(tagOpenParser, componentTypeParser, propsParser, tagCloseParser),
+  const elementSelfClosingParser = Combinator.transformSuccess(
+    Combinator.pipe(
+      'SelfClosingElement',
+      backwardPipeOperatorParser,
+      componentTypeParser,
+      propsParser,
+      pipeOperatorParser
+    ),
     ([_tagOpen, component, props], start, end) => {
       return createNode(
         'SelfClosingElement',
@@ -365,27 +420,251 @@ function parseDocument(file: string): ParseDocumentResult {
 
   const textParser = Combinator.named(
     'Text',
-    Combinator.transform(Combinator.whileMatch('Text', isText), (content, start, end) =>
+    Combinator.transformSuccess(Combinator.whileMatch('Text', isText), (content, start, end) =>
       createNode('Text', start, end, {}, { content })
     )
   );
 
-  const childParser = Combinator.named(
-    'Child',
-    Combinator.oneOf(whitespaceParser, textParser, selfClosingElementParser)
-  );
+  const childParser = Combinator.oneOf('Child', whitespaceParser, textParser, lazyElementAnyParser);
 
   const childrenParser = Combinator.named(
     'Children',
-    Combinator.transform(Combinator.many(childParser), (children) => normalizeChildren(children))
+    Combinator.transformSuccess(Combinator.many(childParser), (children) =>
+      normalizeChildren(children)
+    )
   );
 
-  const documentParser = Combinator.transform(
-    Combinator.named(
-      'Document',
-      Combinator.pipe(childrenParser, Combinator.convertError(Combinator.eof, childParser))
+  const elementOpeningTagParser = Combinator.pipe(
+    'OpeningTag',
+    backwardPipeOperatorParser,
+    componentTypeParser,
+    propsParser,
+    greaterThanParser
+  );
+
+  const elementClosingTagParser = Combinator.pipe(
+    `NamedClosingTag`,
+    lessThanParser,
+    componentTypeParser,
+    pipeOperatorParser
+  );
+
+  const elementClosingParser = Combinator.oneOf(
+    'ClosingTag',
+    pipeOperatorParser,
+    elementClosingTagParser
+  );
+
+  const elementParser = Combinator.transform(
+    Combinator.pipe('Element', elementOpeningTagParser, childrenParser, elementClosingParser),
+    (result) => {
+      if (result.type === 'Failure') {
+        return result;
+      }
+
+      const [open, children, close] = result.value;
+      const [, componentType, props] = open;
+      const closeComponentType = typeof close === 'string' ? componentType : close[1];
+
+      if (!sameComponent(componentType, closeComponentType)) {
+        return Combinator.ParseFailure({
+          message: 'Unexpected close tag, wrong tag !',
+          position: result.end,
+          stack: result.stack,
+        });
+      }
+      const node = createNode(
+        'Element',
+        result.start,
+        result.end,
+        {
+          children,
+          component: componentType,
+          props,
+        },
+        {
+          namedCloseTag: typeof close !== 'string',
+        }
+      );
+      return {
+        ...result,
+        value: node,
+      };
+    }
+  );
+
+  const elementAnyParser = Combinator.oneOf('ElementAny', elementSelfClosingParser, elementParser);
+
+  type AccessItem =
+    | { type: 'DotMember'; indentifier: Node<'Identifier'> }
+    | { type: 'BracketMember'; value: Expression }
+    | {
+        type: 'FunctionCall';
+        args: Array<Node<'ArrayItem'>>;
+      };
+
+  const dotMemberAccessParser = Combinator.transformSuccess(
+    Combinator.pipe('DotMemberAccess', dotParser, identifierParser),
+    ([_dot, indentifier]): AccessItem => ({ type: 'DotMember', indentifier })
+  );
+
+  const bracketMemberAccessParser = Combinator.transformSuccess(
+    Combinator.pipe(
+      'BracketMemberAccess',
+      squareBracketOpenParser,
+      lazyExpression,
+      squareBracketCloseParser
     ),
-    ([children, _eof], start, end) => createNode('Document', start, end, { children }, {})
+    ([_bracket, value]): AccessItem => ({ type: 'BracketMember', value })
+  );
+
+  const functionCallAccessParser = Combinator.transformSuccess(
+    Combinator.pipe(
+      'FunctionCallAccess',
+      parenthesisOpenParser,
+      arrayItemsParser,
+      parenthesisCloseParser
+    ),
+    ([_parenthesis, args]): AccessItem => ({ type: 'FunctionCall', args })
+  );
+
+  const accessItemParser = Combinator.oneOf(
+    null,
+    dotMemberAccessParser,
+    bracketMemberAccessParser,
+    functionCallAccessParser
+  );
+
+  const accessParser = Combinator.reduceRight(
+    'AccessExpression',
+    lazyDottableExpression,
+    accessItemParser,
+    (
+      left: Combinator.ParseResultSuccess<DottableExpression>,
+      right
+    ): Combinator.ParseResult<DottableExpression> => {
+      const start = left.start;
+      const end = right.end;
+      const item = right.value;
+      const target = left.value;
+      if (item.type === 'DotMember') {
+        return Combinator.ParseSuccess(
+          start,
+          right.rest,
+          createNode('DotMember', start, end, { target, property: item.indentifier }, {}),
+          Combinator.mergeStacks(left.stack, right.stack)
+        );
+      }
+      if (item.type === 'BracketMember') {
+        return Combinator.ParseSuccess(
+          start,
+          right.rest,
+          createNode('BracketMember', start, end, { target, property: item.value }, {}),
+          Combinator.mergeStacks(left.stack, right.stack)
+        );
+      }
+      if (item.type === 'FunctionCall') {
+        if (NodeIs.CallableExpression(target)) {
+          return Combinator.ParseSuccess(
+            start,
+            right.rest,
+            createNode('FunctionCall', start, end, { target, arguments: item.args }, {}),
+            Combinator.mergeStacks(left.stack, right.stack)
+          );
+        }
+        return Combinator.ParseFailure({
+          message: `Cannot call on ${target.type}`,
+          position: right.start,
+          stack: Combinator.mergeStacks(left.stack, right.stack),
+        });
+      }
+      throw new Error('todo');
+    }
+  );
+
+  const callableExpressionParser = Combinator.oneOf(
+    'CallableExpression',
+    accessParser,
+    identifierParser,
+    parenthesisParser
+  );
+
+  // const dotMemberParser = Combinator.reduceRight(
+  //   'DotMember',
+  //   lazyDottableExpression,
+  //   Combinator.pipe(null, dotParser, identifierParser),
+  //   (left: DottableExpression, right, start, end): Node<'DotMember'> => {
+  //     const [, property] = right;
+  //     return createNode(
+  //       'DotMember',
+  //       start,
+  //       end,
+  //       {
+  //         target: left,
+  //         property,
+  //       },
+  //       {}
+  //     );
+  //   }
+  // );
+
+  // const bracketMemberParser = Combinator.reduceRight(
+  //   'BracketMember',
+  //   lazyDottableExpression,
+  //   Combinator.pipe(null, squareBracketOpenParser, lazyExpression, squareBracketCloseParser),
+  //   (left: DottableExpression, right, start, end): Node<'BracketMember'> => {
+  //     const [, property] = right;
+  //     return createNode('BracketMember', start, end, { target: left, property }, {});
+  //   }
+  // );
+
+  // const functionCallParser = Combinator.reduceRight(
+  //   'BracketMember',
+  //   lazyCallableExpression,
+  //   Combinator.pipe(null, parenthesisOpenParser, arrayItemsParser, parenthesisCloseParser),
+  //   (target: CallableExpression, right, start, end): Node<'FunctionCall'> => {
+  //     const [, args] = right;
+  //     console.log({ target, args });
+  //     return createNode('FunctionCall', start, end, { target, arguments: args }, {});
+  //   }
+  // );
+
+  const arrayOrObjectParser = Combinator.oneOf(
+    'ArrayOrObject',
+    emptyArrayParser,
+    arrayParser,
+    emptyObjectParser,
+    objectParser
+  );
+
+  // const callableExpressionParser = Combinator.oneOf(
+  //   'CallableExpression',
+  //   functionCallParser,
+  //   dotMemberParser,
+  //   bracketMemberParser,
+  //   parenthesisParser,
+  //   identifierParser
+  // );
+
+  const expressionParser = Combinator.oneOf(
+    'Expression',
+    primitiveParser,
+    callableExpressionParser,
+    arrayOrObjectParser,
+    elementAnyParser
+  );
+
+  const dottableExpressionParser = Combinator.oneOf(
+    'DottableExpression',
+    arrayOrObjectParser,
+    elementAnyParser,
+    callableExpressionParser,
+    stringParser
+  );
+
+  const documentParser = Combinator.transformSuccess(
+    Combinator.pipe('Document', childrenParser, Combinator.eof),
+    ([children], start, end) => createNode('Document', start, end, { children }, {})
   );
 
   const ranges: Ranges = new Map();
@@ -396,11 +675,27 @@ function parseDocument(file: string): ParseDocumentResult {
   function parseDocument(): Document {
     const input = StringReader(file);
 
-    const next = documentParser(input);
+    const next = documentParser(input, []);
     if (next.type === 'Success') {
       return next.value;
     }
-    throw new Error(Combinator.printParseError(next.error));
+    throw new Error(Combinator.printParseError(next.stack));
+  }
+
+  function sameComponent(left: ComponentType, right: ComponentType): boolean {
+    if (left.type !== right.type) {
+      return false;
+    }
+    if (NodeIs.Identifier(left) && NodeIs.Identifier(right) && left.meta.name === right.meta.name) {
+      return true;
+    }
+    if (NodeIs.ElementTypeMember(left) && NodeIs.ElementTypeMember(right)) {
+      return (
+        sameComponent(left.nodes.target, right.nodes.target) &&
+        sameComponent(left.nodes.property, right.nodes.property)
+      );
+    }
+    return false;
   }
 
   function normalizeChildren(nodes: Array<Children>): Array<Children> {

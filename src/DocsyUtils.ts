@@ -174,6 +174,8 @@ export function createNodeFromValue(value: any): Expression {
                     }
                   ),
                   value: createNodeFromValue(value[key]),
+                  whitespaceAfterColon: null,
+                  whitespaceBeforeColon: null,
                 },
                 {}
               ),

@@ -1,10 +1,10 @@
 import { DocsyParser } from '../src';
-// import {
-//   // readFile,
-//   // @ts-ignore
-//   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//   logNode,
-// } from './utils';
+import {
+  readFile,
+  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  logNode,
+} from './utils';
 
 it(`Parse a document with text`, () => {
   const file = `Hello`;
@@ -89,6 +89,20 @@ it(`Parse element name with ElementTypeMember`, () => {
   const result = DocsyParser.parseDocument(file).document as any;
   expect(result.nodes.children.length).toBe(1);
   expect(result.nodes.children[0].type).toEqual('SelfClosingElement');
+  expect(result.nodes.children[0].nodes.component.type).toBe('ElementTypeMember');
+  expect(result.nodes.children[0].nodes.component.nodes.target.meta.name).toBe('Demo');
+  expect(result.nodes.children[0].nodes.component.nodes.property.meta.name).toBe('Foo');
+});
+
+it(`Parse element name with ElementTypeMember`, () => {
+  const file = `<|Demo.Foo.Bar|>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children.length).toBe(1);
+  expect(result.nodes.children[0].type).toEqual('SelfClosingElement');
+  expect(result.nodes.children[0].nodes.component.type).toBe('ElementTypeMember');
+  expect(result.nodes.children[0].nodes.component.nodes.property.meta.name).toBe('Bar');
+  expect(result.nodes.children[0].nodes.component.nodes.target.type).toBe('ElementTypeMember');
 });
 
 it(`Parse SelfClosingElement with props`, () => {
@@ -149,135 +163,153 @@ it(`Parse object`, () => {
   expect(result.nodes.children[0].type).toEqual('SelfClosingElement');
 });
 
-// it(`Parse many elements`, () => {
-//   const file = readFile('elements');
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-//   const result = DocsyParser.parseDocument(file).document as any;
-//   expect(result.nodes.children.length).toBe(10);
-//   expect(result.nodes.children.map((v: any) => v.type)).toEqual([
-//     'SelfClosingElement',
-//     'Whitespace',
-//     'SelfClosingElement',
-//     'Whitespace',
-//     'SelfClosingElement',
-//     'Whitespace',
-//     'Text',
-//     'Whitespace',
-//     'SelfClosingElement',
-//     'Whitespace',
-//   ]);
-//   expect(result.nodes.children[6].meta.content).toEqual('Foo');
-// });
+it(`Parse many elements`, () => {
+  const file = readFile('elements');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children.length).toBe(8);
+  expect(result.nodes.children.map((v: any) => v.type)).toEqual([
+    'SelfClosingElement',
+    'Whitespace',
+    'SelfClosingElement',
+    'Whitespace',
+    'SelfClosingElement',
+    'Text',
+    'SelfClosingElement',
+    'Whitespace',
+  ]);
+  expect(result.nodes.children[5].meta.content).toEqual('\n\nFoo\n\n');
+});
 
-// it(`Parse open/close tag`, () => {
-//   const file = readFile('open-close');
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-//   const result = DocsyParser.parseDocument(file).document as any;
-//   expect(result.nodes.children.length).toBe(2);
-//   expect(result.nodes.children[0].type).toBe('Element');
-//   const component = result.nodes.children[0].nodes.component;
-//   expect(component.type).toBe('Identifier');
-//   expect(component.meta.name).toBe('Demo');
-//   expect(result.nodes.children[0].nodes.children.length).toBe(1);
-//   expect(result.nodes.children[0].nodes.children[0].type).toBe('Text');
-//   expect(result.nodes.children[0].nodes.children[0].meta.content).toBe('Something');
-// });
+it(`Parse open/close tag`, () => {
+  const file = readFile('open-close');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children.length).toBe(2);
+  expect(result.nodes.children[0].type).toBe('Element');
+  const component = result.nodes.children[0].nodes.component;
+  expect(component.type).toBe('Identifier');
+  expect(component.meta.name).toBe('Demo');
+  expect(result.nodes.children[0].nodes.children.length).toBe(1);
+  expect(result.nodes.children[0].nodes.children[0].type).toBe('Text');
+  expect(result.nodes.children[0].nodes.children[0].meta.content).toBe('Something');
+});
 
-// it(`Parse named close tag`, () => {
-//   const file = readFile('open-close-named');
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-//   const result = DocsyParser.parseDocument(file).document as any;
-//   expect(result.nodes.children.length).toBe(2);
-//   expect(result.nodes.children[0].type).toBe('Element');
-//   const component = result.nodes.children[0].nodes.component;
-//   expect(component.type).toBe('Identifier');
-//   expect(component.meta.name).toBe('Demo');
-//   expect(result.nodes.children[0].nodes.children.length).toBe(1);
-//   expect(result.nodes.children[0].nodes.children[0].type).toBe('Text');
-//   expect(result.nodes.children[0].nodes.children[0].meta.content).toBe('Something');
-// });
+it(`Parse named close tag`, () => {
+  const file = readFile('open-close-named');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children.length).toBe(2);
+  expect(result.nodes.children[0].type).toBe('Element');
+  const component = result.nodes.children[0].nodes.component;
+  expect(component.type).toBe('Identifier');
+  expect(component.meta.name).toBe('Demo');
+  expect(result.nodes.children[0].nodes.children.length).toBe(1);
+  expect(result.nodes.children[0].nodes.children[0].type).toBe('Text');
+  expect(result.nodes.children[0].nodes.children[0].meta.content).toBe('Something');
+});
 
-// it(`Parse self closing`, () => {
-//   const file = `<|Demo|>`;
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-// });
+it(`Parse self closing`, () => {
+  const file = `<|Demo|>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
 
-// it(`Parse simple element`, () => {
-//   const file = `<|Demo>Hello<Demo|>`;
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-// });
+it(`Parse simple element`, () => {
+  const file = `<|Demo>Hello<Demo|>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
 
-// it(`Parse simple element with no content`, () => {
-//   const file = `<|Demo><Demo|>`;
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-// });
+it(`Parse simple element with no content`, () => {
+  const file = `<|Demo><Demo|>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
 
-// it(`Throw when you close the wrong tag`, () => {
-//   const file = `<|Demo>Something<Yolo|>`;
-//   expect(() => DocsyParser.parseDocument(file)).toThrow('Unexpected close tag, wrong tag !');
-// });
+it(`Throw when you close the wrong tag`, () => {
+  const file = `<|Demo>Something<Yolo|>`;
+  expect(() => DocsyParser.parseDocument(file)).toThrow('Unexpected close tag, wrong tag !');
+});
 
-// it(`Parse props`, () => {
-//   const file = readFile('props');
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-//   const result = DocsyParser.parseDocument(file).document as any;
-//   expect(result.nodes.children.length).toBe(2);
-//   expect(result.nodes.children[0].type).toBe('Element');
-//   expect(result.nodes.children[0].nodes.component.meta.name).toBe('Title');
-//   expect(result.nodes.children[0].nodes.children.length).toBe(1);
-//   const props = result.nodes.children[0].nodes.props.nodes.items;
-//   expect(props.length).toBe(6);
-//   expect(props.map((item: any) => item.type)).toEqual([
-//     'PropItem',
-//     'PropItem',
-//     'PropItem',
-//     'PropItem',
-//     'PropItem',
-//     'PropItem',
-//   ]);
-//   const propsInner = props.map((item: any) => item.nodes.item);
-//   expect(propsInner.map((item: any) => item.type)).toEqual([
-//     'PropNoValue',
-//     'PropValue',
-//     'PropValue',
-//     'PropValue',
-//     'PropValue',
-//     'PropValue',
-//   ]);
-//   expect(propsInner[0].nodes.name.meta.name).toBe('bold');
-//   expect(propsInner[1].nodes.name.meta.name).toBe('foo');
-//   expect(propsInner[1].nodes.value.type).toBe('Str');
-//   expect(propsInner[1].nodes.value.meta.value).toBe('bar');
-//   expect(propsInner[2].nodes.value.type).toBe('Num');
-//   expect(propsInner[2].nodes.value.meta.value).toBe(-3.14);
-//   expect(propsInner[3].nodes.value.type).toBe('Bool');
-//   expect(propsInner[3].nodes.value.meta.value).toBe(true);
-//   expect(propsInner[4].nodes.value.type).toBe('Null');
-//   expect(propsInner[5].nodes.value.type).toBe('Undefined');
-// });
+it(`Parse function call`, () => {
+  const file = `<|Demo foo=getProps() |>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
 
-// it(`Parse props with object`, () => {
-//   const file = readFile('props-object');
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-//   const result = DocsyParser.parseDocument(file).document as any;
-//   const firstChild = result.nodes.children[0];
-//   expect(firstChild.type).toBe('Element');
-//   const propsItems = firstChild.nodes.props.nodes.items;
-//   expect(propsItems.length).toBe(1);
-//   expect(propsItems[0].type).toBe('PropItem');
-//   expect(propsItems[0].nodes.item.nodes.value.type).toBe('Object');
-//   expect(propsItems[0].nodes.item.nodes.value.nodes.items.length).toBe(5);
-//   expect(
-//     propsItems[0].nodes.item.nodes.value.nodes.items.map((v: any) => v.nodes.item.type)
-//   ).toEqual(['Property', 'ComputedProperty', 'PropertyShorthand', 'Spread', 'Property']);
-// });
+it(`Parse dot member`, () => {
+  const file = `<|Demo foo=Utils.size |>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
 
-// it(`Parse a line comment`, () => {
-//   const file = `// some comment`;
-//   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
-//   const result = DocsyParser.parseDocument(file).document as any;
-//   expect(result.nodes.children[0].type).toBe('LineComment');
-// });
+it(`Parse dot function call`, () => {
+  const file = `<|Demo foo=Utils.getSize(5) |>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
+
+it(`Parse dot function call`, () => {
+  const file = `<|Demo foo=Utils.getSize(5).foo |>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
+
+it(`Parse props`, () => {
+  const file = readFile('props');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children.length).toBe(2);
+  expect(result.nodes.children[0].type).toBe('Element');
+  expect(result.nodes.children[0].nodes.component.meta.name).toBe('Title');
+  expect(result.nodes.children[0].nodes.children.length).toBe(1);
+  const props = result.nodes.children[0].nodes.props.nodes.items;
+  expect(props.length).toBe(6);
+  expect(props.map((item: any) => item.type)).toEqual([
+    'PropItem',
+    'PropItem',
+    'PropItem',
+    'PropItem',
+    'PropItem',
+    'PropItem',
+  ]);
+  const propsInner = props.map((item: any) => item.nodes.item);
+  expect(propsInner.map((item: any) => item.type)).toEqual([
+    'PropNoValue',
+    'PropValue',
+    'PropValue',
+    'PropValue',
+    'PropValue',
+    'PropValue',
+  ]);
+  expect(propsInner[0].nodes.name.meta.name).toBe('bold');
+  expect(propsInner[1].nodes.name.meta.name).toBe('foo');
+  expect(propsInner[1].nodes.value.type).toBe('Str');
+  expect(propsInner[1].nodes.value.meta.value).toBe('bar');
+  expect(propsInner[2].nodes.value.type).toBe('Num');
+  expect(propsInner[2].nodes.value.meta.value).toBe(-3.14);
+  expect(propsInner[3].nodes.value.type).toBe('Bool');
+  expect(propsInner[3].nodes.value.meta.value).toBe(true);
+  expect(propsInner[4].nodes.value.type).toBe('Null');
+  expect(propsInner[5].nodes.value.type).toBe('Undefined');
+});
+
+it(`Parse props with object`, () => {
+  const file = readFile('props-object');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  const firstChild = result.nodes.children[0];
+  expect(firstChild.type).toBe('Element');
+  const propsItems = firstChild.nodes.props.nodes.items;
+  expect(propsItems.length).toBe(1);
+  expect(propsItems[0].type).toBe('PropItem');
+  expect(propsItems[0].nodes.item.nodes.value.type).toBe('Object');
+  expect(propsItems[0].nodes.item.nodes.value.nodes.items.length).toBe(5);
+  expect(
+    propsItems[0].nodes.item.nodes.value.nodes.items.map((v: any) => v.nodes.item.type)
+  ).toEqual(['Property', 'ComputedProperty', 'PropertyShorthand', 'Spread', 'Property']);
+});
+
+it(`Parse a line comment`, () => {
+  const file = `// some comment`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children[0].type).toBe('LineComment');
+});
 
 // it(`Parse ending <`, () => {
 //   const file = `<|Foo|><`;

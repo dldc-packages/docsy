@@ -88,11 +88,11 @@ export type Nodes = CreateNodes<{
   }>;
   Array: CreateNode<{ items: Array<Node<'ArrayItem'>> }>;
   EmptyArray: CreateNode<{ whitespace: MaybeWhitespace }>;
-  FunctionCall: CreateNode<{ target: Expression; arguments: Array<Node<'ArrayItem'>> }>;
+  FunctionCall: CreateNode<{ target: CallableExpression; arguments: Array<Node<'ArrayItem'>> }>;
   Identifier: CreateNode<{}, { name: string }>;
   DotMember: CreateNode<{ target: DottableExpression; property: Node<'Identifier'> }>;
   Parenthesis: CreateNode<{ value: Expression }>;
-  BracketMember: CreateNode<{ target: Expression; property: Expression }>;
+  BracketMember: CreateNode<{ target: DottableExpression; property: Expression }>;
   ElementTypeMember: CreateNode<{
     target: Node<'Identifier' | 'ElementTypeMember'>;
     property: Node<'Identifier'>;
@@ -162,6 +162,64 @@ const NODES_OBJ: { [K in NodeType]: null } = {
 
 const NODES = Object.keys(NODES_OBJ) as Array<NodeType>;
 
+// Alias
+export type Document = Node<'Document'>;
+
+const ComponentType = combine('ElementTypeMember', 'Identifier');
+export type ComponentType = typeof ComponentType['__type'];
+
+const Prop = combine('PropNoValue', 'PropValue', 'PropLineComment', 'PropBlockComment');
+export type Prop = typeof Prop['__type'];
+
+const ElementAny = combine(
+  'Element',
+  'SelfClosingElement',
+  'LineComment',
+  'Fragment',
+  'RawFragment',
+  'RawElement'
+);
+export type ElementAny = typeof ElementAny['__type'];
+
+const Children = combine(...ElementAny.types, 'Whitespace', 'Inject', 'Text', 'BlockComment');
+export type Children = typeof Children['__type'];
+
+const CallableExpression = combine(
+  'FunctionCall',
+  'BracketMember',
+  'Identifier',
+  'DotMember',
+  'Parenthesis'
+);
+export type CallableExpression = typeof CallableExpression['__type'];
+
+const Primitive = combine('Null', 'Undefined', 'Bool', 'Num', 'Str');
+export type Primitive = typeof Primitive['__type'];
+
+const ObjectOrArray = combine('Array', 'EmptyArray', 'Object', 'EmptyObject');
+export type ObjectOrArray = typeof ObjectOrArray['__type'];
+
+const ObjectPart = combine('PropertyShorthand', 'Property', 'ComputedProperty', 'Spread');
+export type ObjectPart = typeof ObjectPart['__type'];
+
+const DottableExpression = combine(
+  ...ElementAny.types,
+  ...CallableExpression.types,
+  ...ObjectOrArray.types,
+  'Str'
+);
+export type DottableExpression = typeof DottableExpression['__type'];
+
+const Expression = combine(
+  ...ElementAny.types,
+  ...Primitive.types,
+  ...ObjectOrArray.types,
+  ...CallableExpression.types
+);
+export type Expression = typeof Expression['__type'];
+
+export type MaybeWhitespace = Node<'Whitespace'> | null;
+
 function nodeIsOneIf<T extends NodeType>(node: Node, types: ReadonlyArray<T>): node is Node<T> {
   return types.includes(node.type as any);
 }
@@ -170,7 +228,7 @@ export function isValidNodeType(type: any): boolean {
   return type && typeof type === 'string' && NODES.includes(type as any);
 }
 
-export const NodeIs: { oneOf: typeof nodeIsOneIf } & {
+const NodeIsInternal: { oneOf: typeof nodeIsOneIf } & {
   [K in NodeType]: (node: Node) => node is Node<K>;
 } = NODES.reduce<any>(
   (acc, key) => {
@@ -179,6 +237,20 @@ export const NodeIs: { oneOf: typeof nodeIsOneIf } & {
   },
   { oneOf: nodeIsOneIf }
 );
+
+export const NodeIs = {
+  ...NodeIsInternal,
+  ComponentType,
+  Prop,
+  ElementAny,
+  Children,
+  CallableExpression,
+  Primitive,
+  ObjectOrArray,
+  ObjectPart,
+  DottableExpression,
+  Expression,
+};
 
 export const CreateNode: {
   [K in NodeType]: (nodes: Nodes[K]['nodes'], meta: Nodes[K]['meta']) => Node<K>;
@@ -191,39 +263,16 @@ export const CreateNode: {
   return acc;
 }, {});
 
-// Alias
-export type Document = Node<'Document'>;
-export type ComponentType = Node<'ElementTypeMember' | 'Identifier'>;
-export type DottableExpression = Node<Exclude<Expression['type'], 'Num'>>; // cannot . on number
-export type Prop = Node<'PropNoValue' | 'PropValue' | 'PropLineComment' | 'PropBlockComment'>;
-export type Children = Node<
-  | 'Whitespace'
-  | 'Inject'
-  | 'Text'
-  | 'Element'
-  | 'SelfClosingElement'
-  | 'LineComment'
-  | 'BlockComment'
-  | 'Fragment'
-  | 'RawFragment'
-  | 'RawElement'
->;
-export type Expression = Node<
-  | 'Null'
-  | 'Undefined'
-  | 'Bool'
-  | 'Num'
-  | 'Str'
-  | 'Array'
-  | 'EmptyArray'
-  | 'Object'
-  | 'EmptyObject'
-  | 'Element'
-  | 'DotMember'
-  | 'BracketMember'
-  | 'Identifier'
-  | 'FunctionCall'
-  | 'Parenthesis'
->;
-export type ObjectPart = Node<'PropertyShorthand' | 'Property' | 'ComputedProperty' | 'Spread'>;
-export type MaybeWhitespace = Node<'Whitespace'> | null;
+// type NodeTypeFromArray<T extends ReadonlyArray<NodeType>> = {
+//   [K in T[number]]: Node<K>;
+// }[T[number]];
+
+type NodeTypeFromArray<T extends ReadonlyArray<NodeType>> = Node<T[number]>;
+
+function combine<T extends ReadonlyArray<NodeType>>(
+  ...types: T
+): { (node: Node): node is NodeTypeFromArray<T>; types: T; __type: NodeTypeFromArray<T> } {
+  const fn = ((node: Node) => types.includes(node.type)) as any;
+  fn.types = types;
+  return fn;
+}
