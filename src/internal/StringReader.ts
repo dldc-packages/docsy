@@ -44,7 +44,7 @@ export function StringReaderInternal(input: string, options: StringReaderOptions
     const peekSize = Math.min(s, size);
     const result = input.slice(options.start, options.start + direction * peekSize);
     if (s === 1) {
-      return result[0];
+      return result[0] || '';
     }
     return result;
   }

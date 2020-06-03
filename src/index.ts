@@ -7,7 +7,7 @@ export {
   Node,
   NodeIs,
   CreateNode,
-  Children,
+  Child,
   ComponentType,
   Document,
   DottableExpression,

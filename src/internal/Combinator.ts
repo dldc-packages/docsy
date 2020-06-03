@@ -34,7 +34,7 @@ export type Parser<T> = {
 export function ParseFailure(stack: StackItem): ParseResultFailure {
   return {
     type: 'Failure',
-    stack,
+    stack: cleanupStackItem(stack),
   };
 }
 
@@ -50,17 +50,80 @@ export function ParseSuccess<T>(
     start,
     end: rest.position,
     value,
-    stack,
+    stack: cleanupStack(stack),
   };
 }
 
-export function mergeStacks(left: Stack, right: StackOrNull): Array<StackItem> {
-  const leftArr = Array.isArray(left) ? left : [left];
-  if (right === null) {
-    return leftArr;
+export function cleanupStackItem(stack: StackItem): StackItem {
+  const sub = stack.stack;
+  if (sub === null) {
+    return stack;
   }
-  const rightArr = Array.isArray(right) ? right : [right];
-  return [...leftArr, ...rightArr];
+  if (Array.isArray(sub)) {
+    if (sub.length === 0) {
+      return {
+        ...stack,
+        stack: null,
+      };
+    }
+    if (sub.length === 1) {
+      const subStack = cleanupStackItem(sub[0]);
+      if (subStack.position === stack.position) {
+        return {
+          ...stack,
+          message: `${stack.message} > ${subStack.message}`,
+          stack: subStack.stack,
+        };
+      }
+      return {
+        ...stack,
+        stack: subStack,
+      };
+    }
+    return {
+      ...stack,
+      stack: cleanupStack(sub),
+    };
+  }
+  // sub is item
+  const clean = cleanupStackItem(sub);
+  if (clean.position === stack.position) {
+    return {
+      ...stack,
+      message: `${stack.message} > ${clean.message}`,
+      stack: clean.stack,
+    };
+  }
+  return {
+    ...stack,
+    stack: clean,
+  };
+}
+
+export function cleanupStack(stack: Stack): Stack {
+  if (Array.isArray(stack)) {
+    return stack.map(cleanupStackItem);
+  }
+  return cleanupStackItem(stack);
+}
+
+export function cleanupStackOrNull(stack: StackOrNull): StackOrNull {
+  if (stack === null) {
+    return null;
+  }
+  return cleanupStack(stack);
+}
+
+export function mergeStacks(left: Stack, ...stacks: Array<StackOrNull>): Array<StackItem> {
+  let result: Array<StackItem> = Array.isArray(left) ? left : [left];
+  stacks.forEach((right) => {
+    if (right === null) {
+      return;
+    }
+    const rightArr = Array.isArray(right) ? right : [right];
+    result = [...result, ...rightArr];
+  });
+  return result;
 }
 
 function expectNever<T extends never>(_val: T): never {
@@ -116,11 +179,76 @@ export function many<T>(parser: Parser<T>): Parser<Array<T>> {
     }
     return ParseSuccess(input.position, nextInput, items, {
       message: `✔ Many ${parser.ParserName} ended (found ${items.length})`,
-      position: nextInput.position,
+      position: input.position,
       stack: stacks,
     });
   });
   return manyParser;
+}
+
+export function manyBetween<Begin, Item, End>(
+  name: string | null,
+  begin: Parser<Begin>,
+  item: Parser<Item>,
+  end: Parser<End>
+): Parser<[Begin, Array<Item>, End]> {
+  const nameResolved =
+    name === null ? `${begin.ParserName} Many(${item.ParserName}) ${end.ParserName}` : name;
+  const manyBetweenParser = createParser(nameResolved, (input, skip) => {
+    let current = input;
+    const beginResult = begin(current, skip);
+    if (beginResult.type === 'Failure') {
+      return ParseFailure({
+        message: `✘ ${nameResolved}`,
+        position: current.position,
+        stack: {
+          message: `✘ Begin ${begin.ParserName}`,
+          position: current.position,
+          stack: beginResult.stack,
+        },
+      });
+    }
+    current = beginResult.rest;
+    let stacks: StackOrNull = beginResult.stack;
+    let endResult = end(current, skip);
+    const items: Array<Item> = [];
+    while (endResult.type === 'Failure') {
+      if (current.size === 0) {
+        return ParseFailure({
+          message: `✘ ${nameResolved}`,
+          position: current.position,
+          stack: mergeStacks(stacks, {
+            message: `✘ Unexpected EOF`,
+            position: current.position,
+            stack: null,
+          }),
+        });
+      }
+      const itemResult = item(current, skip);
+      if (itemResult.type === 'Failure') {
+        return ParseFailure({
+          message: `✘ ${nameResolved}`,
+          position: current.position,
+          stack: mergeStacks(stacks, endResult.stack, {
+            message: `✘ ${item.ParserName}`,
+            position: current.position,
+            stack: itemResult.stack,
+          }),
+        });
+      }
+      items.push(itemResult.value);
+      stacks = mergeStacks(stacks, itemResult.stack);
+      current = itemResult.rest;
+      endResult = end(current, skip);
+    }
+    const result: [Begin, Array<Item>, End] = [beginResult.value, items, endResult.value];
+    return ParseSuccess(input.position, endResult.rest, result, {
+      message: `✔ ${nameResolved}`,
+      position: input.position,
+      stack: stacks,
+    });
+  });
+  return manyBetweenParser;
 }
 
 export function manySepBy<T>(itemParser: Parser<T>, sepParser: Parser<any>): Parser<Array<T>> {
@@ -163,7 +291,7 @@ export function manySepBy<T>(itemParser: Parser<T>, sepParser: Parser<any>): Par
     }
     return ParseSuccess(input.position, nextInput, items, {
       message: `✔ ${name} ended`,
-      position: nextInput.position,
+      position: input.position,
       stack: nextSep.stack,
     });
   });
@@ -179,7 +307,7 @@ export function maybe<T>(parser: Parser<T>): Parser<T | null> {
       if (next.type === 'Failure') {
         return ParseSuccess(input.position, input, null, {
           message: `✔ Maybe ${parser.ParserName}`,
-          position: nextInput.position,
+          position: input.position,
           stack: next.stack,
         });
       }
@@ -229,10 +357,10 @@ export function oneOf<V>(name: string | null, ...parsers: Array<Parser<V>>): Par
         if (next.type === 'Success') {
           return ParseSuccess(input.position, next.rest, next.value, {
             message: `✔ ${nameResolved}`,
-            position: next.rest.position,
+            position: input.position,
             stack: mergeStacks(stacks, {
               message: `✔ ${parser.ParserName}`,
-              position: next.rest.position,
+              position: input.position,
               stack: next.stack,
             }),
           });
@@ -279,7 +407,44 @@ export function transform<T, U>(
   });
 }
 
-export function whileMatch(name: string, matcher: (char: string) => boolean): Parser<string> {
+export function whileNotMatch(name: string | null, matchers: Array<string>): Parser<string> {
+  const nameResolved = name !== null ? name : `WhileNot(${matchers.join(', ')})`;
+  return createParser(nameResolved, (input) => {
+    let content = '';
+    let current = input;
+    if (current.empty) {
+      return ParseFailure({
+        message: `✘ ${nameResolved}: unexpected EOF`,
+        position: input.position,
+        stack: null,
+      });
+    }
+    const noMatches = () => matchers.every((matcher) => current.peek(matcher.length) !== matcher);
+    while (!current.empty && noMatches()) {
+      content += current.peek();
+      current = current.skip();
+    }
+    if (content.length === 0) {
+      return ParseFailure({
+        message: `✘ ${nameResolved} (received '${current.peek()}')`,
+        position: input.position,
+        stack: null,
+      });
+    }
+    return ParseSuccess(input.position, current, content, {
+      message: `✔ ${nameResolved} (stopped at ${current.position} by '${current
+        .peek()
+        .replace(/\n/, '\\n')}')`,
+      position: input.position,
+      stack: null,
+    });
+  });
+}
+
+export function whileMatch(
+  name: string,
+  matcher: (ch1: string, ch2: string, ch3: string) => boolean
+): Parser<string> {
   return createParser(name, (input) => {
     let content = '';
     let current = input;
@@ -290,7 +455,7 @@ export function whileMatch(name: string, matcher: (char: string) => boolean): Pa
         stack: null,
       });
     }
-    while (!current.empty && matcher(current.peek())) {
+    while (!current.empty && matcher(current.peek(), current.peek(2), current.peek(3))) {
       content += current.peek();
       current = current.skip();
     }
@@ -302,14 +467,16 @@ export function whileMatch(name: string, matcher: (char: string) => boolean): Pa
       });
     }
     return ParseSuccess(input.position, current, content, {
-      message: `✔ ${name}`,
-      position: current.position,
+      message: `✔ ${name} (stopped at ${current.position} by '${current
+        .peek()
+        .replace(/\n/, '\\n')}')`,
+      position: input.position,
       stack: null,
     });
   });
 }
 
-export function singleChar(name: string, matcher: (char: string) => boolean): Parser<string> {
+export function singleChar(name: string, matcher?: (char: string) => boolean): Parser<string> {
   return createParser(name, (input) => {
     if (input.empty) {
       return ParseFailure({
@@ -319,7 +486,7 @@ export function singleChar(name: string, matcher: (char: string) => boolean): Pa
       });
     }
     const value = input.peek();
-    if (!matcher(value)) {
+    if (matcher && !matcher(value)) {
       return ParseFailure({
         message: `✘ ${name} (received '${value}')`,
         position: input.position,
@@ -329,33 +496,34 @@ export function singleChar(name: string, matcher: (char: string) => boolean): Pa
     const rest = input.skip();
     return ParseSuccess(input.position, rest, value, {
       message: `✔ ${name}`,
-      position: rest.position,
+      position: input.position,
       stack: null,
     });
   });
 }
 
 export function exact<T extends string>(str: T, name: string = `'${str}'`): Parser<T> {
-  return createParser(name, (input) => {
+  const nameResolved = name.replace(/\n/, '\\n');
+  return createParser(nameResolved, (input) => {
     const peek = input.peek(str.length);
     if (peek.length < str.length) {
       return ParseFailure({
-        message: `✘ ${name}: Unexpected EOF`,
+        message: `✘ ${nameResolved}: Unexpected EOF`,
         position: input.position,
         stack: null,
       });
     }
     if (peek !== str) {
       return ParseFailure({
-        message: `✘ ${name} (received '${peek}')`,
+        message: `✘ ${nameResolved} (received '${peek.replace(/\n/, '\\n')}')`,
         position: input.position,
         stack: null,
       });
     }
     const nextInput = input.skip(str.length);
     return ParseSuccess(input.position, nextInput, str, {
-      message: `✔ ${name}`,
-      position: nextInput.position,
+      message: `✔ ${nameResolved}`,
+      position: input.position,
       stack: null,
     });
   });
@@ -370,7 +538,7 @@ export const eof: Parser<null> = createParser('EOF', (input) => {
     });
   }
   return ParseFailure({
-    message: `✘ Expected EOF, received '${input.peek()}'`,
+    message: `✘ Expected EOF, received '${input.peek().replace(/\n/, '\\n')}'`,
     position: input.position,
     stack: null,
   });

@@ -1,4 +1,4 @@
-import { Node, NodeIs, Children, ObjectPart, Prop } from './internal/Node';
+import { Node, NodeIs, Child, ObjectPart, Prop } from './internal/Node';
 import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './internal/constants';
 
 const COMMONT_TYPE = ['LineComment', 'BlockComment'] as const;
@@ -164,14 +164,14 @@ function serialize(node: Node): string {
     throw new Error(`Invalid Qutote type on Str`);
   }
 
-  function serializeChildren(items: null | Array<Children>, isInRaw: boolean): string {
+  function serializeChildren(items: null | Array<Child>, isInRaw: boolean): string {
     if (!items || items.length === 0) {
       return '';
     }
     return items.map((sub) => serializeChild(sub, isInRaw)).join('');
   }
 
-  function serializeChild(item: Children, isInRaw: boolean): string {
+  function serializeChild(item: Child, isInRaw: boolean): string {
     if (NodeIs.Whitespace(item)) {
       return item.meta.content;
     }

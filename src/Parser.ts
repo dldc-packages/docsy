@@ -3,7 +3,7 @@ import {
   Nodes,
   NodeType,
   Node,
-  Children,
+  Child,
   NodeIs,
   Expression,
   ComponentType,
@@ -21,6 +21,7 @@ import {
   NEW_LINE,
   DOUBLE_QUOTE,
   BACKTICK,
+  WHITESPACES,
 } from './internal/constants';
 
 export type Ranges = Map<Node, { start: number; end: number }>;
@@ -35,8 +36,12 @@ export interface ParseDocumentResult {
 }
 
 function parseDocument(file: string): ParseDocumentResult {
-  const backwardPipeOperatorParser = Combinator.exact('<|');
-  const pipeOperatorParser = Combinator.exact('|>');
+  const elementTokenOpenParser = Combinator.exact('<|');
+  const elementTokenCloseParser = Combinator.exact('|>');
+  const fragmentTokenParser = Combinator.exact('<|>');
+  const rawElementTokenOpenParser = Combinator.exact('<#');
+  const rawElementTokenCloseParser = Combinator.exact('#>');
+  const rawFragmentTokenParser = Combinator.exact('<#>');
   const lessThanParser = Combinator.exact('<');
   const greaterThanParser = Combinator.exact('>');
   const spreadOperatorParser = Combinator.exact('...');
@@ -51,6 +56,10 @@ function parseDocument(file: string): ParseDocumentResult {
   const parenthesisOpenParser = Combinator.exact('(');
   const parenthesisCloseParser = Combinator.exact(')');
   const colonParser = Combinator.exact(':');
+  const doubleSlashParser = Combinator.exact('//');
+  const blockCommentStartParser = Combinator.exact('/*');
+  const blockCommentEndParser = Combinator.exact('*/');
+  const newLineParser = Combinator.exact(NEW_LINE);
   const singleQuoteParser = Combinator.exact(SINGLE_QUOTE);
   const backslashParser = Combinator.exact(BACKSLASH);
   const doubleQuoteParser = Combinator.exact(DOUBLE_QUOTE);
@@ -66,19 +75,32 @@ function parseDocument(file: string): ParseDocumentResult {
     'LazyDottableExpression',
     () => dottableExpressionParser
   );
-  const lazyElementAnyParser: Combinator.Parser<ElementAny> = Combinator.lazy(
-    'LazyElementAnyParser',
-    () => elementAnyParser
+  const lazyChildParser: Combinator.Parser<Child> = Combinator.lazy('Child', () => childParser);
+  const lazyRawChildParser: Combinator.Parser<Child | Array<Child>> = Combinator.lazy(
+    'RawChild',
+    () => rawChildParser
   );
+  const lazyUnrawChildParser: Combinator.Parser<Child> = Combinator.lazy(
+    'UnrawChild',
+    () => unrawChildParser
+  );
+  const lazyUnrawElementAnyParser: Combinator.Parser<ElementAny> = Combinator.lazy(
+    'LazyUnrawElementAnyParser',
+    () => unrawElementAnyParser
+  );
+  // const lazyElementAnyParser: Combinator.Parser<ElementAny> = Combinator.lazy(
+  //   'LazyElementAnyParser',
+  //   () => elementAnyParser
+  // );
 
   const identifierParser = Combinator.transformSuccess(
     Combinator.pipe(
       'Identifier',
       Combinator.singleChar('IdentifierStart', isIdentifierStart),
-      Combinator.whileMatch('Identifier', isIdentifier)
+      Combinator.maybe(Combinator.whileMatch('Identifier', isIdentifier))
     ),
     ([idenitifierStart, content], start, end) =>
-      createNode('Identifier', start, end, {}, { name: idenitifierStart + content })
+      createNode('Identifier', start, end, {}, { name: idenitifierStart + (content || '') })
   );
 
   const numberParser = Combinator.transformSuccess(
@@ -238,6 +260,32 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
+  const lineCommentParser = Combinator.transformSuccess(
+    Combinator.pipe(
+      'LineComment',
+      doubleSlashParser,
+      Combinator.maybe(Combinator.whileMatch('LineCommentContent', isLineCommentContent)),
+      Combinator.oneOf(null, Combinator.eof, newLineParser)
+    ),
+    ([_start, content], start, end) => {
+      return createNode('LineComment', start, end, {}, { content: content || '' });
+    }
+  );
+
+  const blockCommentParser = Combinator.transformSuccess(
+    Combinator.pipe(
+      'BlockComment',
+      blockCommentStartParser,
+      Combinator.maybe(Combinator.whileNotMatch('BlockCommentContent', ['*/'])),
+      blockCommentEndParser
+    ),
+    ([_start, content], start, end) => {
+      return createNode('BlockComment', start, end, {}, { content: content || '' });
+    }
+  );
+
+  const commentParser = Combinator.oneOf('Comment', lineCommentParser, blockCommentParser);
+
   const propertyShorthandParser = Combinator.transformSuccess(
     identifierParser,
     (name, start, end) => {
@@ -245,10 +293,12 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
+  const propertyNameParser = Combinator.oneOf('PropertyName', identifierParser, stringParser);
+
   const propertyParser = Combinator.transformSuccess(
     Combinator.pipe(
       'Property',
-      identifierParser,
+      propertyNameParser,
       maybeWhitespaceParser,
       colonParser,
       maybeWhitespaceParser,
@@ -383,7 +433,37 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const propParser = Combinator.oneOf('Props', propValue, propNoValue);
+  const propBlockCommentParser = Combinator.transformSuccess(
+    Combinator.pipe(
+      'PropBlockComment',
+      blockCommentStartParser,
+      Combinator.maybe(Combinator.whileNotMatch('PropsBlockCommentContent', ['*/'])),
+      blockCommentEndParser
+    ),
+    ([_start, content], start, end) => {
+      return createNode('PropBlockComment', start, end, {}, { content: content || '' });
+    }
+  );
+
+  const propLineCommentParser = Combinator.transformSuccess(
+    Combinator.pipe(
+      'PropLineComment',
+      doubleSlashParser,
+      Combinator.maybe(Combinator.whileMatch('PropLineCommentContent', isLineCommentContent)),
+      Combinator.oneOf(null, Combinator.eof, newLineParser)
+    ),
+    ([_start, content], start, end) => {
+      return createNode('PropLineComment', start, end, {}, { content: content || '' });
+    }
+  );
+
+  const propParser = Combinator.oneOf(
+    'Props',
+    propValue,
+    propNoValue,
+    propBlockCommentParser,
+    propLineCommentParser
+  );
 
   const propItemParser = Combinator.transformSuccess(
     Combinator.pipe('PropItem', whitespaceParser, propParser),
@@ -402,10 +482,10 @@ function parseDocument(file: string): ParseDocumentResult {
   const elementSelfClosingParser = Combinator.transformSuccess(
     Combinator.pipe(
       'SelfClosingElement',
-      backwardPipeOperatorParser,
+      elementTokenOpenParser,
       componentTypeParser,
       propsParser,
-      pipeOperatorParser
+      elementTokenCloseParser
     ),
     ([_tagOpen, component, props], start, end) => {
       return createNode(
@@ -420,23 +500,26 @@ function parseDocument(file: string): ParseDocumentResult {
 
   const textParser = Combinator.named(
     'Text',
-    Combinator.transformSuccess(Combinator.whileMatch('Text', isText), (content, start, end) =>
-      createNode('Text', start, end, {}, { content })
+    Combinator.transformSuccess(
+      Combinator.whileNotMatch('Text', ['|>', '<', '//', ...WHITESPACES]),
+      (content, start, end) => createNode('Text', start, end, {}, { content })
     )
   );
 
-  const childParser = Combinator.oneOf('Child', whitespaceParser, textParser, lazyElementAnyParser);
-
-  const childrenParser = Combinator.named(
-    'Children',
-    Combinator.transformSuccess(Combinator.many(childParser), (children) =>
-      normalizeChildren(children)
-    )
+  const rawTextParser = Combinator.transformSuccess(
+    Combinator.oneOf(
+      'RawText',
+      Combinator.whileNotMatch(null, ['#>', '<']),
+      Combinator.singleChar('RawSingleChar')
+    ),
+    (content, start, end) => {
+      return createNode('Text', start, end, {}, { content });
+    }
   );
 
   const elementOpeningTagParser = Combinator.pipe(
     'OpeningTag',
-    backwardPipeOperatorParser,
+    elementTokenOpenParser,
     componentTypeParser,
     propsParser,
     greaterThanParser
@@ -446,17 +529,22 @@ function parseDocument(file: string): ParseDocumentResult {
     `NamedClosingTag`,
     lessThanParser,
     componentTypeParser,
-    pipeOperatorParser
+    elementTokenCloseParser
   );
 
   const elementClosingParser = Combinator.oneOf(
     'ClosingTag',
-    pipeOperatorParser,
+    elementTokenCloseParser,
     elementClosingTagParser
   );
 
   const elementParser = Combinator.transform(
-    Combinator.pipe('Element', elementOpeningTagParser, childrenParser, elementClosingParser),
+    Combinator.manyBetween(
+      'Element',
+      elementOpeningTagParser,
+      lazyChildParser,
+      elementClosingParser
+    ),
     (result) => {
       if (result.type === 'Failure') {
         return result;
@@ -478,7 +566,7 @@ function parseDocument(file: string): ParseDocumentResult {
         result.start,
         result.end,
         {
-          children,
+          children: normalizeChildren(children),
           component: componentType,
           props,
         },
@@ -493,7 +581,163 @@ function parseDocument(file: string): ParseDocumentResult {
     }
   );
 
-  const elementAnyParser = Combinator.oneOf('ElementAny', elementSelfClosingParser, elementParser);
+  const rawElementOpeningTagParser = Combinator.pipe(
+    'RawOpeningTag',
+    rawElementTokenOpenParser,
+    componentTypeParser,
+    propsParser,
+    greaterThanParser
+  );
+
+  const rawElementClosingTagParser = Combinator.pipe(
+    `NamedRawClosingTag`,
+    lessThanParser,
+    componentTypeParser,
+    rawElementTokenCloseParser
+  );
+
+  const rawElementClosingParser = Combinator.oneOf(
+    'ClosingTag',
+    rawElementTokenCloseParser,
+    rawElementClosingTagParser
+  );
+
+  const rawElementParser = Combinator.transform(
+    Combinator.manyBetween(
+      'RawElement',
+      rawElementOpeningTagParser,
+      lazyRawChildParser,
+      rawElementClosingParser
+    ),
+    (result) => {
+      if (result.type === 'Failure') {
+        return result;
+      }
+
+      const [open, children, close] = result.value;
+      const [, componentType, props] = open;
+      const closeComponentType = typeof close === 'string' ? componentType : close[1];
+
+      if (!sameComponent(componentType, closeComponentType)) {
+        return Combinator.ParseFailure({
+          message: 'Unexpected close tag, wrong tag !',
+          position: result.end,
+          stack: result.stack,
+        });
+      }
+
+      const childrenFlat: Array<Child> = [];
+      children.forEach((child) => {
+        if (Array.isArray(child)) {
+          childrenFlat.push(...child);
+        } else {
+          childrenFlat.push(child);
+        }
+      });
+
+      const node = createNode(
+        'RawElement',
+        result.start,
+        result.end,
+        {
+          children: normalizeChildren(childrenFlat),
+          component: componentType,
+          props,
+        },
+        {
+          namedCloseTag: typeof close !== 'string',
+        }
+      );
+      return {
+        ...result,
+        value: node,
+      };
+    }
+  );
+
+  const fragmentParser = Combinator.transformSuccess(
+    Combinator.manyBetween('Fragment', fragmentTokenParser, lazyChildParser, fragmentTokenParser),
+    ([_open, children], start, end) => {
+      return createNode('Fragment', start, end, { children: normalizeChildren(children) }, {});
+    }
+  );
+
+  const rawFragmentParser = Combinator.transformSuccess(
+    Combinator.manyBetween(
+      'RawFragment',
+      rawFragmentTokenParser,
+      rawTextParser,
+      rawFragmentTokenParser
+    ),
+    ([_open, children], start, end) => {
+      return createNode('RawFragment', start, end, { children: normalizeChildren(children) }, {});
+    }
+  );
+
+  const unrawElementParser = Combinator.transformSuccess(
+    Combinator.manyBetween(
+      'Unraw',
+      rawFragmentTokenParser,
+      lazyUnrawChildParser,
+      rawFragmentTokenParser
+    ),
+    ([_begin, items]) => items
+  );
+
+  const injectParser = Combinator.transformSuccess(
+    Combinator.pipe(
+      'Inject',
+      curlyBracketOpenParser,
+      maybeWhitespaceParser,
+      lazyExpression,
+      maybeWhitespaceParser,
+      curlyBracketCloseParser
+    ),
+    ([_begin, whitespaceBefore, value, whitespaceAfter], start, end) => {
+      return createNode('Inject', start, end, { whitespaceBefore, value, whitespaceAfter }, {});
+    }
+  );
+
+  const unrawChildParser = Combinator.oneOf(
+    'Child',
+    whitespaceParser,
+    commentParser,
+    lazyUnrawElementAnyParser,
+    textParser
+  );
+
+  const rawChildParser: Combinator.Parser<Child | Array<Child>> = Combinator.oneOf(
+    'RawChild',
+    unrawElementParser,
+    rawTextParser
+  );
+
+  const elementAnyParser: Combinator.Parser<ElementAny> = Combinator.oneOf(
+    'ElementAny',
+    fragmentParser,
+    rawFragmentParser,
+    elementSelfClosingParser,
+    elementParser,
+    rawElementParser
+  );
+
+  // All elements except rawFragment
+  const unrawElementAnyParser: Combinator.Parser<ElementAny> = Combinator.oneOf(
+    'UnrawElementAny',
+    fragmentParser,
+    elementSelfClosingParser,
+    elementParser,
+    rawElementParser
+  );
+
+  const childParser = Combinator.oneOf(
+    'Child',
+    whitespaceParser,
+    commentParser,
+    elementAnyParser,
+    injectParser,
+    textParser
+  );
 
   type AccessItem =
     | { type: 'DotMember'; indentifier: Node<'Identifier'> }
@@ -589,46 +833,6 @@ function parseDocument(file: string): ParseDocumentResult {
     parenthesisParser
   );
 
-  // const dotMemberParser = Combinator.reduceRight(
-  //   'DotMember',
-  //   lazyDottableExpression,
-  //   Combinator.pipe(null, dotParser, identifierParser),
-  //   (left: DottableExpression, right, start, end): Node<'DotMember'> => {
-  //     const [, property] = right;
-  //     return createNode(
-  //       'DotMember',
-  //       start,
-  //       end,
-  //       {
-  //         target: left,
-  //         property,
-  //       },
-  //       {}
-  //     );
-  //   }
-  // );
-
-  // const bracketMemberParser = Combinator.reduceRight(
-  //   'BracketMember',
-  //   lazyDottableExpression,
-  //   Combinator.pipe(null, squareBracketOpenParser, lazyExpression, squareBracketCloseParser),
-  //   (left: DottableExpression, right, start, end): Node<'BracketMember'> => {
-  //     const [, property] = right;
-  //     return createNode('BracketMember', start, end, { target: left, property }, {});
-  //   }
-  // );
-
-  // const functionCallParser = Combinator.reduceRight(
-  //   'BracketMember',
-  //   lazyCallableExpression,
-  //   Combinator.pipe(null, parenthesisOpenParser, arrayItemsParser, parenthesisCloseParser),
-  //   (target: CallableExpression, right, start, end): Node<'FunctionCall'> => {
-  //     const [, args] = right;
-  //     console.log({ target, args });
-  //     return createNode('FunctionCall', start, end, { target, arguments: args }, {});
-  //   }
-  // );
-
   const arrayOrObjectParser = Combinator.oneOf(
     'ArrayOrObject',
     emptyArrayParser,
@@ -636,15 +840,6 @@ function parseDocument(file: string): ParseDocumentResult {
     emptyObjectParser,
     objectParser
   );
-
-  // const callableExpressionParser = Combinator.oneOf(
-  //   'CallableExpression',
-  //   functionCallParser,
-  //   dotMemberParser,
-  //   bracketMemberParser,
-  //   parenthesisParser,
-  //   identifierParser
-  // );
 
   const expressionParser = Combinator.oneOf(
     'Expression',
@@ -654,7 +849,7 @@ function parseDocument(file: string): ParseDocumentResult {
     elementAnyParser
   );
 
-  const dottableExpressionParser = Combinator.oneOf(
+  const dottableExpressionParser: Combinator.Parser<DottableExpression> = Combinator.oneOf(
     'DottableExpression',
     arrayOrObjectParser,
     elementAnyParser,
@@ -663,8 +858,9 @@ function parseDocument(file: string): ParseDocumentResult {
   );
 
   const documentParser = Combinator.transformSuccess(
-    Combinator.pipe('Document', childrenParser, Combinator.eof),
-    ([children], start, end) => createNode('Document', start, end, { children }, {})
+    Combinator.pipe('Document', Combinator.many(childParser), Combinator.eof),
+    ([children], start, end) =>
+      createNode('Document', start, end, { children: normalizeChildren(children) }, {})
   );
 
   const ranges: Ranges = new Map();
@@ -698,8 +894,8 @@ function parseDocument(file: string): ParseDocumentResult {
     return false;
   }
 
-  function normalizeChildren(nodes: Array<Children>): Array<Children> {
-    const result: Array<Children> = [];
+  function normalizeChildren(nodes: Array<Child>): Array<Child> {
+    const result: Array<Child> = [];
     nodes.forEach((child, i) => {
       if (i === 0) {
         result.push(child);
@@ -758,17 +954,6 @@ function isWhitespace(char: string): boolean {
   return char === ' ' || char === '\t' || char === '\n' || char === '\r';
 }
 
-function isText(char: string) {
-  return (
-    char !== '#' &&
-    char !== '<' &&
-    char !== '|' &&
-    char !== '/' &&
-    char !== '{' &&
-    isWhitespace(char) === false
-  );
-}
-
 function notNil<T>(val: T | null | undefined): T {
   if (val === null || val === undefined) {
     throw new Error(`Unexpected nil`);
@@ -798,4 +983,8 @@ function isDoubleQuoteContent(ch: string): boolean {
 
 function isBacktickContent(ch: string): boolean {
   return ch !== BACKSLASH && ch !== BACKTICK;
+}
+
+function isLineCommentContent(ch: string): boolean {
+  return ch !== NEW_LINE;
 }

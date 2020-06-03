@@ -21,39 +21,21 @@ interface NodeBase {
 type CreateNodes<Nodes extends { [key: string]: NodeBase }> = Nodes;
 
 export type Nodes = CreateNodes<{
-  Document: CreateNode<{ children: Array<Children> }>;
+  Document: CreateNode<{ children: Array<Child> }>;
   SelfClosingElement: CreateNode<{ component: ComponentType; props: Node<'Props'> }>;
   Element: CreateNode<
-    {
-      component: ComponentType;
-      props: Node<'Props'>;
-      children: Array<Children>;
-    },
-    {
-      namedCloseTag: boolean;
-    }
+    { component: ComponentType; props: Node<'Props'>; children: Array<Child> },
+    { namedCloseTag: boolean }
   >;
   RawElement: CreateNode<
-    {
-      component: ComponentType;
-      props: Node<'Props'>;
-      children: Array<Children>;
-    },
-    {
-      namedCloseTag: boolean;
-    }
+    { component: ComponentType; props: Node<'Props'>; children: Array<Child> },
+    { namedCloseTag: boolean }
   >;
   Whitespace: CreateNode<{}, { content: string; hasNewLine: boolean }>;
-  Fragment: CreateNode<{ children: Array<Children> }>;
-  RawFragment: CreateNode<{ children: Array<Children> }>;
+  Fragment: CreateNode<{ children: Array<Child> }>;
+  RawFragment: CreateNode<{ children: Array<Child> }>;
   Props: CreateNode<{ items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace }, {}>;
-  PropItem: CreateNode<
-    {
-      whitespaceBefore: Node<'Whitespace'>;
-      item: Prop;
-    },
-    {}
-  >;
+  PropItem: CreateNode<{ whitespaceBefore: Node<'Whitespace'>; item: Prop }, {}>;
   PropValue: CreateNode<{ name: Node<'Identifier'>; value: Expression }, {}>;
   PropNoValue: CreateNode<{ name: Node<'Identifier'> }, {}>;
   PropLineComment: CreateNode<{}, { content: string }>;
@@ -104,11 +86,7 @@ export type Nodes = CreateNodes<{
     whitespaceAfter: MaybeWhitespace;
   }>;
   Inject: CreateNode<
-    {
-      whitespaceBefore: MaybeWhitespace;
-      value: Expression;
-      whitespaceAfter: MaybeWhitespace;
-    },
+    { whitespaceBefore: MaybeWhitespace; value: Expression; whitespaceAfter: MaybeWhitespace },
     {}
   >;
 }>;
@@ -174,15 +152,21 @@ export type Prop = typeof Prop['__type'];
 const ElementAny = combine(
   'Element',
   'SelfClosingElement',
-  'LineComment',
   'Fragment',
   'RawFragment',
   'RawElement'
 );
 export type ElementAny = typeof ElementAny['__type'];
 
-const Children = combine(...ElementAny.types, 'Whitespace', 'Inject', 'Text', 'BlockComment');
-export type Children = typeof Children['__type'];
+const Child = combine(
+  ...ElementAny.types,
+  'Whitespace',
+  'Inject',
+  'Text',
+  'BlockComment',
+  'LineComment'
+);
+export type Child = typeof Child['__type'];
 
 const CallableExpression = combine(
   'FunctionCall',
@@ -243,7 +227,7 @@ export const NodeIs = {
   ComponentType,
   Prop,
   ElementAny,
-  Children,
+  Children: Child,
   CallableExpression,
   Primitive,
   ObjectOrArray,
