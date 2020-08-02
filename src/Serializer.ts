@@ -245,9 +245,6 @@ function serialize(node: Node): string {
     if (NodeIs.PropBlockComment(prop)) {
       return `/*${prop.meta.content}*/`;
     }
-    if (NodeIs.Whitespace(prop)) {
-      return prop.meta.content;
-    }
     throw new Error(`Unsuported ${(prop as any).type}`);
   }
 }
