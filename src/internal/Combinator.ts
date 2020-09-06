@@ -10,7 +10,7 @@ type Stack = StackItem | Array<StackItem>;
 
 type StackOrNull = null | Stack;
 
-export interface ParseResultFailure {
+interface ParseResultFailure {
   type: 'Failure';
   stack: StackItem;
 }
@@ -54,7 +54,7 @@ export function ParseSuccess<T>(
   };
 }
 
-export function cleanupStackItem(stack: StackItem): StackItem {
+function cleanupStackItem(stack: StackItem): StackItem {
   const sub = stack.stack;
   if (sub === null) {
     return stack;
@@ -100,19 +100,19 @@ export function cleanupStackItem(stack: StackItem): StackItem {
   };
 }
 
-export function cleanupStack(stack: Stack): Stack {
+function cleanupStack(stack: Stack): Stack {
   if (Array.isArray(stack)) {
     return stack.map(cleanupStackItem);
   }
   return cleanupStackItem(stack);
 }
 
-export function cleanupStackOrNull(stack: StackOrNull): StackOrNull {
-  if (stack === null) {
-    return null;
-  }
-  return cleanupStack(stack);
-}
+// export function cleanupStackOrNull(stack: StackOrNull): StackOrNull {
+//   if (stack === null) {
+//     return null;
+//   }
+//   return cleanupStack(stack);
+// }
 
 export function mergeStacks(left: Stack, ...stacks: Array<StackOrNull>): Array<StackItem> {
   let result: Array<StackItem> = Array.isArray(left) ? left : [left];
@@ -126,7 +126,7 @@ export function mergeStacks(left: Stack, ...stacks: Array<StackOrNull>): Array<S
   return result;
 }
 
-export function expectNever<T extends never>(_val: T): never {
+function expectNever<T extends never>(_val: T): never {
   throw new Error(`Expected never !`);
 }
 
@@ -134,7 +134,7 @@ export function printParseError(error: StackItem) {
   return `Docsy Parse Error: \n` + parseErrorToLines(error, 0).join('\n');
 }
 
-export function parseErrorToLines(error: StackItem, depth: number): Array<string> {
+function parseErrorToLines(error: StackItem, depth: number): Array<string> {
   return [
     `${error.message} (at offset ${error.position})`,
     ...(error.stack === null
@@ -597,34 +597,34 @@ export function pipe<V>(name: string | null, ...parsers: Array<Parser<V>>): Pars
   return pipeParser;
 }
 
-export function onError<T>(
-  parser: Parser<T>,
-  onError: (error: StackItem, input: StringReader) => ParseResult<T>
-): Parser<T> {
-  return createParser(`OnError(${parser.ParserName})`, (input, skip) => {
-    const next = parser(input, skip);
-    if (next.type === 'Success') {
-      return next;
-    }
-    return onError(next.stack, input);
-  });
-}
+// function onError<T>(
+//   parser: Parser<T>,
+//   onError: (error: StackItem, input: StringReader) => ParseResult<T>
+// ): Parser<T> {
+//   return createParser(`OnError(${parser.ParserName})`, (input, skip) => {
+//     const next = parser(input, skip);
+//     if (next.type === 'Success') {
+//       return next;
+//     }
+//     return onError(next.stack, input);
+//   });
+// }
 
 // if error use error of another parser
-export function convertError<T>(parser: Parser<T>, errorParser: Parser<any>): Parser<T> {
-  return createParser(parser.ParserName, (input, skip) => {
-    const next = parser(input, skip);
-    if (next.type === 'Success') {
-      return next;
-    }
-    const childError = errorParser(input, skip);
-    if (childError.type === 'Success') {
-      // errorParser succeed, return the original error
-      return next;
-    }
-    return ParseFailure(childError.stack);
-  });
-}
+// function convertError<T>(parser: Parser<T>, errorParser: Parser<any>): Parser<T> {
+//   return createParser(parser.ParserName, (input, skip) => {
+//     const next = parser(input, skip);
+//     if (next.type === 'Success') {
+//       return next;
+//     }
+//     const childError = errorParser(input, skip);
+//     if (childError.type === 'Success') {
+//       // errorParser succeed, return the original error
+//       return next;
+//     }
+//     return ParseFailure(childError.stack);
+//   });
+// }
 
 export function lazy<T>(name: string, exec: () => Parser<T>): Parser<T> {
   let resolved: Parser<T> | null = null;

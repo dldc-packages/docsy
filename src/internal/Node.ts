@@ -4,9 +4,9 @@ type ArrayOfNodes = Array<Node>;
 
 export type NodeNodesItem = null | Node | ArrayOfNodes | NodeNodesBase;
 
-export type NodeNodesBase = { [key: string]: NodeNodesItem };
+type NodeNodesBase = { [key: string]: NodeNodesItem };
 
-export type NodeMetaBase = { [key: string]: string | number | null | boolean };
+type NodeMetaBase = { [key: string]: string | number | null | boolean };
 
 type CreateNode<Nodes extends NodeNodesBase, Meta extends NodeMetaBase = {}> = {
   nodes: Nodes;

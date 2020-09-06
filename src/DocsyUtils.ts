@@ -25,7 +25,7 @@ export const DocsyUtils = {
 /**
  * If the onNode return a different node, we replace the node and don't go deeper
  */
-export function transform(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
+function transform(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
   return transformInternal(node, []).value;
 
   function transformInternal<K extends NodeType>(
@@ -62,7 +62,7 @@ export function transform(node: Node, onNode: (item: Node, path: TraversePath) =
   // }
 }
 
-export function transformDeep(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
+function transformDeep(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
   return transformDeepInternal(node, []);
 
   function transformDeepInternal(parent: Node, parentPath: TraversePath): Node {
@@ -110,11 +110,11 @@ function getNodesFromNodes(nodes: NodeNodesItem, path: NodePath): Array<NodeWith
   }, []);
 }
 
-export function getNodeNodes(item: Node): Array<NodeWithPath> {
+function getNodeNodes(item: Node): Array<NodeWithPath> {
   return getNodesFromNodes(item.nodes, []);
 }
 
-export function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void) {
+function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void) {
   return traverseInternal(node, []);
 
   function traverseInternal(item: Node, path: TraversePath) {
@@ -125,7 +125,7 @@ export function traverse(node: Node, onNode: (item: Node, path: TraversePath) =>
   }
 }
 
-export function createNodeFromValue(value: any): Expression {
+function createNodeFromValue(value: any): Expression {
   if (value === null) {
     return CreateNode.Null({}, {});
   }
