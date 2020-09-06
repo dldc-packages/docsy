@@ -190,6 +190,14 @@ test(`Parse object`, () => {
   expect(result.nodes.children[0].type).toEqual('SelfClosingElement');
 });
 
+test(`Parse empty object`, () => {
+  const file = `<|Title obj={} |>`;
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children.length).toBe(1);
+  expect(result.nodes.children[0].type).toEqual('SelfClosingElement');
+});
+
 test(`Parse object with quoted key`, () => {
   const file = `<|Title obj={ 'other': 'blue', [property]: true } |>`;
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
@@ -525,9 +533,45 @@ test('Element in RawElement is text', () => {
 });
 
 test(`Parse raw.docsy file`, () => {
+  const file = readFile('tag-in-raw');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children.map((c: any) => c.type)).toEqual(['RawElement', 'Whitespace']);
+  expect(result.nodes.children[0].nodes.children.length).toBe(1);
+  expect(result.nodes.children[0].nodes.children[0].type).toBe('Text');
+});
+
+test(`Whitespace in unraw`, () => {
+  const file = [`<#Code><#>`, `// comment here`, `<#><#>`].join('\n');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  // const result = DocsyParser.parseDocument(file).document as any;
+  // logNode(result)
+});
+
+test(`Parse raw.docsy file`, () => {
+  const file = readFile('complex-raw');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.nodes.children[0].nodes.children.map((c: any) => c.type)).toEqual([
+    'Text',
+    'SelfClosingElement',
+    'Text',
+    'Whitespace',
+    'LineComment',
+    'SelfClosingElement',
+    'Whitespace',
+    'BlockComment',
+    'SelfClosingElement',
+    'Whitespace',
+    'Text',
+  ]);
+});
+
+test(`Parse raw.docsy file`, () => {
   const file = readFile('raw');
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
   // const result = DocsyParser.parseDocument(file).document as any;
+  // logNode(result.nodes.children.map((c: any) => c.type));
 });
 
 test(`Parse complete.docsy file`, () => {

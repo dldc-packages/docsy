@@ -168,7 +168,38 @@ function serialize(node: Node): string {
     if (!items || items.length === 0) {
       return '';
     }
+    if (isInRaw) {
+      return serializeChildrenInRaw(items);
+    }
     return items.map((sub) => serializeChild(sub, isInRaw)).join('');
+  }
+
+  function serializeChildrenInRaw(items: Array<Child>): string {
+    const groups: Array<Array<Child>> = [];
+    items.forEach((item) => {
+      if (groups.length === 0) {
+        groups.push([item]);
+        return;
+      }
+      const lastGroup = groups[groups.length - 1];
+      const lastItem = lastGroup[lastGroup.length - 1];
+      const isText = NodeIs.Text(item);
+      const lastIsText = NodeIs.Text(lastItem);
+      if (isText === lastIsText) {
+        lastGroup.push(item);
+      } else {
+        groups.push([item]);
+      }
+    });
+    return groups
+      .map((group) => {
+        const isText = NodeIs.Text(group[0]);
+        if (isText) {
+          return group.map((item) => serializeChild(item, true)).join('');
+        }
+        return `<#>${group.map((item) => serializeChild(item, true)).join('')}<#>`;
+      })
+      .join('');
   }
 
   function serializeChild(item: Child, isInRaw: boolean): string {
@@ -245,6 +276,7 @@ function serialize(node: Node): string {
     if (NodeIs.PropBlockComment(prop)) {
       return `/*${prop.meta.content}*/`;
     }
+    // return expectNever(prop.type);
     throw new Error(`Unsuported ${(prop as any).type}`);
   }
 }

@@ -126,7 +126,7 @@ export function mergeStacks(left: Stack, ...stacks: Array<StackOrNull>): Array<S
   return result;
 }
 
-function expectNever<T extends never>(_val: T): never {
+export function expectNever<T extends never>(_val: T): never {
   throw new Error(`Expected never !`);
 }
 

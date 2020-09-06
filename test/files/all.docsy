@@ -24,7 +24,7 @@ Hello /* Inline comments */ <|B>world|> !
 Hello <|B>world|> !
 <Title|>
 
-<|Title config={ color: 'green', 'other': 'blue', [property]: true } hey='yoo' num=34 bool=true noop=null|>
+<|Title config={ color: 'green', 'other': 'blue', [property]: true } hey='yoo' num=34 bool=true otherBool=false noop=null|>
 
 <|Title config=[34, 'foo', Theme.bar]>Hello <|B>world|> !|>
 

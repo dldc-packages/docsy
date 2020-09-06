@@ -566,7 +566,7 @@ function parseDocument(file: string): ParseDocumentResult {
         result.start,
         result.end,
         {
-          children: normalizeChildren(children),
+          children: normalizeChildren(children, true),
           component: componentType,
           props,
         },
@@ -640,7 +640,7 @@ function parseDocument(file: string): ParseDocumentResult {
         result.start,
         result.end,
         {
-          children: normalizeChildren(childrenFlat),
+          children: normalizeChildren(childrenFlat, false),
           component: componentType,
           props,
         },
@@ -658,7 +658,13 @@ function parseDocument(file: string): ParseDocumentResult {
   const fragmentParser = Combinator.transformSuccess(
     Combinator.manyBetween('Fragment', fragmentTokenParser, lazyChildParser, fragmentTokenParser),
     ([_open, children], start, end) => {
-      return createNode('Fragment', start, end, { children: normalizeChildren(children) }, {});
+      return createNode(
+        'Fragment',
+        start,
+        end,
+        { children: normalizeChildren(children, true) },
+        {}
+      );
     }
   );
 
@@ -670,7 +676,13 @@ function parseDocument(file: string): ParseDocumentResult {
       rawFragmentTokenParser
     ),
     ([_open, children], start, end) => {
-      return createNode('RawFragment', start, end, { children: normalizeChildren(children) }, {});
+      return createNode(
+        'RawFragment',
+        start,
+        end,
+        { children: normalizeChildren(children, true) },
+        {}
+      );
     }
   );
 
@@ -681,7 +693,7 @@ function parseDocument(file: string): ParseDocumentResult {
       lazyUnrawChildParser,
       rawFragmentTokenParser
     ),
-    ([_begin, items]) => items
+    ([_begin, items]) => normalizeChildren(items, true)
   );
 
   const injectParser = Combinator.transformSuccess(
@@ -860,7 +872,7 @@ function parseDocument(file: string): ParseDocumentResult {
   const documentParser = Combinator.transformSuccess(
     Combinator.pipe('Document', Combinator.many(childParser), Combinator.eof),
     ([children], start, end) =>
-      createNode('Document', start, end, { children: normalizeChildren(children) }, {})
+      createNode('Document', start, end, { children: normalizeChildren(children, true) }, {})
   );
 
   const ranges: Ranges = new Map();
@@ -894,7 +906,7 @@ function parseDocument(file: string): ParseDocumentResult {
     return false;
   }
 
-  function normalizeChildren(nodes: Array<Child>): Array<Child> {
+  function normalizeChildren(nodes: Array<Child>, mergeWhitespaces: boolean): Array<Child> {
     const result: Array<Child> = [];
     nodes.forEach((child, i) => {
       if (i === 0) {
@@ -909,14 +921,13 @@ function parseDocument(file: string): ParseDocumentResult {
       }
       const lastRange = notNil(ranges.get(last));
       const childRange = notNil(ranges.get(child));
-      // text + text => text
       if (
         // text + text => text
         (NodeIs.Text(last) && NodeIs.Text(child)) ||
         // whitespace + text => text
-        (NodeIs.Whitespace(last) && NodeIs.Text(child)) ||
+        (mergeWhitespaces && NodeIs.Whitespace(last) && NodeIs.Text(child)) ||
         // text + whitespace => text
-        (NodeIs.Text(last) && NodeIs.Whitespace(child))
+        (mergeWhitespaces && NodeIs.Text(last) && NodeIs.Whitespace(child))
       ) {
         // Collapse textNode
         result.pop();
