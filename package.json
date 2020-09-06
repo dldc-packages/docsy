@@ -46,13 +46,13 @@
   "dependencies": {},
   "devDependencies": {
     "@types/fs-extra": "^9.0.1",
-    "@types/jest": "^26.0.10",
+    "@types/jest": "^26.0.13",
     "eslint-plugin-prettier": "^3.1.4",
     "fs-extra": "^9.0.1",
     "husky": "^4.2.5",
-    "np": "^6.4.0",
-    "prettier": "^2.0.5",
-    "tsdx": "^0.13.2",
+    "np": "^6.5.0",
+    "prettier": "^2.1.1",
+    "tsdx": "^0.13.3",
     "tslib": "^2.0.1",
     "typescript": "^3.9.7"
   }
