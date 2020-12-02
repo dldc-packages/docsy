@@ -19,7 +19,9 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
     }
     if (NodeIs.Element(item) || NodeIs.SelfClosingElement(item)) {
       const props = resolveInternal(item.nodes.props);
-      const children = NodeIs.SelfClosingElement(item) ? [] : resolveChildren(item.nodes.children);
+      const children = NodeIs.SelfClosingElement(item)
+        ? []
+        : resolveChildren(item.nodes.children);
       const type = resolveInternal(item.nodes.component);
       if (type === undefined) {
         throw new Error(
@@ -87,7 +89,9 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
       return resolveInternal(item.nodes.target)[item.nodes.property.meta.name];
     }
     if (NodeIs.BracketMember(item)) {
-      return resolveInternal(item.nodes.target)[resolveInternal(item.nodes.property)];
+      return resolveInternal(item.nodes.target)[
+        resolveInternal(item.nodes.property)
+      ];
     }
     if (NodeIs.Object(item)) {
       return resolveObject(item.nodes.items);
@@ -100,12 +104,12 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
   }
 
   function resolveChildren(items: Array<Node>): Array<any> {
-    return items.map((child) => resolveInternal(child));
+    return items.map(child => resolveInternal(child));
   }
 
   function resolveProps(items: Array<Node<'PropItem'>>): any {
     const obj: any = {};
-    items.forEach((prop) => {
+    items.forEach(prop => {
       const inner = prop.nodes.item;
       if (NodeIs.PropNoValue(inner)) {
         const key: string = inner.nodes.name.meta.name;
@@ -124,7 +128,7 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
 
   function resolveObject(items: Array<Node<'ObjectItem'>>): any {
     let obj: any = {};
-    items.forEach((propItem) => {
+    items.forEach(propItem => {
       const prop = propItem.nodes.item;
       if (NodeIs.Spread(prop)) {
         const value = resolveInternal(prop.nodes.target);
@@ -165,7 +169,7 @@ function resolve<I extends ResolveValues>(node: Node, values: I): any {
 
   function resolveArray(items: Array<Node<'ArrayItem'>>): any {
     let arr: Array<any> = [];
-    items.forEach((arrayItem) => {
+    items.forEach(arrayItem => {
       const item = arrayItem.nodes.item;
       if (NodeIs.Spread(item)) {
         const value = resolveInternal(item.nodes.target);

@@ -59,16 +59,30 @@ function serialize(node: Node): string {
       return `null`;
     }
     if (NodeIs.DotMember(item)) {
-      return serializeInternal(item.nodes.target) + '.' + serializeInternal(item.nodes.property);
+      return (
+        serializeInternal(item.nodes.target) +
+        '.' +
+        serializeInternal(item.nodes.property)
+      );
     }
     if (NodeIs.BracketMember(item)) {
-      return serializeInternal(item.nodes.target) + `[${serializeInternal(item.nodes.property)}]`;
+      return (
+        serializeInternal(item.nodes.target) +
+        `[${serializeInternal(item.nodes.property)}]`
+      );
     }
     if (NodeIs.FunctionCall(item)) {
-      return serializeInternal(item.nodes.target) + serializeArguments(item.nodes.arguments);
+      return (
+        serializeInternal(item.nodes.target) +
+        serializeArguments(item.nodes.arguments)
+      );
     }
     if (NodeIs.ElementTypeMember(item)) {
-      return serializeInternal(item.nodes.target) + '.' + serializeInternal(item.nodes.property);
+      return (
+        serializeInternal(item.nodes.target) +
+        '.' +
+        serializeInternal(item.nodes.property)
+      );
     }
     if (NodeIs.oneOf(item, CHILDREN_TYPE)) {
       return serializeChild(item, false);
@@ -84,7 +98,9 @@ function serialize(node: Node): string {
       serializeProps(elem.nodes.props),
       '>',
       childrenStr,
-      elem.meta.namedCloseTag ? `<${serializeInternal(elem.nodes.component)}|>` : `|>`,
+      elem.meta.namedCloseTag
+        ? `<${serializeInternal(elem.nodes.component)}|>`
+        : `|>`,
     ].join('');
   }
 
@@ -96,11 +112,15 @@ function serialize(node: Node): string {
       serializeProps(elem.nodes.props),
       '>',
       childrenStr,
-      elem.meta.namedCloseTag ? `<${serializeInternal(elem.nodes.component)}#>` : `#>`,
+      elem.meta.namedCloseTag
+        ? `<${serializeInternal(elem.nodes.component)}#>`
+        : `#>`,
     ].join('');
   }
 
-  function serializeSelfClosingElement(elem: Node<'SelfClosingElement'>): string {
+  function serializeSelfClosingElement(
+    elem: Node<'SelfClosingElement'>
+  ): string {
     return [
       `<|`,
       serializeInternal(elem.nodes.component),
@@ -113,7 +133,7 @@ function serialize(node: Node): string {
     return (
       `{` +
       item.nodes.items
-        .map((objectItem) => {
+        .map(objectItem => {
           return (
             serializeInternal(objectItem.nodes.whitespaceBefore) +
             serializeObjectPart(objectItem.nodes.item) +
@@ -141,12 +161,16 @@ function serialize(node: Node): string {
       return serializeInternal(item.nodes.name);
     }
     if (NodeIs.Property(item)) {
-      return serializeInternal(item.nodes.name) + ': ' + serializeInternal(item.nodes.value);
+      return (
+        serializeInternal(item.nodes.name) +
+        ': ' +
+        serializeInternal(item.nodes.value)
+      );
     }
     if (NodeIs.ComputedProperty(item)) {
-      return `[${serializeInternal(item.nodes.expression)}]: ${serializeInternal(
-        item.nodes.value
-      )}`;
+      return `[${serializeInternal(
+        item.nodes.expression
+      )}]: ${serializeInternal(item.nodes.value)}`;
     }
     throw new Error(`Unsuported node ${(item as any).type}`);
   }
@@ -164,19 +188,22 @@ function serialize(node: Node): string {
     throw new Error(`Invalid Qutote type on Str`);
   }
 
-  function serializeChildren(items: null | Array<Child>, isInRaw: boolean): string {
+  function serializeChildren(
+    items: null | Array<Child>,
+    isInRaw: boolean
+  ): string {
     if (!items || items.length === 0) {
       return '';
     }
     if (isInRaw) {
       return serializeChildrenInRaw(items);
     }
-    return items.map((sub) => serializeChild(sub, isInRaw)).join('');
+    return items.map(sub => serializeChild(sub, isInRaw)).join('');
   }
 
   function serializeChildrenInRaw(items: Array<Child>): string {
     const groups: Array<Array<Child>> = [];
-    items.forEach((item) => {
+    items.forEach(item => {
       if (groups.length === 0) {
         groups.push([item]);
         return;
@@ -192,12 +219,14 @@ function serialize(node: Node): string {
       }
     });
     return groups
-      .map((group) => {
+      .map(group => {
         const isText = NodeIs.Text(group[0]);
         if (isText) {
-          return group.map((item) => serializeChild(item, true)).join('');
+          return group.map(item => serializeChild(item, true)).join('');
         }
-        return `<#>${group.map((item) => serializeChild(item, true)).join('')}<#>`;
+        return `<#>${group
+          .map(item => serializeChild(item, true))
+          .join('')}<#>`;
       })
       .join('');
   }
@@ -242,7 +271,9 @@ function serialize(node: Node): string {
     throw new Error(`Unsuported node ${item.type}`);
   }
 
-  function serializeComment(item: Node<'BlockComment' | 'LineComment'>): string {
+  function serializeComment(
+    item: Node<'BlockComment' | 'LineComment'>
+  ): string {
     if (NodeIs.LineComment(item)) {
       // TODO: should not add \n if eof
       return `//${item.meta.content}\n`;
@@ -256,8 +287,11 @@ function serialize(node: Node): string {
   function serializeProps(props: Node<'Props'>): string {
     return (
       props.nodes.items
-        .map((prop) => {
-          return serializeInternal(prop.nodes.whitespaceBefore) + serializeProp(prop.nodes.item);
+        .map(prop => {
+          return (
+            serializeInternal(prop.nodes.whitespaceBefore) +
+            serializeProp(prop.nodes.item)
+          );
         })
         .join('') + serializeInternal(props.nodes.whitespaceAfter)
     );
@@ -265,7 +299,9 @@ function serialize(node: Node): string {
 
   function serializeProp(prop: Prop): string {
     if (NodeIs.PropValue(prop)) {
-      return `${serializeInternal(prop.nodes.name)}=${serializeInternal(prop.nodes.value)}`;
+      return `${serializeInternal(prop.nodes.name)}=${serializeInternal(
+        prop.nodes.value
+      )}`;
     }
     if (NodeIs.PropNoValue(prop)) {
       return `${serializeInternal(prop.nodes.name)}`;

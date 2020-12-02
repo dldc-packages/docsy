@@ -114,9 +114,12 @@ function cleanupStack(stack: Stack): Stack {
 //   return cleanupStack(stack);
 // }
 
-export function mergeStacks(left: Stack, ...stacks: Array<StackOrNull>): Array<StackItem> {
+export function mergeStacks(
+  left: Stack,
+  ...stacks: Array<StackOrNull>
+): Array<StackItem> {
   let result: Array<StackItem> = Array.isArray(left) ? left : [left];
-  stacks.forEach((right) => {
+  stacks.forEach(right => {
     if (right === null) {
       return;
     }
@@ -140,9 +143,9 @@ function parseErrorToLines(error: StackItem, depth: number): Array<string> {
     ...(error.stack === null
       ? []
       : Array.isArray(error.stack)
-      ? error.stack.map((p) => parseErrorToLines(p, depth + 1)).flat(1)
+      ? error.stack.map(p => parseErrorToLines(p, depth + 1)).flat(1)
       : parseErrorToLines(error.stack, depth + 1)
-    ).map((l) => (depth % 2 === 0 ? '| ' : '| ') + l),
+    ).map(l => (depth % 2 === 0 ? '| ' : '| ') + l),
   ];
 }
 
@@ -160,29 +163,32 @@ export function named<T>(name: string, parser: Parser<T>): Parser<T> {
 }
 
 export function many<T>(parser: Parser<T>): Parser<Array<T>> {
-  const manyParser = createParser(`Many(${parser.ParserName})`, (input, parent) => {
-    let nextInput = input;
-    let stacks: StackOrNull = [];
-    let items: Array<T> = [];
-    let next: ParseResult<T>;
-    while (true) {
-      next = parser(nextInput, items.length === 0 ? parent : []);
-      if (next.type === 'Failure') {
-        stacks.push(next.stack);
-        break;
+  const manyParser = createParser(
+    `Many(${parser.ParserName})`,
+    (input, parent) => {
+      let nextInput = input;
+      let stacks: StackOrNull = [];
+      let items: Array<T> = [];
+      let next: ParseResult<T>;
+      while (true) {
+        next = parser(nextInput, items.length === 0 ? parent : []);
+        if (next.type === 'Failure') {
+          stacks.push(next.stack);
+          break;
+        }
+        if (next.type === 'Success') {
+          stacks = mergeStacks(stacks, next.stack);
+          items.push(next.value);
+          nextInput = next.rest;
+        }
       }
-      if (next.type === 'Success') {
-        stacks = mergeStacks(stacks, next.stack);
-        items.push(next.value);
-        nextInput = next.rest;
-      }
+      return ParseSuccess(input.position, nextInput, items, {
+        message: `✔ Many ${parser.ParserName} ended (found ${items.length})`,
+        position: input.position,
+        stack: stacks,
+      });
     }
-    return ParseSuccess(input.position, nextInput, items, {
-      message: `✔ Many ${parser.ParserName} ended (found ${items.length})`,
-      position: input.position,
-      stack: stacks,
-    });
-  });
+  );
   return manyParser;
 }
 
@@ -193,7 +199,9 @@ export function manyBetween<Begin, Item, End>(
   end: Parser<End>
 ): Parser<[Begin, Array<Item>, End]> {
   const nameResolved =
-    name === null ? `${begin.ParserName} Many(${item.ParserName}) ${end.ParserName}` : name;
+    name === null
+      ? `${begin.ParserName} Many(${item.ParserName}) ${end.ParserName}`
+      : name;
   const manyBetweenParser = createParser(nameResolved, (input, skip) => {
     let current = input;
     const beginResult = begin(current, skip);
@@ -241,7 +249,11 @@ export function manyBetween<Begin, Item, End>(
       current = itemResult.rest;
       endResult = end(current, skip);
     }
-    const result: [Begin, Array<Item>, End] = [beginResult.value, items, endResult.value];
+    const result: [Begin, Array<Item>, End] = [
+      beginResult.value,
+      items,
+      endResult.value,
+    ];
     return ParseSuccess(input.position, endResult.rest, result, {
       message: `✔ ${nameResolved}`,
       position: input.position,
@@ -251,50 +263,56 @@ export function manyBetween<Begin, Item, End>(
   return manyBetweenParser;
 }
 
-export function manySepBy<T>(itemParser: Parser<T>, sepParser: Parser<any>): Parser<Array<T>> {
+export function manySepBy<T>(
+  itemParser: Parser<T>,
+  sepParser: Parser<any>
+): Parser<Array<T>> {
   const name = `ManySepBy(${itemParser.ParserName}, ${sepParser.ParserName})`;
-  const manySepByParser: Parser<Array<T>> = createParser<Array<T>>(name, (input, parent) => {
-    let nextInput = input;
-    let items: Array<T> = [];
-    // parse first
-    const next = itemParser(nextInput, parent);
-    if (next.type === 'Failure') {
-      return ParseSuccess(input.position, nextInput, items, {
-        message: `✘ ${name}`,
-        position: nextInput.position,
-        stack: next.stack,
-      });
-    }
-    if (next.type === 'Success') {
-      items.push(next.value);
-      nextInput = next.rest;
-    }
-    let nextSep: ParseResult<any>;
-    while (true) {
-      nextSep = sepParser(nextInput, []);
-      if (nextSep.type === 'Failure') {
-        break;
-      }
-      const nextItem = itemParser(nextSep.rest, []);
-      if (nextItem.type === 'Failure') {
-        // fail
-        return ParseFailure({
-          message: `✘ Expected ${itemParser.ParserName} after ${sepParser.ParserName}`,
-          position: nextSep.rest.position,
-          stack: nextItem.stack,
+  const manySepByParser: Parser<Array<T>> = createParser<Array<T>>(
+    name,
+    (input, parent) => {
+      let nextInput = input;
+      let items: Array<T> = [];
+      // parse first
+      const next = itemParser(nextInput, parent);
+      if (next.type === 'Failure') {
+        return ParseSuccess(input.position, nextInput, items, {
+          message: `✘ ${name}`,
+          position: nextInput.position,
+          stack: next.stack,
         });
       }
-      if (nextItem.type === 'Success') {
-        items.push(nextItem.value);
-        nextInput = nextItem.rest;
+      if (next.type === 'Success') {
+        items.push(next.value);
+        nextInput = next.rest;
       }
+      let nextSep: ParseResult<any>;
+      while (true) {
+        nextSep = sepParser(nextInput, []);
+        if (nextSep.type === 'Failure') {
+          break;
+        }
+        const nextItem = itemParser(nextSep.rest, []);
+        if (nextItem.type === 'Failure') {
+          // fail
+          return ParseFailure({
+            message: `✘ Expected ${itemParser.ParserName} after ${sepParser.ParserName}`,
+            position: nextSep.rest.position,
+            stack: nextItem.stack,
+          });
+        }
+        if (nextItem.type === 'Success') {
+          items.push(nextItem.value);
+          nextInput = nextItem.rest;
+        }
+      }
+      return ParseSuccess(input.position, nextInput, items, {
+        message: `✔ ${name} ended`,
+        position: input.position,
+        stack: nextSep.stack,
+      });
     }
-    return ParseSuccess(input.position, nextInput, items, {
-      message: `✔ ${name} ended`,
-      position: input.position,
-      stack: nextSep.stack,
-    });
-  });
+  );
   return manySepByParser;
 }
 
@@ -337,9 +355,12 @@ export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9>(name: string | null, p
 export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>, p9: Parser<R9>, p10: Parser<R10>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10>;
 // prettier-ignore
 export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>, p9: Parser<R9>, p10: Parser<R10>, p11: Parser<R11>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11>;
-export function oneOf<V>(name: string | null, ...parsers: Array<Parser<V>>): Parser<V> {
+export function oneOf<V>(
+  name: string | null,
+  ...parsers: Array<Parser<V>>
+): Parser<V> {
   const nameResolved =
-    name === null ? `OneOf(${parsers.map((p) => p.ParserName).join(',')})` : name;
+    name === null ? `OneOf(${parsers.map(p => p.ParserName).join(',')})` : name;
   const onOfParser = createParser(
     nameResolved,
     (input, skip): ParseResult<V> => {
@@ -407,9 +428,13 @@ export function transform<T, U>(
   });
 }
 
-export function whileNotMatch(name: string | null, matchers: Array<string>): Parser<string> {
-  const nameResolved = name !== null ? name : `WhileNot(${matchers.join(', ')})`;
-  return createParser(nameResolved, (input) => {
+export function whileNotMatch(
+  name: string | null,
+  matchers: Array<string>
+): Parser<string> {
+  const nameResolved =
+    name !== null ? name : `WhileNot(${matchers.join(', ')})`;
+  return createParser(nameResolved, input => {
     let content = '';
     let current = input;
     if (current.empty) {
@@ -419,7 +444,8 @@ export function whileNotMatch(name: string | null, matchers: Array<string>): Par
         stack: null,
       });
     }
-    const noMatches = () => matchers.every((matcher) => current.peek(matcher.length) !== matcher);
+    const noMatches = () =>
+      matchers.every(matcher => current.peek(matcher.length) !== matcher);
     while (!current.empty && noMatches()) {
       content += current.peek();
       current = current.skip();
@@ -432,9 +458,9 @@ export function whileNotMatch(name: string | null, matchers: Array<string>): Par
       });
     }
     return ParseSuccess(input.position, current, content, {
-      message: `✔ ${nameResolved} (stopped at ${current.position} by '${current
-        .peek()
-        .replace(/\n/, '\\n')}')`,
+      message: `✔ ${nameResolved} (stopped at ${
+        current.position
+      } by '${current.peek().replace(/\n/, '\\n')}')`,
       position: input.position,
       stack: null,
     });
@@ -445,7 +471,7 @@ export function whileMatch(
   name: string,
   matcher: (ch1: string, ch2: string, ch3: string) => boolean
 ): Parser<string> {
-  return createParser(name, (input) => {
+  return createParser(name, input => {
     let content = '';
     let current = input;
     if (current.empty) {
@@ -455,7 +481,10 @@ export function whileMatch(
         stack: null,
       });
     }
-    while (!current.empty && matcher(current.peek(), current.peek(2), current.peek(3))) {
+    while (
+      !current.empty &&
+      matcher(current.peek(), current.peek(2), current.peek(3))
+    ) {
       content += current.peek();
       current = current.skip();
     }
@@ -467,17 +496,20 @@ export function whileMatch(
       });
     }
     return ParseSuccess(input.position, current, content, {
-      message: `✔ ${name} (stopped at ${current.position} by '${current
-        .peek()
-        .replace(/\n/, '\\n')}')`,
+      message: `✔ ${name} (stopped at ${
+        current.position
+      } by '${current.peek().replace(/\n/, '\\n')}')`,
       position: input.position,
       stack: null,
     });
   });
 }
 
-export function singleChar(name: string, matcher?: (char: string) => boolean): Parser<string> {
-  return createParser(name, (input) => {
+export function singleChar(
+  name: string,
+  matcher?: (char: string) => boolean
+): Parser<string> {
+  return createParser(name, input => {
     if (input.empty) {
       return ParseFailure({
         message: `✘ ${name}: Unexpected EOF`,
@@ -502,9 +534,12 @@ export function singleChar(name: string, matcher?: (char: string) => boolean): P
   });
 }
 
-export function exact<T extends string>(str: T, name: string = `'${str}'`): Parser<T> {
+export function exact<T extends string>(
+  str: T,
+  name: string = `'${str}'`
+): Parser<T> {
   const nameResolved = name.replace(/\n/, '\\n');
-  return createParser(nameResolved, (input) => {
+  return createParser(nameResolved, input => {
     const peek = input.peek(str.length);
     if (peek.length < str.length) {
       return ParseFailure({
@@ -529,7 +564,7 @@ export function exact<T extends string>(str: T, name: string = `'${str}'`): Pars
   });
 }
 
-export const eof: Parser<null> = createParser('EOF', (input) => {
+export const eof: Parser<null> = createParser('EOF', input => {
   if (input.empty) {
     return ParseSuccess(input.position, input, null, {
       message: `✔ EOF did match`,
@@ -556,8 +591,12 @@ export function pipe<R1, R2, R3, R4, R5>(name: string | null, p1: Parser<R1>, p2
 export function pipe<R1, R2, R3, R4, R5, R6>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>): Parser<[R1, R2, R3, R4, R5, R6]>;
 // prettier-ignore
 export function pipe<R1, R2, R3, R4, R5, R6, R7>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>): Parser<[R1, R2, R3, R4, R5, R6, R7]>;
-export function pipe<V>(name: string | null, ...parsers: Array<Parser<V>>): Parser<Array<V>> {
-  const nameResolved = name === null ? `[${parsers.map((p) => p.ParserName).join(' ')}]` : name;
+export function pipe<V>(
+  name: string | null,
+  ...parsers: Array<Parser<V>>
+): Parser<Array<V>> {
+  const nameResolved =
+    name === null ? `[${parsers.map(p => p.ParserName).join(' ')}]` : name;
   const pipeParser = createParser(nameResolved, (input, skip) => {
     let current = input;
     const result: Array<V> = [];
@@ -641,7 +680,10 @@ export function reduceRight<I, C, O>(
   name: string,
   init: Parser<I>,
   condition: Parser<C>,
-  transform: (result: ParseResultSuccess<I | O>, right: ParseResultSuccess<C>) => ParseResult<O>
+  transform: (
+    result: ParseResultSuccess<I | O>,
+    right: ParseResultSuccess<C>
+  ) => ParseResult<O>
 ): Parser<O> {
   const reduceRightParser: Parser<O> = createParser(
     name,

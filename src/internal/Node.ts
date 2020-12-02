@@ -22,7 +22,10 @@ type CreateNodes<Nodes extends { [key: string]: NodeBase }> = Nodes;
 
 export type Nodes = CreateNodes<{
   Document: CreateNode<{ children: Array<Child> }>;
-  SelfClosingElement: CreateNode<{ component: ComponentType; props: Node<'Props'> }>;
+  SelfClosingElement: CreateNode<{
+    component: ComponentType;
+    props: Node<'Props'>;
+  }>;
   Element: CreateNode<
     { component: ComponentType; props: Node<'Props'>; children: Array<Child> },
     { namedCloseTag: boolean }
@@ -34,8 +37,14 @@ export type Nodes = CreateNodes<{
   Whitespace: CreateNode<{}, { content: string; hasNewLine: boolean }>;
   Fragment: CreateNode<{ children: Array<Child> }>;
   RawFragment: CreateNode<{ children: Array<Child> }>;
-  Props: CreateNode<{ items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace }, {}>;
-  PropItem: CreateNode<{ whitespaceBefore: Node<'Whitespace'>; item: Prop }, {}>;
+  Props: CreateNode<
+    { items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace },
+    {}
+  >;
+  PropItem: CreateNode<
+    { whitespaceBefore: Node<'Whitespace'>; item: Prop },
+    {}
+  >;
   PropValue: CreateNode<{ name: Node<'Identifier'>; value: Expression }, {}>;
   PropNoValue: CreateNode<{ name: Node<'Identifier'> }, {}>;
   PropLineComment: CreateNode<{}, { content: string }>;
@@ -70,11 +79,20 @@ export type Nodes = CreateNodes<{
   }>;
   Array: CreateNode<{ items: Array<Node<'ArrayItem'>> }>;
   EmptyArray: CreateNode<{ whitespace: MaybeWhitespace }>;
-  FunctionCall: CreateNode<{ target: CallableExpression; arguments: Array<Node<'ArrayItem'>> }>;
+  FunctionCall: CreateNode<{
+    target: CallableExpression;
+    arguments: Array<Node<'ArrayItem'>>;
+  }>;
   Identifier: CreateNode<{}, { name: string }>;
-  DotMember: CreateNode<{ target: DottableExpression; property: Node<'Identifier'> }>;
+  DotMember: CreateNode<{
+    target: DottableExpression;
+    property: Node<'Identifier'>;
+  }>;
   Parenthesis: CreateNode<{ value: Expression }>;
-  BracketMember: CreateNode<{ target: DottableExpression; property: Expression }>;
+  BracketMember: CreateNode<{
+    target: DottableExpression;
+    property: Expression;
+  }>;
   ElementTypeMember: CreateNode<{
     target: Node<'Identifier' | 'ElementTypeMember'>;
     property: Node<'Identifier'>;
@@ -86,7 +104,11 @@ export type Nodes = CreateNodes<{
     whitespaceAfter: MaybeWhitespace;
   }>;
   Inject: CreateNode<
-    { whitespaceBefore: MaybeWhitespace; value: Expression; whitespaceAfter: MaybeWhitespace },
+    {
+      whitespaceBefore: MaybeWhitespace;
+      value: Expression;
+      whitespaceAfter: MaybeWhitespace;
+    },
     {}
   >;
 }>;
@@ -146,7 +168,12 @@ export type Document = Node<'Document'>;
 const ComponentType = combine('ElementTypeMember', 'Identifier');
 export type ComponentType = typeof ComponentType['__type'];
 
-const Prop = combine('PropNoValue', 'PropValue', 'PropLineComment', 'PropBlockComment');
+const Prop = combine(
+  'PropNoValue',
+  'PropValue',
+  'PropLineComment',
+  'PropBlockComment'
+);
 export type Prop = typeof Prop['__type'];
 
 const ElementAny = combine(
@@ -183,7 +210,12 @@ export type Primitive = typeof Primitive['__type'];
 const ObjectOrArray = combine('Array', 'EmptyArray', 'Object', 'EmptyObject');
 export type ObjectOrArray = typeof ObjectOrArray['__type'];
 
-const ObjectPart = combine('PropertyShorthand', 'Property', 'ComputedProperty', 'Spread');
+const ObjectPart = combine(
+  'PropertyShorthand',
+  'Property',
+  'ComputedProperty',
+  'Spread'
+);
 export type ObjectPart = typeof ObjectPart['__type'];
 
 const DottableExpression = combine(
@@ -204,7 +236,10 @@ export type Expression = typeof Expression['__type'];
 
 export type MaybeWhitespace = Node<'Whitespace'> | null;
 
-function nodeIsOneIf<T extends NodeType>(node: Node, types: ReadonlyArray<T>): node is Node<T> {
+function nodeIsOneIf<T extends NodeType>(
+  node: Node,
+  types: ReadonlyArray<T>
+): node is Node<T> {
   return types.includes(node.type as any);
 }
 
@@ -237,9 +272,15 @@ export const NodeIs = {
 };
 
 export const CreateNode: {
-  [K in NodeType]: (nodes: Nodes[K]['nodes'], meta: Nodes[K]['meta']) => Node<K>;
+  [K in NodeType]: (
+    nodes: Nodes[K]['nodes'],
+    meta: Nodes[K]['meta']
+  ) => Node<K>;
 } = NODES.reduce<any>((acc, type) => {
-  acc[type] = (nodes: Nodes[NodeType]['nodes'], meta: Nodes[NodeType]['meta']) => ({
+  acc[type] = (
+    nodes: Nodes[NodeType]['nodes'],
+    meta: Nodes[NodeType]['meta']
+  ) => ({
     type,
     nodes,
     meta,
@@ -255,7 +296,11 @@ type NodeTypeFromArray<T extends ReadonlyArray<NodeType>> = Node<T[number]>;
 
 function combine<T extends ReadonlyArray<NodeType>>(
   ...types: T
-): { (node: Node): node is NodeTypeFromArray<T>; types: T; __type: NodeTypeFromArray<T> } {
+): {
+  (node: Node): node is NodeTypeFromArray<T>;
+  types: T;
+  __type: NodeTypeFromArray<T>;
+} {
   const fn = ((node: Node) => types.includes(node.type)) as any;
   fn.types = types;
   return fn;

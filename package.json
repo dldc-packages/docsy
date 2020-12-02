@@ -25,35 +25,32 @@
     "bin"
   ],
   "scripts": {
-    "build": "tsdx build --target web",
-    "lint": "tsdx lint",
+    "analyze": "size-limit --why",
+    "build": "tsdx build",
+    "lint": "tsdx lint src",
+    "prepare": "tsdx build",
     "pub": "yarn build && np",
+    "size": "size-limit",
     "start": "tsdx watch",
     "test": "tsdx test --coverage",
     "test:watch": "tsdx test --watch"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
-  "prettier": {
-    "printWidth": 100,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
-  "dependencies": {},
   "devDependencies": {
-    "@types/fs-extra": "^9.0.1",
-    "@types/jest": "^26.0.13",
-    "eslint-plugin-prettier": "^3.1.4",
+    "@types/fs-extra": "^9.0.4",
+    "@types/jest": "^26.0.16",
     "fs-extra": "^9.0.1",
-    "husky": "^4.2.5",
-    "np": "^6.5.0",
-    "prettier": "^2.1.1",
-    "tsdx": "^0.13.3",
-    "tslib": "^2.0.1",
-    "typescript": "^3.9.7"
+    "np": "^7.0.0",
+    "prettier": "1.19.1",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.0.3",
+    "typescript": "^4.0.5"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "np": {
+    "yarn": false,
+    "cleanup": false
   }
 }
