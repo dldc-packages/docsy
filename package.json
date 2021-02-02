@@ -35,12 +35,24 @@
     "test": "tsdx test --coverage",
     "test:watch": "tsdx test --watch"
   },
+  "eslintConfig": {
+    "settings": {
+      "react": {
+        "version": "999.999.999"
+      }
+    },
+    "extends": [
+      "react-app",
+      "prettier/@typescript-eslint",
+      "plugin:prettier/recommended"
+    ]
+  },
   "devDependencies": {
     "@types/fs-extra": "^9.0.4",
     "@types/jest": "^26.0.16",
     "fs-extra": "^9.0.1",
     "np": "^7.0.0",
-    "prettier": "1.19.1",
+    "prettier": "2.2.1",
     "tsdx": "^0.14.1",
     "tslib": "^2.0.3",
     "typescript": "^4.0.5"
@@ -48,9 +60,5 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
-  },
-  "np": {
-    "yarn": false,
-    "cleanup": false
   }
 }

@@ -35,9 +35,9 @@ Hello <|B>world|> !
 <|Block template=`Some template string with inject value`|>
 
 <|Block color='red'>
-<|Agathe color='red'>
+<|Footer color='red'>
 bla bla bla
-<Agathe|>
+<Footer|>
 <Block|>
 
 <|Block theme=Theme.dark() foo=43|>

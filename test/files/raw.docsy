@@ -4,7 +4,7 @@
 Some raw code
 // No comments in this !
 <|Block color="red">
-<|Agathe color="red">
+<|Footer color="red">
 <#>
 
 <#Code language="javascript">
@@ -14,7 +14,7 @@ Some raw code
 // comment here
 <|Block color="red"|>
 /* More comment */<|Block color="red"|>
-<|Agathe color="red">
+<|Footer color="red">
 <Code#>
 
 <#Code language="javascript"><|Block color="red">#>
@@ -29,5 +29,5 @@ Some raw code
 <|Block color="red"|>
 /* More comment */<|Block color="red"|>
 <#>
-<|Agathe color="red">
+<|Footer color="red">
 <Code#>

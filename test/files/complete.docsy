@@ -47,7 +47,7 @@ Hello <|B>world|> !
 Some raw code
 // No comments in this !
 <|Block color="red">
-<|Agathe color="red">
+<|Footer color="red">
 <#>
 
 <#Code language="javascript">
@@ -60,13 +60,13 @@ Some raw code
 <|Block color="red"|>
 /* More comment */<|Block color="red"|>
 <#>
-<|Agathe color="red">
+<|Footer color="red">
 <Code#>
 
 <|Block color="red">
-<|Agathe color="red">
+<|Footer color="red">
 bla bla bla
-<Agathe|>
+<Footer|>
 <Block|>
 
 <|Block theme=Theme.dark() /* foo=43 */ |>
