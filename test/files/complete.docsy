@@ -28,6 +28,8 @@ Hello <|B>world|> !
   bool=true
   noop=null
   access=Foo['bar'].foo()
+  // comment in props
+  //
 >
 Hello <|B>world|> !
 |>
