@@ -81,11 +81,7 @@ function format(node: Node): Node {
     );
   }
 
-  function createNode<K extends NodeType>(
-    type: K,
-    nodes: Nodes[K]['nodes'],
-    meta: Nodes[K]['meta']
-  ): Node<K> {
+  function createNode<K extends NodeType>(type: K, nodes: Nodes[K]['nodes'], meta: Nodes[K]['meta']): Node<K> {
     const node: Node<K> = {
       type,
       nodes,

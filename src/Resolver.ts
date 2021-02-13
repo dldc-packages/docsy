@@ -38,17 +38,16 @@ function resolve(node: Node, options: ResolveOptions): any {
       }
       return result;
     }
+    if (NodeIs.ExpressionDocument(item)) {
+      return resolveNode(item.nodes.value);
+    }
     if (NodeIs.Element(item) || NodeIs.SelfClosingElement(item)) {
       const props = resolveNode(item.nodes.props);
-      const children = NodeIs.SelfClosingElement(item)
-        ? []
-        : resolveChildren(item.nodes.children);
+      const children = NodeIs.SelfClosingElement(item) ? [] : resolveChildren(item.nodes.children);
       const type = resolveNode(item.nodes.component);
       if (type === undefined) {
         throw new Error(
-          `Invalid type, you probably forgot to provide a value for ${DocsySerializer.serialize(
-            item.nodes.component
-          )}`
+          `Invalid type, you probably forgot to provide a value for ${DocsySerializer.serialize(item.nodes.component)}`
         );
       }
       return resolveJsx(type, { ...props, children });
@@ -59,9 +58,7 @@ function resolve(node: Node, options: ResolveOptions): any {
       const type = resolveNode(item.nodes.component);
       if (type === undefined) {
         throw new Error(
-          `Invalid type, you probably forgot to provide a value for ${DocsySerializer.serialize(
-            item.nodes.component
-          )}`
+          `Invalid type, you probably forgot to provide a value for ${DocsySerializer.serialize(item.nodes.component)}`
         );
       }
       return resolveJsx(type, { ...props, children });
@@ -94,17 +91,17 @@ function resolve(node: Node, options: ResolveOptions): any {
       const target = resolveNode(item.nodes.target);
       if (target === undefined) {
         throw new Error(
-          `Cannot access property "${DocsySerializer.serialize(
-            item.nodes.property
-          )}" of \`${DocsySerializer.serialize(item.nodes.target)}\``
+          `Cannot access property "${DocsySerializer.serialize(item.nodes.property)}" of \`${DocsySerializer.serialize(
+            item.nodes.target
+          )}\``
         );
       }
       const keys = Object.keys(target);
       if (keys.indexOf(item.nodes.property.meta.name) === -1) {
         throw new Error(
-          `Cannot access property "${DocsySerializer.serialize(
-            item.nodes.property
-          )}" of \`${DocsySerializer.serialize(item.nodes.target)}\``
+          `Cannot access property "${DocsySerializer.serialize(item.nodes.property)}" of \`${DocsySerializer.serialize(
+            item.nodes.target
+          )}\``
         );
       }
       return resolveNode(item.nodes.target)[item.nodes.property.meta.name];
@@ -143,9 +140,7 @@ function resolve(node: Node, options: ResolveOptions): any {
 
   function resolveJsx(type: string, props: any): any {
     if (!jsx || typeof jsx !== 'function') {
-      throw new Error(
-        `No JSX function provided. You need a jsx(type, props, key) function to resolve components.`
-      );
+      throw new Error(`No JSX function provided. You need a jsx(type, props, key) function to resolve components.`);
     }
     const key = props.key;
     if (props.key) {
@@ -160,7 +155,7 @@ function resolve(node: Node, options: ResolveOptions): any {
 
   function resolveChildren(items: Array<Node>): Array<any> {
     const result: Array<any> = [];
-    items.forEach(child => {
+    items.forEach((child) => {
       const next = resolveNode(child);
       const last = result[result.length - 1];
       if (typeof next === 'string' && typeof last === 'string') {
@@ -174,7 +169,7 @@ function resolve(node: Node, options: ResolveOptions): any {
 
   function resolveProps(items: Array<Node<'PropItem'>>): any {
     const obj: any = {};
-    items.forEach(prop => {
+    items.forEach((prop) => {
       const inner = prop.nodes.item;
       if (NodeIs.PropNoValue(inner)) {
         const key: string = inner.nodes.name.meta.name;
@@ -193,7 +188,7 @@ function resolve(node: Node, options: ResolveOptions): any {
 
   function resolveObject(items: Array<Node<'ObjectItem'>>): any {
     let obj: any = {};
-    items.forEach(propItem => {
+    items.forEach((propItem) => {
       const prop = propItem.nodes.item;
       if (NodeIs.Spread(prop)) {
         const value = resolveNode(prop.nodes.target);
@@ -234,7 +229,7 @@ function resolve(node: Node, options: ResolveOptions): any {
 
   function resolveArray(items: Array<Node<'ArrayItem'>>): any {
     let arr: Array<any> = [];
-    items.forEach(arrayItem => {
+    items.forEach((arrayItem) => {
       const item = arrayItem.nodes.item;
       if (NodeIs.Spread(item)) {
         const value = resolveNode(item.nodes.target);

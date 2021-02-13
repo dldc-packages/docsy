@@ -26,9 +26,9 @@ export interface ParseResultSuccess<T> {
 
 export type ParseResult<T> = ParseResultSuccess<T> | ParseResultFailure;
 
-export type Parser<T> = {
+export type Parser<T, Ctx> = {
   ParserName: string;
-  (input: StringReader, skip: Array<Parser<any>>): ParseResult<T>;
+  (input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx): ParseResult<T>;
 };
 
 export function ParseFailure(stack: StackItem): ParseResultFailure {
@@ -38,12 +38,7 @@ export function ParseFailure(stack: StackItem): ParseResultFailure {
   };
 }
 
-export function ParseSuccess<T>(
-  start: number,
-  rest: StringReader,
-  value: T,
-  stack: Stack
-): ParseResultSuccess<T> {
+export function ParseSuccess<T>(start: number, rest: StringReader, value: T, stack: Stack): ParseResultSuccess<T> {
   return {
     type: 'Success',
     rest,
@@ -107,19 +102,9 @@ function cleanupStack(stack: Stack): Stack {
   return cleanupStackItem(stack);
 }
 
-// export function cleanupStackOrNull(stack: StackOrNull): StackOrNull {
-//   if (stack === null) {
-//     return null;
-//   }
-//   return cleanupStack(stack);
-// }
-
-export function mergeStacks(
-  left: Stack,
-  ...stacks: Array<StackOrNull>
-): Array<StackItem> {
+export function mergeStacks(left: Stack, ...stacks: Array<StackOrNull>): Array<StackItem> {
   let result: Array<StackItem> = Array.isArray(left) ? left : [left];
-  stacks.forEach(right => {
+  stacks.forEach((right) => {
     if (right === null) {
       return;
     }
@@ -143,68 +128,62 @@ function parseErrorToLines(error: StackItem, depth: number): Array<string> {
     ...(error.stack === null
       ? []
       : Array.isArray(error.stack)
-      ? error.stack.map(p => parseErrorToLines(p, depth + 1)).flat(1)
+      ? error.stack.map((p) => parseErrorToLines(p, depth + 1)).flat(1)
       : parseErrorToLines(error.stack, depth + 1)
-    ).map(l => (depth % 2 === 0 ? '| ' : '| ') + l),
+    ).map((l) => (depth % 2 === 0 ? '| ' : '| ') + l),
   ];
 }
 
-function createParser<T>(
+function createParser<T, Ctx>(
   name: string,
-  fn: (input: StringReader, skip: Array<Parser<any>>) => ParseResult<T>
-): Parser<T> {
-  const parser: Parser<T> = fn as any;
+  fn: (input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx) => ParseResult<T>
+): Parser<T, Ctx> {
+  const parser: Parser<T, Ctx> = fn as any;
   parser.ParserName = name;
   return parser;
 }
 
-export function named<T>(name: string, parser: Parser<T>): Parser<T> {
+export function named<T, Ctx>(name: string, parser: Parser<T, Ctx>): Parser<T, Ctx> {
   return createParser(name, parser);
 }
 
-export function many<T>(parser: Parser<T>): Parser<Array<T>> {
-  const manyParser = createParser(
-    `Many(${parser.ParserName})`,
-    (input, parent) => {
-      let nextInput = input;
-      let stacks: StackOrNull = [];
-      let items: Array<T> = [];
-      let next: ParseResult<T>;
-      while (true) {
-        next = parser(nextInput, items.length === 0 ? parent : []);
-        if (next.type === 'Failure') {
-          stacks.push(next.stack);
-          break;
-        }
-        if (next.type === 'Success') {
-          stacks = mergeStacks(stacks, next.stack);
-          items.push(next.value);
-          nextInput = next.rest;
-        }
+export function many<T, Ctx>(parser: Parser<T, Ctx>): Parser<Array<T>, Ctx> {
+  const manyParser = createParser<Array<T>, Ctx>(`Many(${parser.ParserName})`, (input, parent, ctx) => {
+    let nextInput = input;
+    let stacks: StackOrNull = [];
+    let items: Array<T> = [];
+    let next: ParseResult<T>;
+    while (true) {
+      next = parser(nextInput, items.length === 0 ? parent : [], ctx);
+      if (next.type === 'Failure') {
+        stacks.push(next.stack);
+        break;
       }
-      return ParseSuccess(input.position, nextInput, items, {
-        message: `✔ Many ${parser.ParserName} ended (found ${items.length})`,
-        position: input.position,
-        stack: stacks,
-      });
+      if (next.type === 'Success') {
+        stacks = mergeStacks(stacks, next.stack);
+        items.push(next.value);
+        nextInput = next.rest;
+      }
     }
-  );
+    return ParseSuccess(input.position, nextInput, items, {
+      message: `✔ Many ${parser.ParserName} ended (found ${items.length})`,
+      position: input.position,
+      stack: stacks,
+    });
+  });
   return manyParser;
 }
 
-export function manyBetween<Begin, Item, End>(
+export function manyBetween<Begin, Item, End, Ctx>(
   name: string | null,
-  begin: Parser<Begin>,
-  item: Parser<Item>,
-  end: Parser<End>
-): Parser<[Begin, Array<Item>, End]> {
-  const nameResolved =
-    name === null
-      ? `${begin.ParserName} Many(${item.ParserName}) ${end.ParserName}`
-      : name;
-  const manyBetweenParser = createParser(nameResolved, (input, skip) => {
+  begin: Parser<Begin, Ctx>,
+  item: Parser<Item, Ctx>,
+  end: Parser<End, Ctx>
+): Parser<[Begin, Array<Item>, End], Ctx> {
+  const nameResolved = name === null ? `${begin.ParserName} Many(${item.ParserName}) ${end.ParserName}` : name;
+  const manyBetweenParser = createParser<[Begin, Array<Item>, End], Ctx>(nameResolved, (input, skip, ctx) => {
     let current = input;
-    const beginResult = begin(current, skip);
+    const beginResult = begin(current, skip, ctx);
     if (beginResult.type === 'Failure') {
       return ParseFailure({
         message: `✘ ${nameResolved}`,
@@ -218,7 +197,7 @@ export function manyBetween<Begin, Item, End>(
     }
     current = beginResult.rest;
     let stacks: StackOrNull = beginResult.stack;
-    let endResult = end(current, skip);
+    let endResult = end(current, skip, ctx);
     const items: Array<Item> = [];
     while (endResult.type === 'Failure') {
       if (current.size === 0) {
@@ -232,7 +211,7 @@ export function manyBetween<Begin, Item, End>(
           }),
         });
       }
-      const itemResult = item(current, skip);
+      const itemResult = item(current, skip, ctx);
       if (itemResult.type === 'Failure') {
         return ParseFailure({
           message: `✘ ${nameResolved}`,
@@ -247,13 +226,9 @@ export function manyBetween<Begin, Item, End>(
       items.push(itemResult.value);
       stacks = mergeStacks(stacks, itemResult.stack);
       current = itemResult.rest;
-      endResult = end(current, skip);
+      endResult = end(current, skip, ctx);
     }
-    const result: [Begin, Array<Item>, End] = [
-      beginResult.value,
-      items,
-      endResult.value,
-    ];
+    const result: [Begin, Array<Item>, End] = [beginResult.value, items, endResult.value];
     return ParseSuccess(input.position, endResult.rest, result, {
       message: `✔ ${nameResolved}`,
       position: input.position,
@@ -263,65 +238,59 @@ export function manyBetween<Begin, Item, End>(
   return manyBetweenParser;
 }
 
-export function manySepBy<T>(
-  itemParser: Parser<T>,
-  sepParser: Parser<any>
-): Parser<Array<T>> {
+export function manySepBy<T, Ctx>(itemParser: Parser<T, Ctx>, sepParser: Parser<any, Ctx>): Parser<Array<T>, Ctx> {
   const name = `ManySepBy(${itemParser.ParserName}, ${sepParser.ParserName})`;
-  const manySepByParser: Parser<Array<T>> = createParser<Array<T>>(
-    name,
-    (input, parent) => {
-      let nextInput = input;
-      let items: Array<T> = [];
-      // parse first
-      const next = itemParser(nextInput, parent);
-      if (next.type === 'Failure') {
-        return ParseSuccess(input.position, nextInput, items, {
-          message: `✘ ${name}`,
-          position: nextInput.position,
-          stack: next.stack,
-        });
-      }
-      if (next.type === 'Success') {
-        items.push(next.value);
-        nextInput = next.rest;
-      }
-      let nextSep: ParseResult<any>;
-      while (true) {
-        nextSep = sepParser(nextInput, []);
-        if (nextSep.type === 'Failure') {
-          break;
-        }
-        const nextItem = itemParser(nextSep.rest, []);
-        if (nextItem.type === 'Failure') {
-          // fail
-          return ParseFailure({
-            message: `✘ Expected ${itemParser.ParserName} after ${sepParser.ParserName}`,
-            position: nextSep.rest.position,
-            stack: nextItem.stack,
-          });
-        }
-        if (nextItem.type === 'Success') {
-          items.push(nextItem.value);
-          nextInput = nextItem.rest;
-        }
-      }
+  const manySepByParser: Parser<Array<T>, Ctx> = createParser<Array<T>, Ctx>(name, (input, parent, ctx) => {
+    let nextInput = input;
+    let items: Array<T> = [];
+    // parse first
+    const next = itemParser(nextInput, parent, ctx);
+    if (next.type === 'Failure') {
       return ParseSuccess(input.position, nextInput, items, {
-        message: `✔ ${name} ended`,
-        position: input.position,
-        stack: nextSep.stack,
+        message: `✘ ${name}`,
+        position: nextInput.position,
+        stack: next.stack,
       });
     }
-  );
+    if (next.type === 'Success') {
+      items.push(next.value);
+      nextInput = next.rest;
+    }
+    let nextSep: ParseResult<any>;
+    while (true) {
+      nextSep = sepParser(nextInput, [], ctx);
+      if (nextSep.type === 'Failure') {
+        break;
+      }
+      const nextItem = itemParser(nextSep.rest, [], ctx);
+      if (nextItem.type === 'Failure') {
+        // fail
+        return ParseFailure({
+          message: `✘ Expected ${itemParser.ParserName} after ${sepParser.ParserName}`,
+          position: nextSep.rest.position,
+          stack: nextItem.stack,
+        });
+      }
+      if (nextItem.type === 'Success') {
+        items.push(nextItem.value);
+        nextInput = nextItem.rest;
+      }
+    }
+    return ParseSuccess(input.position, nextInput, items, {
+      message: `✔ ${name} ended`,
+      position: input.position,
+      stack: nextSep.stack,
+    });
+  });
   return manySepByParser;
 }
 
-export function maybe<T>(parser: Parser<T>): Parser<T | null> {
-  const maybeParser: Parser<T | null> = createParser<T | null>(
+export function maybe<T, Ctx>(parser: Parser<T, Ctx>): Parser<T | null, Ctx> {
+  const maybeParser: Parser<T | null, Ctx> = createParser<T | null, Ctx>(
     `Maybe(${parser.ParserName})`,
-    (input, parent) => {
+    (input, parent, ctx) => {
       let nextInput = input;
-      const next = parser(nextInput, parent);
+      const next = parser(nextInput, parent, ctx);
       if (next.type === 'Failure') {
         return ParseSuccess(input.position, input, null, {
           message: `✔ Maybe ${parser.ParserName}`,
@@ -336,34 +305,30 @@ export function maybe<T>(parser: Parser<T>): Parser<T | null> {
 }
 
 // prettier-ignore
-export function oneOf<R1, R2>(name: string | null, p1: Parser<R1>, p2: Parser<R2>): Parser<R1 | R2>;
+export function oneOf<R1, R2, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>): Parser<R1 | R2, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>): Parser<R1 | R2 | R3>;
+export function oneOf<R1, R2, R3, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>): Parser<R1 | R2 | R3, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3, R4>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>): Parser<R1 | R2 | R3 | R4>;
+export function oneOf<R1, R2, R3, R4, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>): Parser<R1 | R2 | R3 | R4, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3, R4, R5>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>): Parser<R1 | R2 | R3 | R4 | R5>;
+export function oneOf<R1, R2, R3, R4, R5, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>): Parser<R1 | R2 | R3 | R4 | R5, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3, R4, R5, R6>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>): Parser<R1 | R2 | R3 | R4 | R5 | R6>;
+export function oneOf<R1, R2, R3, R4, R5, R6, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>): Parser<R1 | R2 | R3 | R4 | R5 | R6, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3, R4, R5, R6, R7>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7>;
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>, p7: Parser<R7, C>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8>;
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>, p7: Parser<R7, C>, p8: Parser<R8, C>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>, p9: Parser<R9>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9>;
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>, p7: Parser<R7, C>, p8: Parser<R8, C>, p9: Parser<R9, C>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>, p9: Parser<R9>, p10: Parser<R10>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10>;
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>, p7: Parser<R7, C>, p8: Parser<R8, C>, p9: Parser<R9, C>, p10: Parser<R10, C>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10, C>;
 // prettier-ignore
-export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>, p8: Parser<R8>, p9: Parser<R9>, p10: Parser<R10>, p11: Parser<R11>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11>;
-export function oneOf<V>(
-  name: string | null,
-  ...parsers: Array<Parser<V>>
-): Parser<V> {
-  const nameResolved =
-    name === null ? `OneOf(${parsers.map(p => p.ParserName).join(',')})` : name;
-  const onOfParser = createParser(
+export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>, p7: Parser<R7, C>, p8: Parser<R8, C>, p9: Parser<R9, C>, p10: Parser<R10, C>, p11: Parser<R11, C>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11, C>;
+export function oneOf<V, Ctx>(name: string | null, ...parsers: Array<Parser<V, Ctx>>): Parser<V, Ctx> {
+  const nameResolved = name === null ? `OneOf(${parsers.map((p) => p.ParserName).join(',')})` : name;
+  const onOfParser = createParser<V, Ctx>(
     nameResolved,
-    (input, skip): ParseResult<V> => {
+    (input, skip, ctx): ParseResult<V> => {
       let stacks: StackOrNull = [];
       for (const parser of parsers) {
         if (skip.includes(parser)) {
@@ -374,7 +339,7 @@ export function oneOf<V>(
           });
           continue;
         }
-        const next = parser(input, [...skip]);
+        const next = parser(input, [...skip], ctx);
         if (next.type === 'Success') {
           return ParseSuccess(input.position, next.rest, next.value, {
             message: `✔ ${nameResolved}`,
@@ -402,39 +367,35 @@ export function oneOf<V>(
   return onOfParser;
 }
 
-export function transformSuccess<T, U>(
-  parser: Parser<T>,
-  transformer: (val: T, start: number, end: number) => U
-): Parser<U> {
-  return createParser(parser.ParserName, (input, skip) => {
-    const next = parser(input, skip);
+export function transformSuccess<T, U, Ctx>(
+  parser: Parser<T, Ctx>,
+  transformer: (val: T, start: number, end: number, ctx: Ctx) => U
+): Parser<U, Ctx> {
+  return createParser<U, Ctx>(parser.ParserName, (input, skip, ctx) => {
+    const next = parser(input, skip, ctx);
     if (next.type === 'Success') {
       return {
         ...next,
-        value: transformer(next.value, next.start, next.end),
+        value: transformer(next.value, next.start, next.end, ctx),
       };
     }
     return next;
   });
 }
 
-export function transform<T, U>(
-  parser: Parser<T>,
-  transformer: (result: ParseResult<T>) => ParseResult<U>
-): Parser<U> {
-  return createParser(parser.ParserName, (input, skip) => {
-    const next = parser(input, skip);
-    return transformer(next);
+export function transform<T, U, Ctx>(
+  parser: Parser<T, Ctx>,
+  transformer: (result: ParseResult<T>, ctx: Ctx) => ParseResult<U>
+): Parser<U, Ctx> {
+  return createParser<U, Ctx>(parser.ParserName, (input, skip, ctx) => {
+    const next = parser(input, skip, ctx);
+    return transformer(next, ctx);
   });
 }
 
-export function whileNotMatch(
-  name: string | null,
-  matchers: Array<string>
-): Parser<string> {
-  const nameResolved =
-    name !== null ? name : `WhileNot(${matchers.join(', ')})`;
-  return createParser(nameResolved, input => {
+export function whileNotMatch<Ctx>(name: string | null, matchers: Array<string>): Parser<string, Ctx> {
+  const nameResolved = name !== null ? name : `WhileNot(${matchers.join(', ')})`;
+  return createParser<string, Ctx>(nameResolved, (input) => {
     let content = '';
     let current = input;
     if (current.empty) {
@@ -444,8 +405,7 @@ export function whileNotMatch(
         stack: null,
       });
     }
-    const noMatches = () =>
-      matchers.every(matcher => current.peek(matcher.length) !== matcher);
+    const noMatches = () => matchers.every((matcher) => current.peek(matcher.length) !== matcher);
     while (!current.empty && noMatches()) {
       content += current.peek();
       current = current.skip();
@@ -458,20 +418,18 @@ export function whileNotMatch(
       });
     }
     return ParseSuccess(input.position, current, content, {
-      message: `✔ ${nameResolved} (stopped at ${
-        current.position
-      } by '${current.peek().replace(/\n/, '\\n')}')`,
+      message: `✔ ${nameResolved} (stopped at ${current.position} by '${current.peek().replace(/\n/, '\\n')}')`,
       position: input.position,
       stack: null,
     });
   });
 }
 
-export function whileMatch(
+export function whileMatch<Ctx>(
   name: string,
   matcher: (ch1: string, ch2: string, ch3: string) => boolean
-): Parser<string> {
-  return createParser(name, input => {
+): Parser<string, Ctx> {
+  return createParser(name, (input) => {
     let content = '';
     let current = input;
     if (current.empty) {
@@ -481,10 +439,7 @@ export function whileMatch(
         stack: null,
       });
     }
-    while (
-      !current.empty &&
-      matcher(current.peek(), current.peek(2), current.peek(3))
-    ) {
+    while (!current.empty && matcher(current.peek(), current.peek(2), current.peek(3))) {
       content += current.peek();
       current = current.skip();
     }
@@ -496,20 +451,15 @@ export function whileMatch(
       });
     }
     return ParseSuccess(input.position, current, content, {
-      message: `✔ ${name} (stopped at ${
-        current.position
-      } by '${current.peek().replace(/\n/, '\\n')}')`,
+      message: `✔ ${name} (stopped at ${current.position} by '${current.peek().replace(/\n/, '\\n')}')`,
       position: input.position,
       stack: null,
     });
   });
 }
 
-export function singleChar(
-  name: string,
-  matcher?: (char: string) => boolean
-): Parser<string> {
-  return createParser(name, input => {
+export function singleChar<Ctx>(name: string, matcher?: (char: string) => boolean): Parser<string, Ctx> {
+  return createParser(name, (input) => {
     if (input.empty) {
       return ParseFailure({
         message: `✘ ${name}: Unexpected EOF`,
@@ -534,12 +484,9 @@ export function singleChar(
   });
 }
 
-export function exact<T extends string>(
-  str: T,
-  name: string = `'${str}'`
-): Parser<T> {
+export function exact<T extends string, Ctx>(str: T, name: string = `'${str}'`): Parser<T, Ctx> {
   const nameResolved = name.replace(/\n/, '\\n');
-  return createParser(nameResolved, input => {
+  return createParser(nameResolved, (input) => {
     const peek = input.peek(str.length);
     if (peek.length < str.length) {
       return ParseFailure({
@@ -564,40 +511,38 @@ export function exact<T extends string>(
   });
 }
 
-export const eof: Parser<null> = createParser('EOF', input => {
-  if (input.empty) {
-    return ParseSuccess(input.position, input, null, {
-      message: `✔ EOF did match`,
+export function eof<Ctx>(): Parser<null, Ctx> {
+  return createParser('EOF', (input) => {
+    if (input.empty) {
+      return ParseSuccess(input.position, input, null, {
+        message: `✔ EOF did match`,
+        position: input.position,
+        stack: null,
+      });
+    }
+    return ParseFailure({
+      message: `✘ Expected EOF, received '${input.peek().replace(/\n/, '\\n')}'`,
       position: input.position,
       stack: null,
     });
-  }
-  return ParseFailure({
-    message: `✘ Expected EOF, received '${input.peek().replace(/\n/, '\\n')}'`,
-    position: input.position,
-    stack: null,
   });
-});
+}
 
 // prettier-ignore
-export function pipe<R1, R2>(name: string | null, p1: Parser<R1>, p2: Parser<R2>): Parser<[R1, R2]>;
+export function pipe<R1, R2, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>): Parser<[R1, R2], C>;
 // prettier-ignore
-export function pipe<R1, R2, R3>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>): Parser<[R1, R2, R3]>;
+export function pipe<R1, R2, R3, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>): Parser<[R1, R2, R3], C>;
 // prettier-ignore
-export function pipe<R1, R2, R3, R4>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>): Parser<[R1, R2, R3, R4]>;
+export function pipe<R1, R2, R3, R4, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>): Parser<[R1, R2, R3, R4], C>;
 // prettier-ignore
-export function pipe<R1, R2, R3, R4, R5>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>): Parser<[R1, R2, R3, R4, R5]>;
+export function pipe<R1, R2, R3, R4, R5, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>): Parser<[R1, R2, R3, R4, R5], C>;
 // prettier-ignore
-export function pipe<R1, R2, R3, R4, R5, R6>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>): Parser<[R1, R2, R3, R4, R5, R6]>;
+export function pipe<R1, R2, R3, R4, R5, R6, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>): Parser<[R1, R2, R3, R4, R5, R6], C>;
 // prettier-ignore
-export function pipe<R1, R2, R3, R4, R5, R6, R7>(name: string | null, p1: Parser<R1>, p2: Parser<R2>, p3: Parser<R3>, p4: Parser<R4>, p5: Parser<R5>, p6: Parser<R6>, p7: Parser<R7>): Parser<[R1, R2, R3, R4, R5, R6, R7]>;
-export function pipe<V>(
-  name: string | null,
-  ...parsers: Array<Parser<V>>
-): Parser<Array<V>> {
-  const nameResolved =
-    name === null ? `[${parsers.map(p => p.ParserName).join(' ')}]` : name;
-  const pipeParser = createParser(nameResolved, (input, skip) => {
+export function pipe<R1, R2, R3, R4, R5, R6, R7, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>, p7: Parser<R7, C>): Parser<[R1, R2, R3, R4, R5, R6, R7], C>;
+export function pipe<V, Ctx>(name: string | null, ...parsers: Array<Parser<V, Ctx>>): Parser<Array<V>, Ctx> {
+  const nameResolved = name === null ? `[${parsers.map((p) => p.ParserName).join(' ')}]` : name;
+  const pipeParser = createParser<Array<V>, Ctx>(nameResolved, (input, skip, ctx) => {
     let current = input;
     const result: Array<V> = [];
     let stacks: Array<StackItem> = [];
@@ -615,7 +560,7 @@ export function pipe<V>(
 
     for (let i = 0; i < parsers.length; i++) {
       const parser = parsers[i];
-      const next = parser(current, i === 0 ? [...skip, parser] : []);
+      const next = parser(current, i === 0 ? [...skip, parser] : [], ctx);
       if (next.type === 'Failure') {
         stacks.push(next.stack);
         // const prevError = prevResult === null ? null : prevResult.result.stack;
@@ -665,29 +610,26 @@ export function pipe<V>(
 //   });
 // }
 
-export function lazy<T>(name: string, exec: () => Parser<T>): Parser<T> {
-  let resolved: Parser<T> | null = null;
-  const parser: Parser<T> = createParser(name, (input, skip) => {
+export function lazy<T, Ctx>(name: string, exec: () => Parser<T, Ctx>): Parser<T, Ctx> {
+  let resolved: Parser<T, Ctx> | null = null;
+  const parser = createParser<T, Ctx>(name, (input, skip, ctx) => {
     if (resolved == null) {
       resolved = exec();
     }
-    return resolved(input, skip);
+    return resolved(input, skip, ctx);
   });
   return parser;
 }
 
-export function reduceRight<I, C, O>(
+export function reduceRight<I, C, O, Ctx>(
   name: string,
-  init: Parser<I>,
-  condition: Parser<C>,
-  transform: (
-    result: ParseResultSuccess<I | O>,
-    right: ParseResultSuccess<C>
-  ) => ParseResult<O>
-): Parser<O> {
-  const reduceRightParser: Parser<O> = createParser(
+  init: Parser<I, Ctx>,
+  condition: Parser<C, Ctx>,
+  transform: (result: ParseResultSuccess<I | O>, right: ParseResultSuccess<C>, ctx: Ctx) => ParseResult<O>
+): Parser<O, Ctx> {
+  const reduceRightParser = createParser<O, Ctx>(
     name,
-    (input, skip): ParseResult<O> => {
+    (input, skip, ctx): ParseResult<O> => {
       if (skip.includes(init)) {
         return ParseFailure({
           message: `✘ ${name}`,
@@ -699,7 +641,7 @@ export function reduceRight<I, C, O>(
           },
         });
       }
-      let initParsed = init(input, [...skip, init]);
+      let initParsed = init(input, [...skip, init], ctx);
       if (initParsed.type === 'Failure') {
         return ParseFailure({
           message: `✘ ${name}`,
@@ -708,7 +650,7 @@ export function reduceRight<I, C, O>(
         });
       }
       let current = initParsed.rest;
-      let cond = condition(current, []);
+      let cond = condition(current, [], ctx);
       if (cond.type === 'Failure') {
         return ParseFailure({
           message: `✘ ${name}`,
@@ -718,17 +660,17 @@ export function reduceRight<I, C, O>(
       }
       // let count = 0;
       current = cond.rest;
-      const firstResult = transform(initParsed, cond);
+      const firstResult = transform(initParsed, cond, ctx);
       if (firstResult.type === 'Failure') {
         return firstResult;
       }
       let result = firstResult;
       while (cond.type === 'Success') {
         current = cond.rest;
-        cond = condition(current, []);
+        cond = condition(current, [], ctx);
         if (cond.type === 'Success') {
           // count++;
-          const nextResult = transform(result, cond);
+          const nextResult = transform(result, cond, ctx);
           if (nextResult.type === 'Failure') {
             return nextResult;
           }

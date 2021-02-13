@@ -342,9 +342,13 @@ test(`Parse props with object`, () => {
   expect(propsItems[0].type).toBe('PropItem');
   expect(propsItems[0].nodes.item.nodes.value.type).toBe('Object');
   expect(propsItems[0].nodes.item.nodes.value.nodes.items.length).toBe(5);
-  expect(
-    propsItems[0].nodes.item.nodes.value.nodes.items.map((v: any) => v.nodes.item.type)
-  ).toEqual(['Property', 'ComputedProperty', 'PropertyShorthand', 'Spread', 'Property']);
+  expect(propsItems[0].nodes.item.nodes.value.nodes.items.map((v: any) => v.nodes.item.type)).toEqual([
+    'Property',
+    'ComputedProperty',
+    'PropertyShorthand',
+    'Spread',
+    'Property',
+  ]);
 });
 
 test(`Parse a line comment`, () => {
@@ -413,15 +417,7 @@ test(`Does not parse element in comment`, () => {
 });
 
 test('Parse more comments', () => {
-  const file = [
-    `<|Title bold>Hello world !|>`,
-    ``,
-    `// some comment`,
-    ``,
-    `/*`,
-    `More comments !`,
-    `*/`,
-  ].join('\n');
+  const file = [`<|Title bold>Hello world !|>`, ``, `// some comment`, ``, `/*`, `More comments !`, `*/`].join('\n');
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
   const result = DocsyParser.parseDocument(file).document as any;
   expect(result.nodes.children.length).toBe(5);
@@ -590,6 +586,16 @@ test(`Parse inject`, () => {
   expect(result.nodes.children[0].nodes.value.meta.value).toBe(34);
 });
 
+test(`Parse inject file`, () => {
+  const file = readFile('inject');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.type).toBe('Document');
+  expect(result.nodes.children.length).toBe(2);
+  expect(result.nodes.children[0].type).toBe('Inject');
+  expect(result.nodes.children[0].nodes.value.type).toBe('Object');
+});
+
 test(`Parse inject with spaces`, () => {
   const file = '{\n34   \n}';
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
@@ -604,4 +610,24 @@ test(`Parse inject with spaces`, () => {
 test(`Parse all.docsy file`, () => {
   const file = readFile('all');
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
+
+test(`Parse ExpressionDocument`, () => {
+  const file = '42';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.type).toBe('ExpressionDocument');
+  expect(result.nodes.value.type).toBe('Num');
+  expect(result.nodes.value.meta.value).toBe(42);
+});
+
+test(`Parse ExpressionDocument with whitespace`, () => {
+  const file = '   42   ';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.type).toBe('ExpressionDocument');
+  expect(result.nodes.value.type).toBe('Num');
+  expect(result.nodes.value.meta.value).toBe(42);
+  expect(result.nodes.whitespaceBefore).not.toBe(null);
+  expect(result.nodes.whitespaceAfter).not.toBe(null);
 });

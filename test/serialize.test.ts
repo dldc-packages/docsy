@@ -77,3 +77,10 @@ test(`Parse then serialize complete file`, () => {
   expect(() => DocsySerializer.serialize(result)).not.toThrow();
   expect(DocsySerializer.serialize(result)).toBe(file);
 });
+
+test(`Parse then serialize expression doc`, () => {
+  const file = '  { foo: "Bar", component: <|Hello>Test|> } \n';
+  const result = DocsyParser.parseDocument(file).document;
+  expect(() => DocsySerializer.serialize(result)).not.toThrow();
+  expect(DocsySerializer.serialize(result)).toBe(file);
+});

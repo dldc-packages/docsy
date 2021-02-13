@@ -22,6 +22,11 @@ type CreateNodes<Nodes extends { [key: string]: NodeBase }> = Nodes;
 
 export type Nodes = CreateNodes<{
   Document: CreateNode<{ children: Array<Child> }>;
+  ExpressionDocument: CreateNode<{
+    whitespaceAfter: MaybeWhitespace;
+    value: Expression;
+    whitespaceBefore: MaybeWhitespace;
+  }>;
   SelfClosingElement: CreateNode<{
     component: ComponentType;
     props: Node<'Props'>;
@@ -37,14 +42,8 @@ export type Nodes = CreateNodes<{
   Whitespace: CreateNode<{}, { content: string; hasNewLine: boolean }>;
   Fragment: CreateNode<{ children: Array<Child> }>;
   RawFragment: CreateNode<{ children: Array<Child> }>;
-  Props: CreateNode<
-    { items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace },
-    {}
-  >;
-  PropItem: CreateNode<
-    { whitespaceBefore: Node<'Whitespace'>; item: Prop },
-    {}
-  >;
+  Props: CreateNode<{ items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace }, {}>;
+  PropItem: CreateNode<{ whitespaceBefore: Node<'Whitespace'>; item: Prop }, {}>;
   PropValue: CreateNode<{ name: Node<'Identifier'>; value: Expression }, {}>;
   PropNoValue: CreateNode<{ name: Node<'Identifier'> }, {}>;
   PropLineComment: CreateNode<{}, { content: string }>;
@@ -123,7 +122,6 @@ const NODES_OBJ: { [K in NodeType]: null } = {
   Array: null,
   ArrayItem: null,
   BlockComment: null,
-  Inject: null,
   Bool: null,
   BracketMember: null,
   ComputedProperty: null,
@@ -131,11 +129,13 @@ const NODES_OBJ: { [K in NodeType]: null } = {
   DotMember: null,
   Element: null,
   ElementTypeMember: null,
-  Fragment: null,
-  FunctionCall: null,
   EmptyArray: null,
   EmptyObject: null,
+  ExpressionDocument: null,
+  Fragment: null,
+  FunctionCall: null,
   Identifier: null,
+  Inject: null,
   LineComment: null,
   Null: null,
   Num: null,
@@ -164,44 +164,21 @@ const NODES = Object.keys(NODES_OBJ) as Array<NodeType>;
 
 // Alias
 export type Document = Node<'Document'>;
+export type ExpressionDocument = Node<'ExpressionDocument'>;
 
 const ComponentType = combine('ElementTypeMember', 'Identifier');
 export type ComponentType = typeof ComponentType['__type'];
 
-const Prop = combine(
-  'PropNoValue',
-  'PropValue',
-  'PropLineComment',
-  'PropBlockComment'
-);
+const Prop = combine('PropNoValue', 'PropValue', 'PropLineComment', 'PropBlockComment');
 export type Prop = typeof Prop['__type'];
 
-const ElementAny = combine(
-  'Element',
-  'SelfClosingElement',
-  'Fragment',
-  'RawFragment',
-  'RawElement'
-);
+const ElementAny = combine('Element', 'SelfClosingElement', 'Fragment', 'RawFragment', 'RawElement');
 export type ElementAny = typeof ElementAny['__type'];
 
-const Child = combine(
-  ...ElementAny.types,
-  'Whitespace',
-  'Inject',
-  'Text',
-  'BlockComment',
-  'LineComment'
-);
+const Child = combine(...ElementAny.types, 'Whitespace', 'Inject', 'Text', 'BlockComment', 'LineComment');
 export type Child = typeof Child['__type'];
 
-const CallableExpression = combine(
-  'FunctionCall',
-  'BracketMember',
-  'Identifier',
-  'DotMember',
-  'Parenthesis'
-);
+const CallableExpression = combine('FunctionCall', 'BracketMember', 'Identifier', 'DotMember', 'Parenthesis');
 export type CallableExpression = typeof CallableExpression['__type'];
 
 const Primitive = combine('Null', 'Undefined', 'Bool', 'Num', 'Str');
@@ -210,20 +187,10 @@ export type Primitive = typeof Primitive['__type'];
 const ObjectOrArray = combine('Array', 'EmptyArray', 'Object', 'EmptyObject');
 export type ObjectOrArray = typeof ObjectOrArray['__type'];
 
-const ObjectPart = combine(
-  'PropertyShorthand',
-  'Property',
-  'ComputedProperty',
-  'Spread'
-);
+const ObjectPart = combine('PropertyShorthand', 'Property', 'ComputedProperty', 'Spread');
 export type ObjectPart = typeof ObjectPart['__type'];
 
-const DottableExpression = combine(
-  ...ElementAny.types,
-  ...CallableExpression.types,
-  ...ObjectOrArray.types,
-  'Str'
-);
+const DottableExpression = combine(...ElementAny.types, ...CallableExpression.types, ...ObjectOrArray.types, 'Str');
 export type DottableExpression = typeof DottableExpression['__type'];
 
 const Expression = combine(
@@ -236,10 +203,7 @@ export type Expression = typeof Expression['__type'];
 
 export type MaybeWhitespace = Node<'Whitespace'> | null;
 
-function nodeIsOneIf<T extends NodeType>(
-  node: Node,
-  types: ReadonlyArray<T>
-): node is Node<T> {
+function nodeIsOneIf<T extends NodeType>(node: Node, types: ReadonlyArray<T>): node is Node<T> {
   return types.includes(node.type as any);
 }
 
@@ -272,15 +236,9 @@ export const NodeIs = {
 };
 
 export const CreateNode: {
-  [K in NodeType]: (
-    nodes: Nodes[K]['nodes'],
-    meta: Nodes[K]['meta']
-  ) => Node<K>;
+  [K in NodeType]: (nodes: Nodes[K]['nodes'], meta: Nodes[K]['meta']) => Node<K>;
 } = NODES.reduce<any>((acc, type) => {
-  acc[type] = (
-    nodes: Nodes[NodeType]['nodes'],
-    meta: Nodes[NodeType]['meta']
-  ) => ({
+  acc[type] = (nodes: Nodes[NodeType]['nodes'], meta: Nodes[NodeType]['meta']) => ({
     type,
     nodes,
     meta,

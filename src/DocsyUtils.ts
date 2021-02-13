@@ -1,11 +1,4 @@
-import {
-  Node,
-  NodeType,
-  CreateNode,
-  Expression,
-  NodeNodesItem,
-  isValidNodeType,
-} from './internal/Node';
+import { Node, NodeType, CreateNode, Expression, NodeNodesItem, isValidNodeType } from './internal/Node';
 
 type TraversePath = Array<number | string>;
 
@@ -25,16 +18,10 @@ export const DocsyUtils = {
 /**
  * If the onNode return a different node, we replace the node and don't go deeper
  */
-function transform(
-  node: Node,
-  onNode: (item: Node, path: TraversePath) => Node
-): Node {
+function transform(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
   return transformInternal(node, []).value;
 
-  function transformInternal<K extends NodeType>(
-    item: Node<K>,
-    path: TraversePath
-  ): TransformResult<Node> {
+  function transformInternal<K extends NodeType>(item: Node<K>, path: TraversePath): TransformResult<Node> {
     const result = onNode(item, path);
     if (result !== item) {
       return { changed: true, value: result };
@@ -65,10 +52,7 @@ function transform(
   // }
 }
 
-function transformDeep(
-  node: Node,
-  onNode: (item: Node, path: TraversePath) => Node
-): Node {
+function transformDeep(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
   return transformDeepInternal(node, []);
 
   function transformDeepInternal(parent: Node, parentPath: TraversePath): Node {
@@ -98,10 +82,7 @@ export interface NodeWithPath {
   path: NodePath;
 }
 
-function getNodesFromNodes(
-  nodes: NodeNodesItem,
-  path: NodePath
-): Array<NodeWithPath> {
+function getNodesFromNodes(nodes: NodeNodesItem, path: NodePath): Array<NodeWithPath> {
   if (nodes === null) {
     return [];
   }
@@ -123,15 +104,12 @@ function getNodeNodes(item: Node): Array<NodeWithPath> {
   return getNodesFromNodes(item.nodes, []);
 }
 
-function traverse(
-  node: Node,
-  onNode: (item: Node, path: TraversePath) => void
-) {
+function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void) {
   return traverseInternal(node, []);
 
   function traverseInternal(item: Node, path: TraversePath) {
     onNode(item, path);
-    getNodeNodes(item).forEach(child => {
+    getNodeNodes(item).forEach((child) => {
       traverseInternal(child.node, [...path, ...child.path]);
     });
   }
@@ -156,7 +134,7 @@ function createNodeFromValue(value: any): Expression {
   if (Array.isArray(value)) {
     return CreateNode.Array(
       {
-        items: value.map(val =>
+        items: value.map((val) =>
           CreateNode.ArrayItem(
             {
               item: createNodeFromValue(val),
@@ -173,7 +151,7 @@ function createNodeFromValue(value: any): Expression {
   if (isPlainObject(value)) {
     return CreateNode.Object(
       {
-        items: Object.keys(value).map(key => {
+        items: Object.keys(value).map((key) => {
           return CreateNode.ObjectItem(
             {
               item: CreateNode.Property(
@@ -210,10 +188,7 @@ function isObject(val: any): boolean {
 }
 
 function isObjectObject(o: any) {
-  return (
-    isObject(o) === true &&
-    Object.prototype.toString.call(o) === '[object Object]'
-  );
+  return isObject(o) === true && Object.prototype.toString.call(o) === '[object Object]';
 }
 
 function isPlainObject(o: any): boolean {
