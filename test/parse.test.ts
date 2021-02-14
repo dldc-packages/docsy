@@ -628,6 +628,28 @@ test(`Parse ExpressionDocument with whitespace`, () => {
   expect(result.type).toBe('ExpressionDocument');
   expect(result.nodes.value.type).toBe('Num');
   expect(result.nodes.value.meta.value).toBe(42);
-  expect(result.nodes.whitespaceBefore).not.toBe(null);
-  expect(result.nodes.whitespaceAfter).not.toBe(null);
+  expect(result.nodes.before.length).toBe(1);
+  expect(result.nodes.after.length).toBe(1);
+});
+
+test(`Parse ExpressionDocument with comment`, () => {
+  const file = '// some comment\n42';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.type).toBe('ExpressionDocument');
+  expect(result.nodes.value.type).toBe('Num');
+  expect(result.nodes.value.meta.value).toBe(42);
+  expect(result.nodes.before.length).toBe(1);
+  expect(result.nodes.after.length).toBe(0);
+});
+
+test(`Parse ExpressionDocument with many before and after`, () => {
+  const file = '// some comment\n/* Block comment */42  \n  ';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.type).toBe('ExpressionDocument');
+  expect(result.nodes.value.type).toBe('Num');
+  expect(result.nodes.value.meta.value).toBe(42);
+  expect(result.nodes.before.length).toBe(2);
+  expect(result.nodes.after.length).toBe(1);
 });

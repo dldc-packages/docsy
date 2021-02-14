@@ -29,9 +29,9 @@ function serialize(node: Node): string {
     }
     if (NodeIs.ExpressionDocument(item)) {
       return (
-        serializeInternal(item.nodes.whitespaceBefore) +
+        item.nodes.before.map(serializeInternal).join('') +
         serializeInternal(item.nodes.value) +
-        serializeInternal(item.nodes.whitespaceAfter)
+        item.nodes.after.map(serializeInternal).join('')
       );
     }
     if (NodeIs.Whitespace(item)) {

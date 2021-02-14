@@ -790,18 +790,27 @@ const documentParser = Combinator.transformSuccess(
     createNode(ctx.ranges, 'Document', start, end, { children: normalizeChildren(children, true, ctx.ranges) }, {})
 );
 
+const anyCommentParser = Combinator.oneOf('AnyComment', lineCommentParser, blockCommentParser);
+
+const whitespaceOrComment = Combinator.oneOf('WhitespaceOrComment', whitespaceParser, anyCommentParser);
+
 const expressionDocumentParser = Combinator.transformSuccess(
-  Combinator.pipe('ExpressionDocument', maybeWhitespaceParser, lazyExpression, maybeWhitespaceParser),
-  ([whitespaceBefore, value, whitespaceAfter], start, end, ctx) =>
+  Combinator.pipe(
+    'ExpressionDocument',
+    Combinator.many(whitespaceOrComment),
+    lazyExpression,
+    Combinator.many(whitespaceOrComment)
+  ),
+  ([before, value, after], start, end, ctx) =>
     createNode(
       ctx.ranges,
       'ExpressionDocument',
       start,
       end,
       {
-        whitespaceAfter,
-        whitespaceBefore,
+        before,
         value,
+        after,
       },
       {}
     )

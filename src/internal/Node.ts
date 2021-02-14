@@ -23,9 +23,9 @@ type CreateNodes<Nodes extends { [key: string]: NodeBase }> = Nodes;
 export type Nodes = CreateNodes<{
   Document: CreateNode<{ children: Array<Child> }>;
   ExpressionDocument: CreateNode<{
-    whitespaceAfter: MaybeWhitespace;
+    before: Array<WhitespaceOrComment>;
     value: Expression;
-    whitespaceBefore: MaybeWhitespace;
+    after: Array<WhitespaceOrComment>;
   }>;
   SelfClosingElement: CreateNode<{
     component: ComponentType;
@@ -192,6 +192,12 @@ export type ObjectPart = typeof ObjectPart['__type'];
 
 const DottableExpression = combine(...ElementAny.types, ...CallableExpression.types, ...ObjectOrArray.types, 'Str');
 export type DottableExpression = typeof DottableExpression['__type'];
+
+const AnyComment = combine('LineComment', 'BlockComment');
+export type AnyComment = typeof AnyComment['__type'];
+
+const WhitespaceOrComment = combine('Whitespace', ...AnyComment.types);
+export type WhitespaceOrComment = typeof WhitespaceOrComment['__type'];
 
 const Expression = combine(
   ...ElementAny.types,
