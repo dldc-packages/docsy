@@ -1,15 +1,6 @@
 import { DocsyUnexpectedError } from '../DocsyError';
 import { StringReader } from './StringReader';
-
-export interface StackItem {
-  message: string;
-  position: number;
-  stack: StackOrNull;
-}
-
-type Stack = StackItem | Array<StackItem>;
-
-type StackOrNull = null | Stack;
+import { Stack, StackItem, StackOrNull } from './types';
 
 interface ParseResultFailure {
   type: 'Failure';
@@ -117,22 +108,6 @@ export function mergeStacks(left: Stack, ...stacks: Array<StackOrNull>): Array<S
 
 function expectNever<T extends never>(_val: T): never {
   throw new DocsyUnexpectedError(`Expected never !`);
-}
-
-export function printParseError(error: StackItem) {
-  return `Docsy Parse Error: \n` + parseErrorToLines(error, 0).join('\n');
-}
-
-function parseErrorToLines(error: StackItem, depth: number): Array<string> {
-  return [
-    `${error.message} (at offset ${error.position})`,
-    ...(error.stack === null
-      ? []
-      : Array.isArray(error.stack)
-      ? error.stack.map((p) => parseErrorToLines(p, depth + 1)).flat(1)
-      : parseErrorToLines(error.stack, depth + 1)
-    ).map((l) => (depth % 2 === 0 ? '| ' : '| ') + l),
-  ];
 }
 
 function createParser<T, Ctx>(
