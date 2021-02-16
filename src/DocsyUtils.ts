@@ -145,7 +145,7 @@ function createNodeFromValue(value: any): Expression {
           )
         ),
       },
-      {}
+      { trailingComma: false }
     );
   }
   if (isPlainObject(value)) {
@@ -176,7 +176,7 @@ function createNodeFromValue(value: any): Expression {
           );
         }),
       },
-      {}
+      { trailingComma: false }
     );
   }
 
