@@ -56,7 +56,7 @@ export type Nodes = CreateNodes<{
   Str: CreateNode<{}, { value: string; quote: QuoteType }>;
   Bool: CreateNode<{}, { value: boolean }>;
   Num: CreateNode<{}, { value: number; rawValue: string }>;
-  Object: CreateNode<{ items: Array<Node<'ObjectItem'>> }>;
+  Object: CreateNode<{ items: Array<Node<'ObjectItem'>> }, { trailingComma: boolean }>;
   EmptyObject: CreateNode<{ whitespace: MaybeWhitespace }>;
   ObjectItem: CreateNode<{
     whitespaceBefore: MaybeWhitespace;
@@ -76,12 +76,15 @@ export type Nodes = CreateNodes<{
     whitespaceAfterColon: MaybeWhitespace;
     value: Expression;
   }>;
-  Array: CreateNode<{ items: Array<Node<'ArrayItem'>> }>;
+  Array: CreateNode<{ items: Array<Node<'ArrayItem'>> }, { trailingComma: boolean }>;
   EmptyArray: CreateNode<{ whitespace: MaybeWhitespace }>;
-  FunctionCall: CreateNode<{
-    target: CallableExpression;
-    arguments: Array<Node<'ArrayItem'>>;
-  }>;
+  FunctionCall: CreateNode<
+    {
+      target: CallableExpression;
+      arguments: Array<Node<'ArrayItem'>>;
+    },
+    { trailingComma: boolean }
+  >;
   Identifier: CreateNode<{}, { name: string }>;
   DotMember: CreateNode<{
     target: DottableExpression;

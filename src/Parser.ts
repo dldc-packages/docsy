@@ -245,12 +245,18 @@ const arrayItemParser = Combinator.transformSuccess(
   }
 );
 
-const arrayItemsParser = Combinator.manySepBy(arrayItemParser, commaParser);
+const arrayItemsParser = Combinator.manySepBy(arrayItemParser, commaParser, true);
 
 const arrayParser = Combinator.transformSuccess(
-  Combinator.pipe('Array', squareBracketOpenParser, arrayItemsParser, squareBracketCloseParser),
-  ([_open, items, _close], start, end, ctx) => {
-    return createNode(ctx.ranges, 'Array', start, end, { items }, {});
+  Combinator.pipe(
+    'Array',
+    squareBracketOpenParser,
+    arrayItemsParser,
+    Combinator.maybe(commaParser),
+    squareBracketCloseParser
+  ),
+  ([_open, { items, trailing }, _close], start, end, ctx) => {
+    return createNode(ctx.ranges, 'Array', start, end, { items }, { trailingComma: trailing });
   }
 );
 
@@ -351,11 +357,11 @@ const objectParser = Combinator.transformSuccess(
   Combinator.pipe(
     'Object',
     curlyBracketOpenParser,
-    Combinator.manySepBy(objectItemParser, commaParser),
+    Combinator.manySepBy(objectItemParser, commaParser, true),
     curlyBracketCloseParser
   ),
-  ([_open, items, _close], start, end, ctx) => {
-    return createNode(ctx.ranges, 'Object', start, end, { items }, {});
+  ([_open, { items, trailing }, _close], start, end, ctx) => {
+    return createNode(ctx.ranges, 'Object', start, end, { items }, { trailingComma: trailing });
   }
 );
 
@@ -685,6 +691,7 @@ type AccessItem =
   | {
       type: 'FunctionCall';
       args: Array<Node<'ArrayItem'>>;
+      trailingComma: boolean;
     };
 
 const dotMemberAccessParser = Combinator.transformSuccess(
@@ -699,7 +706,7 @@ const bracketMemberAccessParser = Combinator.transformSuccess(
 
 const functionCallAccessParser = Combinator.transformSuccess(
   Combinator.pipe('FunctionCallAccess', parenthesisOpenParser, arrayItemsParser, parenthesisCloseParser),
-  ([_parenthesis, args]): AccessItem => ({ type: 'FunctionCall', args })
+  ([_parenthesis, { items, trailing }]): AccessItem => ({ type: 'FunctionCall', args: items, trailingComma: trailing })
 );
 
 const accessItemParser = Combinator.oneOf(
@@ -739,7 +746,14 @@ const accessParser = Combinator.reduceRight(
         return Combinator.ParseSuccess(
           start,
           right.rest,
-          createNode(ctx.ranges, 'FunctionCall', start, end, { target, arguments: item.args }, {}),
+          createNode(
+            ctx.ranges,
+            'FunctionCall',
+            start,
+            end,
+            { target, arguments: item.args },
+            { trailingComma: item.trailingComma }
+          ),
           Combinator.mergeStacks(left.stack, right.stack)
         );
       }

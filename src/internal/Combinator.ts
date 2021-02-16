@@ -238,19 +238,30 @@ export function manyBetween<Begin, Item, End, Ctx>(
   return manyBetweenParser;
 }
 
-export function manySepBy<T, Ctx>(itemParser: Parser<T, Ctx>, sepParser: Parser<any, Ctx>): Parser<Array<T>, Ctx> {
+export type ManySepByResult<T> = { items: Array<T>; trailing: boolean };
+
+export function manySepBy<T, Ctx>(
+  itemParser: Parser<T, Ctx>,
+  sepParser: Parser<any, Ctx>,
+  allowTrailing: boolean
+): Parser<ManySepByResult<T>, Ctx> {
   const name = `ManySepBy(${itemParser.ParserName}, ${sepParser.ParserName})`;
-  const manySepByParser: Parser<Array<T>, Ctx> = createParser<Array<T>, Ctx>(name, (input, parent, ctx) => {
+  return createParser<ManySepByResult<T>, Ctx>(name, (input, parent, ctx) => {
     let nextInput = input;
     let items: Array<T> = [];
     // parse first
     const next = itemParser(nextInput, parent, ctx);
     if (next.type === 'Failure') {
-      return ParseSuccess(input.position, nextInput, items, {
-        message: `✘ ${name}`,
-        position: nextInput.position,
-        stack: next.stack,
-      });
+      return ParseSuccess<ManySepByResult<T>>(
+        input.position,
+        nextInput,
+        { items, trailing: false },
+        {
+          message: `✘ ${name}`,
+          position: nextInput.position,
+          stack: next.stack,
+        }
+      );
     }
     if (next.type === 'Success') {
       items.push(next.value);
@@ -264,6 +275,18 @@ export function manySepBy<T, Ctx>(itemParser: Parser<T, Ctx>, sepParser: Parser<
       }
       const nextItem = itemParser(nextSep.rest, [], ctx);
       if (nextItem.type === 'Failure') {
+        if (allowTrailing) {
+          return ParseSuccess<ManySepByResult<T>>(
+            input.position,
+            nextSep.rest,
+            { items, trailing: true },
+            {
+              message: `✔ ${name} ended with trailing separator`,
+              position: input.position,
+              stack: nextSep.stack,
+            }
+          );
+        }
         // fail
         return ParseFailure({
           message: `✘ Expected ${itemParser.ParserName} after ${sepParser.ParserName}`,
@@ -276,13 +299,17 @@ export function manySepBy<T, Ctx>(itemParser: Parser<T, Ctx>, sepParser: Parser<
         nextInput = nextItem.rest;
       }
     }
-    return ParseSuccess(input.position, nextInput, items, {
-      message: `✔ ${name} ended`,
-      position: input.position,
-      stack: nextSep.stack,
-    });
+    return ParseSuccess<ManySepByResult<T>>(
+      input.position,
+      nextInput,
+      { items, trailing: false },
+      {
+        message: `✔ ${name} ended`,
+        position: input.position,
+        stack: nextSep.stack,
+      }
+    );
   });
-  return manySepByParser;
 }
 
 export function maybe<T, Ctx>(parser: Parser<T, Ctx>): Parser<T | null, Ctx> {

@@ -112,8 +112,14 @@ function resolve(node: Node, options: ResolveOptions): any {
     if (NodeIs.Object(item)) {
       return resolveObject(item.nodes.items);
     }
+    if (NodeIs.EmptyObject(item)) {
+      return {};
+    }
     if (NodeIs.Array(item)) {
       return resolveArray(item.nodes.items);
+    }
+    if (NodeIs.EmptyArray(item)) {
+      return [];
     }
     if (NodeIs.Inject(item)) {
       const content = resolveNode(item.nodes.value);
