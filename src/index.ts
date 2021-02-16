@@ -2,7 +2,10 @@ export * from './Parser';
 export * from './Serializer';
 export * from './Resolver';
 export * from './Formatter';
+export * from './DocsyError';
 export { DocsyUtils, NodePath, NodeWithPath } from './DocsyUtils';
+export { StackItem } from './internal/Combinator';
+export { Position, Range } from './internal/types';
 export {
   Node,
   NodeIs,
@@ -17,4 +20,3 @@ export {
   Prop,
   QuoteType,
 } from './internal/Node';
-export { Position, Range } from './internal/types';

@@ -1,10 +1,8 @@
-import { DocsyParser } from '../src';
-import {
-  readFile,
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  logNode,
-} from './utils';
+import { DocsyParser, DocsyParsingError } from '../src';
+import { readFile } from './utils';
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { logNode } from './utils';
 
 test(`Parse a document with text`, () => {
   const file = `Hello`;
@@ -269,7 +267,7 @@ test(`Parse simple element with no content`, () => {
 
 test(`Throw when you close the wrong tag`, () => {
   const file = `<|Demo>Something<Yolo|>`;
-  expect(() => DocsyParser.parseDocument(file)).toThrow('Unexpected close tag, wrong tag !');
+  expect(() => DocsyParser.parseDocument(file)).toThrow(DocsyParsingError);
 });
 
 test(`Parse function call`, () => {

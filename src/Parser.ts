@@ -13,6 +13,7 @@ import {
 } from './internal/Node';
 import * as Combinator from './internal/Combinator';
 import { StringReader } from './internal/StringReader';
+import { DocsyParsingError, DocsyUnexpectedError } from './DocsyError';
 import {
   IDENTIFIER_START_REGEX,
   IDENTIFIER_REGEX,
@@ -49,7 +50,7 @@ function parseDocument(file: string): ParseDocumentResult {
   const input = StringReader(file);
   const next = documentParser(input, [], { ranges });
   if (next.type === 'Failure') {
-    throw new Error(Combinator.printParseError(next.stack));
+    throw new DocsyParsingError(next.stack);
   }
   return { document: next.value, ranges };
 }
@@ -59,7 +60,7 @@ function parseExpression(file: string): ParseDocumentExpressionResult {
   const input = StringReader(file);
   const next = expressionDocumentParser(input, [], { ranges });
   if (next.type === 'Failure') {
-    throw new Error(Combinator.printParseError(next.stack));
+    throw new DocsyParsingError(next.stack);
   }
   return { expression: next.value, ranges };
 }
@@ -763,7 +764,7 @@ const accessParser = Combinator.reduceRight(
         stack: Combinator.mergeStacks(left.stack, right.stack),
       });
     }
-    throw new Error('todo');
+    throw new DocsyUnexpectedError(`Access on invalid type`);
   }
 );
 
@@ -905,9 +906,9 @@ function isWhitespace(char: string): boolean {
   return char === ' ' || char === '\t' || char === '\n' || char === '\r';
 }
 
-function notNil<T>(val: T | null | undefined): T {
+function notNil<T>(val: T | null | undefined, errorMessage?: string): T {
   if (val === null || val === undefined) {
-    throw new Error(`Unexpected nil`);
+    throw new DocsyUnexpectedError(errorMessage || `Unexpected nil value`);
   }
   return val;
 }

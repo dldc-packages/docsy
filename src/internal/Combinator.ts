@@ -1,6 +1,7 @@
+import { DocsyUnexpectedError } from '../DocsyError';
 import { StringReader } from './StringReader';
 
-interface StackItem {
+export interface StackItem {
   message: string;
   position: number;
   stack: StackOrNull;
@@ -115,7 +116,7 @@ export function mergeStacks(left: Stack, ...stacks: Array<StackOrNull>): Array<S
 }
 
 function expectNever<T extends never>(_val: T): never {
-  throw new Error(`Expected never !`);
+  throw new DocsyUnexpectedError(`Expected never !`);
 }
 
 export function printParseError(error: StackItem) {

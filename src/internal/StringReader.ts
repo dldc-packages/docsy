@@ -1,3 +1,5 @@
+import { DocsyUnexpectedError } from '../DocsyError';
+
 export interface StringReader {
   peek(size?: number): string;
   skip(size?: number): StringReader;
@@ -49,7 +51,7 @@ function StringReaderInternal(input: string, options: StringReaderOptions): Stri
 
   function skip(s: number = 1): StringReader {
     if (s < 1 || s > size) {
-      throw new Error(`Cannot peek ${s} item`);
+      throw new DocsyUnexpectedError(`Cannot peek ${s} item`);
     }
     const nextStart = options.start + direction * s;
     return StringReaderInternal(input, { start: nextStart, end: options.end });
