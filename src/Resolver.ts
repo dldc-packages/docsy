@@ -49,7 +49,7 @@ function resolve(node: Node, options: ResolveOptions): any {
     }
     if (NodeIs.Element(item) || NodeIs.SelfClosingElement(item)) {
       const props = resolveNode(item.nodes.props);
-      const children = NodeIs.SelfClosingElement(item) ? [] : resolveChildren(item.nodes.children);
+      const children = NodeIs.SelfClosingElement(item) ? undefined : resolveChildren(item.nodes.children);
       const type = resolveNode(item.nodes.component);
       if (type === undefined) {
         throw new DocsyMissingGlobalError(
@@ -131,6 +131,9 @@ function resolve(node: Node, options: ResolveOptions): any {
     if (NodeIs.EmptyArray(item)) {
       return [];
     }
+    if (NodeIs.Whitespace(item)) {
+      return item.meta.content;
+    }
     if (NodeIs.Inject(item)) {
       const content = resolveNode(item.nodes.value);
       if (typeof content !== 'string') {
@@ -168,7 +171,7 @@ function resolve(node: Node, options: ResolveOptions): any {
   //   return items.map(child => resolveNode(child));
   // }
 
-  function resolveChildren(items: Array<Node>): Array<any> {
+  function resolveChildren(items: Array<Node>): Array<any> | any {
     const result: Array<any> = [];
     items.forEach((child) => {
       const next = resolveNode(child);
@@ -179,6 +182,9 @@ function resolve(node: Node, options: ResolveOptions): any {
       }
       result.push(next);
     });
+    if (result.length === 1) {
+      return result;
+    }
     return result;
   }
 

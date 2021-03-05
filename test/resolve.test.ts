@@ -31,7 +31,7 @@ test('Resolve element', () => {
   });
   expect(resolved).toEqual({
     key: undefined,
-    props: { children: [] },
+    props: { children: undefined },
     type: 'DemoType',
   });
 });
