@@ -1,7 +1,7 @@
-export * from './Parser';
-export * from './Serializer';
-export * from './Resolver';
-export * from './Formatter';
+export * from './DocsyParser';
+export * from './DocsySerializer';
+export * from './DocsyResolver';
+export * from './DocsyFomatter';
 export * from './DocsyError';
 export { DocsyUtils, NodePath, NodeWithPath } from './DocsyUtils';
 export { Position, Range, StackItem, Stack, StackOrNull } from './internal/types';

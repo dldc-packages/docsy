@@ -33,6 +33,8 @@ type Ctx = { ranges: Ranges };
 export const DocsyParser = {
   parseDocument,
   parseExpression,
+  parseDocumentSync,
+  parseExpressionSync,
 };
 
 export interface ParseDocumentResult {
@@ -45,24 +47,44 @@ export interface ParseDocumentExpressionResult {
   ranges: Ranges;
 }
 
-function parseDocument(file: string): ParseDocumentResult {
+function parseDocumentSync(file: string): ParseDocumentResult {
   const ranges: Ranges = new Map();
   const input = StringReader(file);
-  const next = documentParser(input, [], { ranges });
-  if (next.type === 'Failure') {
-    throw new DocsyParsingError(next.stack);
+  const result = Combinator.executeParserSync(documentParser, input, { ranges });
+  if (result.type === 'Failure') {
+    throw new DocsyParsingError(result.stack);
   }
-  return { document: next.value, ranges };
+  return { document: result.value, ranges };
 }
 
-function parseExpression(file: string): ParseDocumentExpressionResult {
+function parseExpressionSync(file: string): ParseDocumentExpressionResult {
   const ranges: Ranges = new Map();
   const input = StringReader(file);
-  const next = expressionDocumentParser(input, [], { ranges });
-  if (next.type === 'Failure') {
-    throw new DocsyParsingError(next.stack);
+  const result = Combinator.executeParserSync(expressionDocumentParser, input, { ranges });
+  if (result.type === 'Failure') {
+    throw new DocsyParsingError(result.stack);
   }
-  return { expression: next.value, ranges };
+  return { expression: result.value, ranges };
+}
+
+async function parseDocument(file: string): Promise<ParseDocumentResult> {
+  const ranges: Ranges = new Map();
+  const input = StringReader(file);
+  const result = await Combinator.executeParserAsync(documentParser, input, { ranges });
+  if (result.type === 'Failure') {
+    throw new DocsyParsingError(result.stack);
+  }
+  return { document: result.value, ranges };
+}
+
+async function parseExpression(file: string): Promise<ParseDocumentExpressionResult> {
+  const ranges: Ranges = new Map();
+  const input = StringReader(file);
+  const result = await Combinator.executeParserAsync(expressionDocumentParser, input, { ranges });
+  if (result.type === 'Failure') {
+    throw new DocsyParsingError(result.stack);
+  }
+  return { expression: result.value, ranges };
 }
 
 function createExact<T extends string>(str: T, name: string = `'${str}'`): Combinator.Parser<T, Ctx> {

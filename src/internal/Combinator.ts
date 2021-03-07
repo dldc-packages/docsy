@@ -2,6 +2,32 @@ import { DocsyUnexpectedError } from '../DocsyError';
 import { StringReader } from './StringReader';
 import { Stack, StackItem, StackOrNull } from './types';
 
+export type Job<T, Ctx> = {
+  parser: ParserJob<T, Ctx>;
+  ref: {};
+};
+
+export type JobResult = {
+  ref: {};
+  value: ParseResult<unknown>;
+};
+
+type Unwrap<T> = (result: JobResult) => ParseResult<T>;
+
+export function createJob<T, Ctx>(parser: ParserJob<T, Ctx>): [Job<T, Ctx>, Unwrap<T>] {
+  const ref = {};
+
+  return [
+    { ref, parser },
+    (result) => {
+      if (result.ref !== ref) {
+        throw new Error(`Invalid job result`);
+      }
+      return result.value as any;
+    },
+  ];
+}
+
 interface ParseResultFailure {
   type: 'Failure';
   stack: StackItem;
@@ -16,11 +42,93 @@ export interface ParseResultSuccess<T> {
   stack: Stack;
 }
 
+export function executeParserSync<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
+  const running = parser(input, [], ctx);
+
+  const [rootJob, unwrapRoot] = createJob(running);
+
+  const stack: Array<Job<any, Ctx>> = [rootJob];
+
+  let value: JobResult | undefined = undefined;
+
+  while (true) {
+    const current = stack[stack.length - 1];
+    const step = current.parser.next(value!);
+    if (step.done) {
+      value = {
+        ref: current.ref,
+        value: step.value,
+      };
+      stack.pop();
+      if (stack.length === 0) {
+        break;
+      }
+    } else {
+      value = undefined;
+      stack.push(step.value);
+    }
+  }
+
+  return unwrapRoot(value);
+}
+
+const ASYNC_JOB_DURATION = 5;
+
+export function executeParserAsync<T, Ctx>(
+  parser: Parser<T, Ctx>,
+  input: StringReader,
+  ctx: Ctx
+): Promise<ParseResult<T>> {
+  return new Promise((resolve) => {
+    const running = parser(input, [], ctx);
+    const [rootJob] = createJob(running);
+    const stack: Array<Job<any, Ctx>> = [rootJob];
+    let value: JobResult | undefined = undefined;
+
+    // Should we schedule immediatly ?
+    run();
+
+    // run for
+    function run() {
+      const endTime = Date.now() + ASYNC_JOB_DURATION;
+      while (true) {
+        if (Date.now() >= endTime) {
+          setTimeout(run, 0);
+          return;
+        }
+        const current = stack[stack.length - 1];
+        const step = current.parser.next(value!);
+        if (step.done) {
+          value = {
+            ref: current.ref,
+            value: step.value,
+          };
+          stack.pop();
+          if (stack.length === 0) {
+            break;
+          }
+        } else {
+          value = undefined;
+          stack.push(step.value);
+        }
+      }
+
+      if (value === undefined) {
+        throw new Error('TODO: handle this');
+      }
+
+      resolve(value.value as any);
+    }
+  });
+}
+
 export type ParseResult<T> = ParseResultSuccess<T> | ParseResultFailure;
+
+export type ParserJob<T, Ctx> = Generator<Job<any, Ctx>, ParseResult<T>, JobResult>;
 
 export type Parser<T, Ctx> = {
   ParserName: string;
-  (input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx): ParseResult<T>;
+  (input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx): ParserJob<T, Ctx>;
 };
 
 export function ParseFailure(stack: StackItem): ParseResultFailure {
@@ -112,7 +220,7 @@ function expectNever<T extends never>(_val: T): never {
 
 function createParser<T, Ctx>(
   name: string,
-  fn: (input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx) => ParseResult<T>
+  fn: (input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx) => ParserJob<T, Ctx>
 ): Parser<T, Ctx> {
   const parser: Parser<T, Ctx> = fn as any;
   parser.ParserName = name;
@@ -124,13 +232,14 @@ export function named<T, Ctx>(name: string, parser: Parser<T, Ctx>): Parser<T, C
 }
 
 export function many<T, Ctx>(parser: Parser<T, Ctx>): Parser<Array<T>, Ctx> {
-  const manyParser = createParser<Array<T>, Ctx>(`Many(${parser.ParserName})`, (input, parent, ctx) => {
+  const manyParser = createParser<Array<T>, Ctx>(`Many(${parser.ParserName})`, function* (input, parent, ctx) {
     let nextInput = input;
     let stacks: StackOrNull = [];
     let items: Array<T> = [];
     let next: ParseResult<T>;
     while (true) {
-      next = parser(nextInput, items.length === 0 ? parent : [], ctx);
+      const [parserJob, unwrapParser] = createJob(parser(nextInput, items.length === 0 ? parent : [], ctx));
+      next = unwrapParser(yield parserJob);
       if (next.type === 'Failure') {
         stacks.push(next.stack);
         break;
@@ -157,9 +266,10 @@ export function manyBetween<Begin, Item, End, Ctx>(
   end: Parser<End, Ctx>
 ): Parser<[Begin, Array<Item>, End], Ctx> {
   const nameResolved = name === null ? `${begin.ParserName} Many(${item.ParserName}) ${end.ParserName}` : name;
-  const manyBetweenParser = createParser<[Begin, Array<Item>, End], Ctx>(nameResolved, (input, skip, ctx) => {
+  const manyBetweenParser = createParser<[Begin, Array<Item>, End], Ctx>(nameResolved, function* (input, skip, ctx) {
     let current = input;
-    const beginResult = begin(current, skip, ctx);
+    const [beginJob, unwrapBegin] = createJob(begin(current, skip, ctx));
+    const beginResult = unwrapBegin(yield beginJob);
     if (beginResult.type === 'Failure') {
       return ParseFailure({
         message: `✘ ${nameResolved}`,
@@ -173,7 +283,8 @@ export function manyBetween<Begin, Item, End, Ctx>(
     }
     current = beginResult.rest;
     let stacks: StackOrNull = beginResult.stack;
-    let endResult = end(current, skip, ctx);
+    const [endJob, unwrapEnd] = createJob(end(current, skip, ctx));
+    let endResult = unwrapEnd(yield endJob);
     const items: Array<Item> = [];
     while (endResult.type === 'Failure') {
       if (current.size === 0) {
@@ -187,7 +298,8 @@ export function manyBetween<Begin, Item, End, Ctx>(
           }),
         });
       }
-      const itemResult = item(current, skip, ctx);
+      const [itemJob, unwrapItem] = createJob(item(current, skip, ctx));
+      const itemResult = unwrapItem(yield itemJob);
       if (itemResult.type === 'Failure') {
         return ParseFailure({
           message: `✘ ${nameResolved}`,
@@ -202,7 +314,8 @@ export function manyBetween<Begin, Item, End, Ctx>(
       items.push(itemResult.value);
       stacks = mergeStacks(stacks, itemResult.stack);
       current = itemResult.rest;
-      endResult = end(current, skip, ctx);
+      const [endJob, unwrapEnd] = createJob(end(current, skip, ctx));
+      endResult = unwrapEnd(yield endJob);
     }
     const result: [Begin, Array<Item>, End] = [beginResult.value, items, endResult.value];
     return ParseSuccess(input.position, endResult.rest, result, {
@@ -222,11 +335,12 @@ export function manySepBy<T, Ctx>(
   allowTrailing: boolean
 ): Parser<ManySepByResult<T>, Ctx> {
   const name = `ManySepBy(${itemParser.ParserName}, ${sepParser.ParserName})`;
-  return createParser<ManySepByResult<T>, Ctx>(name, (input, parent, ctx) => {
+  return createParser<ManySepByResult<T>, Ctx>(name, function* (input, parent, ctx) {
     let nextInput = input;
     let items: Array<T> = [];
     // parse first
-    const next = itemParser(nextInput, parent, ctx);
+    const [itemJob, unwrapItem] = createJob(itemParser(nextInput, parent, ctx));
+    const next = unwrapItem(yield itemJob);
     if (next.type === 'Failure') {
       return ParseSuccess<ManySepByResult<T>>(
         input.position,
@@ -245,11 +359,13 @@ export function manySepBy<T, Ctx>(
     }
     let nextSep: ParseResult<any>;
     while (true) {
-      nextSep = sepParser(nextInput, [], ctx);
+      const [sepJob, unwrapSep] = createJob(sepParser(nextInput, [], ctx));
+      nextSep = unwrapSep(yield sepJob);
       if (nextSep.type === 'Failure') {
         break;
       }
-      const nextItem = itemParser(nextSep.rest, [], ctx);
+      const [itemJob, unwrapItem] = createJob(itemParser(nextSep.rest, [], ctx));
+      const nextItem = unwrapItem(yield itemJob);
       if (nextItem.type === 'Failure') {
         if (allowTrailing) {
           return ParseSuccess<ManySepByResult<T>>(
@@ -291,9 +407,10 @@ export function manySepBy<T, Ctx>(
 export function maybe<T, Ctx>(parser: Parser<T, Ctx>): Parser<T | null, Ctx> {
   const maybeParser: Parser<T | null, Ctx> = createParser<T | null, Ctx>(
     `Maybe(${parser.ParserName})`,
-    (input, parent, ctx) => {
+    function* (input, parent, ctx) {
       let nextInput = input;
-      const next = parser(nextInput, parent, ctx);
+      const [job, unwrap] = createJob(parser(nextInput, parent, ctx));
+      const next = unwrap(yield job);
       if (next.type === 'Failure') {
         return ParseSuccess(input.position, input, null, {
           message: `✔ Maybe ${parser.ParserName}`,
@@ -329,44 +446,42 @@ export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, C>(name: string |
 export function oneOf<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>, p7: Parser<R7, C>, p8: Parser<R8, C>, p9: Parser<R9, C>, p10: Parser<R10, C>, p11: Parser<R11, C>): Parser<R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11, C>;
 export function oneOf<V, Ctx>(name: string | null, ...parsers: Array<Parser<V, Ctx>>): Parser<V, Ctx> {
   const nameResolved = name === null ? `OneOf(${parsers.map((p) => p.ParserName).join(',')})` : name;
-  const onOfParser = createParser<V, Ctx>(
-    nameResolved,
-    (input, skip, ctx): ParseResult<V> => {
-      let stacks: StackOrNull = [];
-      for (const parser of parsers) {
-        if (skip.includes(parser)) {
-          stacks.push({
-            message: `✘ Skip ${parser.ParserName}`,
-            position: input.position,
-            stack: null,
-          });
-          continue;
-        }
-        const next = parser(input, [...skip], ctx);
-        if (next.type === 'Success') {
-          return ParseSuccess(input.position, next.rest, next.value, {
-            message: `✔ ${nameResolved}`,
-            position: input.position,
-            stack: mergeStacks(stacks, {
-              message: `✔ ${parser.ParserName}`,
-              position: input.position,
-              stack: next.stack,
-            }),
-          });
-        }
-        if (next.type === 'Failure') {
-          stacks.push(next.stack);
-          continue;
-        }
-        expectNever(next);
+  const onOfParser = createParser<V, Ctx>(nameResolved, function* (input, skip, ctx) {
+    let stacks: StackOrNull = [];
+    for (const parser of parsers) {
+      if (skip.includes(parser)) {
+        stacks.push({
+          message: `✘ Skip ${parser.ParserName}`,
+          position: input.position,
+          stack: null,
+        });
+        continue;
       }
-      return ParseFailure({
-        message: `✘ ${nameResolved}`,
-        position: input.position,
-        stack: stacks,
-      });
+      const [job, unwrap] = createJob(parser(input, [...skip], ctx));
+      const next = unwrap(yield job);
+      if (next.type === 'Success') {
+        return ParseSuccess(input.position, next.rest, next.value, {
+          message: `✔ ${nameResolved}`,
+          position: input.position,
+          stack: mergeStacks(stacks, {
+            message: `✔ ${parser.ParserName}`,
+            position: input.position,
+            stack: next.stack,
+          }),
+        });
+      }
+      if (next.type === 'Failure') {
+        stacks.push(next.stack);
+        continue;
+      }
+      expectNever(next);
     }
-  );
+    return ParseFailure({
+      message: `✘ ${nameResolved}`,
+      position: input.position,
+      stack: stacks,
+    });
+  });
   return onOfParser;
 }
 
@@ -374,8 +489,9 @@ export function transformSuccess<T, U, Ctx>(
   parser: Parser<T, Ctx>,
   transformer: (val: T, start: number, end: number, ctx: Ctx) => U
 ): Parser<U, Ctx> {
-  return createParser<U, Ctx>(parser.ParserName, (input, skip, ctx) => {
-    const next = parser(input, skip, ctx);
+  return createParser<U, Ctx>(parser.ParserName, function* (input, skip, ctx) {
+    const [job, unwrap] = createJob(parser(input, skip, ctx));
+    const next = unwrap(yield job);
     if (next.type === 'Success') {
       return {
         ...next,
@@ -390,15 +506,16 @@ export function transform<T, U, Ctx>(
   parser: Parser<T, Ctx>,
   transformer: (result: ParseResult<T>, ctx: Ctx) => ParseResult<U>
 ): Parser<U, Ctx> {
-  return createParser<U, Ctx>(parser.ParserName, (input, skip, ctx) => {
-    const next = parser(input, skip, ctx);
+  return createParser<U, Ctx>(parser.ParserName, function* (input, skip, ctx) {
+    const [job, unwrap] = createJob(parser(input, skip, ctx));
+    const next = unwrap(yield job);
     return transformer(next, ctx);
   });
 }
 
 export function whileNotMatch<Ctx>(name: string | null, matchers: Array<string>): Parser<string, Ctx> {
   const nameResolved = name !== null ? name : `WhileNot(${matchers.join(', ')})`;
-  return createParser<string, Ctx>(nameResolved, (input) => {
+  return createParser<string, Ctx>(nameResolved, function* (input) {
     let content = '';
     let current = input;
     if (current.empty) {
@@ -432,7 +549,7 @@ export function whileMatch<Ctx>(
   name: string,
   matcher: (ch1: string, ch2: string, ch3: string) => boolean
 ): Parser<string, Ctx> {
-  return createParser(name, (input) => {
+  return createParser(name, function* (input) {
     let content = '';
     let current = input;
     if (current.empty) {
@@ -462,7 +579,7 @@ export function whileMatch<Ctx>(
 }
 
 export function singleChar<Ctx>(name: string, matcher?: (char: string) => boolean): Parser<string, Ctx> {
-  return createParser(name, (input) => {
+  return createParser(name, function* (input) {
     if (input.empty) {
       return ParseFailure({
         message: `✘ ${name}: Unexpected EOF`,
@@ -489,7 +606,7 @@ export function singleChar<Ctx>(name: string, matcher?: (char: string) => boolea
 
 export function exact<T extends string, Ctx>(str: T, name: string = `'${str}'`): Parser<T, Ctx> {
   const nameResolved = name.replace(/\n/, '\\n');
-  return createParser(nameResolved, (input) => {
+  return createParser(nameResolved, function* (input) {
     const peek = input.peek(str.length);
     if (peek.length < str.length) {
       return ParseFailure({
@@ -515,7 +632,7 @@ export function exact<T extends string, Ctx>(str: T, name: string = `'${str}'`):
 }
 
 export function eof<Ctx>(): Parser<null, Ctx> {
-  return createParser('EOF', (input) => {
+  return createParser('EOF', function* (input) {
     if (input.empty) {
       return ParseSuccess(input.position, input, null, {
         message: `✔ EOF did match`,
@@ -545,7 +662,7 @@ export function pipe<R1, R2, R3, R4, R5, R6, C>(name: string | null, p1: Parser<
 export function pipe<R1, R2, R3, R4, R5, R6, R7, C>(name: string | null, p1: Parser<R1, C>, p2: Parser<R2, C>, p3: Parser<R3, C>, p4: Parser<R4, C>, p5: Parser<R5, C>, p6: Parser<R6, C>, p7: Parser<R7, C>): Parser<[R1, R2, R3, R4, R5, R6, R7], C>;
 export function pipe<V, Ctx>(name: string | null, ...parsers: Array<Parser<V, Ctx>>): Parser<Array<V>, Ctx> {
   const nameResolved = name === null ? `[${parsers.map((p) => p.ParserName).join(' ')}]` : name;
-  const pipeParser = createParser<Array<V>, Ctx>(nameResolved, (input, skip, ctx) => {
+  const pipeParser = createParser<Array<V>, Ctx>(nameResolved, function* (input, skip, ctx) {
     let current = input;
     const result: Array<V> = [];
     let stacks: Array<StackItem> = [];
@@ -563,7 +680,8 @@ export function pipe<V, Ctx>(name: string | null, ...parsers: Array<Parser<V, Ct
 
     for (let i = 0; i < parsers.length; i++) {
       const parser = parsers[i];
-      const next = parser(current, i === 0 ? [...skip, parser] : [], ctx);
+      const [job, unwrap] = createJob(parser(current, i === 0 ? [...skip, parser] : [], ctx));
+      const next = unwrap(yield job);
       if (next.type === 'Failure') {
         stacks.push(next.stack);
         // const prevError = prevResult === null ? null : prevResult.result.stack;
@@ -630,64 +748,64 @@ export function reduceRight<I, C, O, Ctx>(
   condition: Parser<C, Ctx>,
   transform: (result: ParseResultSuccess<I | O>, right: ParseResultSuccess<C>, ctx: Ctx) => ParseResult<O>
 ): Parser<O, Ctx> {
-  const reduceRightParser = createParser<O, Ctx>(
-    name,
-    (input, skip, ctx): ParseResult<O> => {
-      if (skip.includes(init)) {
-        return ParseFailure({
-          message: `✘ ${name}`,
+  const reduceRightParser = createParser<O, Ctx>(name, function* (input, skip, ctx) {
+    if (skip.includes(init)) {
+      return ParseFailure({
+        message: `✘ ${name}`,
+        position: input.position,
+        stack: {
+          message: `✘ Skip ${init.ParserName}`,
           position: input.position,
-          stack: {
-            message: `✘ Skip ${init.ParserName}`,
-            position: input.position,
-            stack: null,
-          },
-        });
-      }
-      let initParsed = init(input, [...skip, init], ctx);
-      if (initParsed.type === 'Failure') {
-        return ParseFailure({
-          message: `✘ ${name}`,
-          position: input.position,
-          stack: initParsed.stack,
-        });
-      }
-      let current = initParsed.rest;
-      let cond = condition(current, [], ctx);
-      if (cond.type === 'Failure') {
-        return ParseFailure({
-          message: `✘ ${name}`,
-          position: current.position,
-          stack: cond.stack,
-        });
-      }
-      // let count = 0;
-      current = cond.rest;
-      const firstResult = transform(initParsed, cond, ctx);
-      if (firstResult.type === 'Failure') {
-        return firstResult;
-      }
-      let result = firstResult;
-      while (cond.type === 'Success') {
-        current = cond.rest;
-        cond = condition(current, [], ctx);
-        if (cond.type === 'Success') {
-          // count++;
-          const nextResult = transform(result, cond, ctx);
-          if (nextResult.type === 'Failure') {
-            return nextResult;
-          }
-          current = nextResult.rest;
-          result = nextResult;
-        }
-      }
-      return result;
-      // return ParseSuccess(input, current, result, {
-      //   message: `✔ ${name} (reduce right) ended after ${count} items`,
-      //   position: current.position,
-      //   stack: cond.stack,
-      // });
+          stack: null,
+        },
+      });
     }
-  );
+    const [initJob, unwrapInit] = createJob(init(input, [...skip, init], ctx));
+    let initParsed = unwrapInit(yield initJob);
+    if (initParsed.type === 'Failure') {
+      return ParseFailure({
+        message: `✘ ${name}`,
+        position: input.position,
+        stack: initParsed.stack,
+      });
+    }
+    let current = initParsed.rest;
+    const [conditionJob, unwrapCondition] = createJob(condition(current, [], ctx));
+    let cond = unwrapCondition(yield conditionJob);
+    if (cond.type === 'Failure') {
+      return ParseFailure({
+        message: `✘ ${name}`,
+        position: current.position,
+        stack: cond.stack,
+      });
+    }
+    // let count = 0;
+    current = cond.rest;
+    const firstResult = transform(initParsed, cond, ctx);
+    if (firstResult.type === 'Failure') {
+      return firstResult;
+    }
+    let result = firstResult;
+    while (cond.type === 'Success') {
+      current = cond.rest;
+      const [conditionJob, unwrapCondition] = createJob(condition(current, [], ctx));
+      cond = unwrapCondition(yield conditionJob);
+      if (cond.type === 'Success') {
+        // count++;
+        const nextResult = transform(result, cond, ctx);
+        if (nextResult.type === 'Failure') {
+          return nextResult;
+        }
+        current = nextResult.rest;
+        result = nextResult;
+      }
+    }
+    return result;
+    // return ParseSuccess(input, current, result, {
+    //   message: `✔ ${name} (reduce right) ended after ${count} items`,
+    //   position: current.position,
+    //   stack: cond.stack,
+    // });
+  });
   return reduceRightParser;
 }

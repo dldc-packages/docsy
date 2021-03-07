@@ -1,0 +1,5497 @@
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+
+<|Title
+  config={ color: "green", ...Theme.spread }
+  hey="yoo"
+  num=-34.90
+  bool=true
+  noop=null
+  access=Foo['bar'].foo()
+  // comment in props
+  //
+>
+Hello <|B>world|> !
+|>
+
+<|>Foo <|Bar|> <|>
+<#>Foo <|Bar|> <#>
+
+// Foo
+
+/* Comment */
+
+// More comment !
+
+<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+
+<#>
+Some raw code
+// No comments in this !
+<|Block color="red">
+<|Footer color="red">
+<#>
+
+<#Code language="javascript">
+Some raw code
+// No comments in this !
+<#><|Block color="red"|><#>
+<|Block color="red">
+<#>
+// comment here
+<|Block color="red"|>
+/* More comment */<|Block color="red"|>
+<#>
+<|Footer color="red">
+<Code#>
+
+<|Block color="red">
+<|Footer color="red">
+bla bla bla
+<Footer|>
+<Block|>
+
+<|Block theme=Theme.dark() /* foo=43 */ |>
+
+
+<|Title>{Foo.bar()} <|B>world|> !|>
+
+<|Title color="red">Hello world !|>
+
+<|Title color="red">Hello world !<Title|>
+
+<|Title bold>Hello world !|>
+
+<|Title bold|>
+
+<|Title
+
+|>
+
+<|Title mainColor="red">
+Hello <|B>world|> !
+<Title|>
+
+<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+
+<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>

@@ -5,7 +5,7 @@ import {
   DocsyMissingJsxFunctionError,
 } from './DocsyError';
 import { MaybeWhitespace, Node, NodeIs } from './internal/Node';
-import { DocsySerializer } from './Serializer';
+import { DocsySerializer } from './DocsySerializer';
 
 export type ResolveValues = {
   [key: string]: any;
