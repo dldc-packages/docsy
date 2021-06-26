@@ -1,4 +1,4 @@
-import { DocsyUnexpectedError } from '../DocsyError';
+import { DocsyUnexpectedError } from '../DocsyError.js';
 
 export interface StringReader {
   peek(size?: number): string;

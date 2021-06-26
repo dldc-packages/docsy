@@ -1,10 +1,10 @@
-export * from './DocsyParser';
-export * from './DocsySerializer';
-export * from './DocsyResolver';
-export * from './DocsyFomatter';
-export * from './DocsyError';
-export { DocsyUtils, NodePath, NodeWithPath } from './DocsyUtils';
-export { Position, Range, StackItem, Stack, StackOrNull } from './internal/types';
+export * from './DocsyParser.js';
+export * from './DocsySerializer.js';
+export * from './DocsyResolver.js';
+export * from './DocsyFomatter.js';
+export * from './DocsyError.js';
+export { DocsyUtils, NodePath, NodeWithPath } from './DocsyUtils.js';
+export { Position, Range, StackItem, Stack, StackOrNull } from './internal/types.js';
 export {
   Node,
   NodeIs,
@@ -18,4 +18,4 @@ export {
   ObjectPart,
   Prop,
   QuoteType,
-} from './internal/Node';
+} from './internal/Node.js';

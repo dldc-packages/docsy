@@ -1,5 +1,5 @@
-import { DocsyCannotTransformValueError, DocsyNotImplementedError } from './DocsyError';
-import { Node, NodeType, CreateNode, Expression, NodeNodesItem, isValidNodeType } from './internal/Node';
+import { DocsyCannotTransformValueError, DocsyNotImplementedError } from './DocsyError.js';
+import { Node, NodeType, CreateNode, Expression, NodeNodesItem, isValidNodeType } from './internal/Node.js';
 
 type TraversePath = Array<number | string>;
 

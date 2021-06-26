@@ -1,6 +1,6 @@
-import { DocsyUnexpectedError } from '../DocsyError';
-import { StringReader } from './StringReader';
-import { Stack, StackItem, StackOrNull } from './types';
+import { DocsyUnexpectedError } from '../DocsyError.js';
+import { StringReader } from './StringReader.js';
+import { Stack, StackItem, StackOrNull } from './types.js';
 
 export type Job<T, Ctx> = {
   parser: ParserJob<T, Ctx>;

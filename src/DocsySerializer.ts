@@ -1,6 +1,6 @@
-import { Node, NodeIs, Child, ObjectPart, Prop } from './internal/Node';
-import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './internal/constants';
-import { DocsyCannotSerializeNodeError, DocsyUnexpectedError } from './DocsyError';
+import { Node, NodeIs, Child, ObjectPart, Prop } from './internal/Node.js';
+import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './internal/constants.js';
+import { DocsyCannotSerializeNodeError, DocsyUnexpectedError } from './DocsyError.js';
 
 const COMMONT_TYPE = ['LineComment', 'BlockComment'] as const;
 

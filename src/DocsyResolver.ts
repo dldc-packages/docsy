@@ -3,9 +3,9 @@ import {
   DocsyCannotResolveInjectError,
   DocsyCannotResolveNodeError,
   DocsyMissingJsxFunctionError,
-} from './DocsyError';
-import { MaybeWhitespace, Node, NodeIs } from './internal/Node';
-import { DocsySerializer } from './DocsySerializer';
+} from './DocsyError.js';
+import { MaybeWhitespace, Node, NodeIs } from './internal/Node.js';
+import { DocsySerializer } from './DocsySerializer.js';
 
 export type ResolveValues = {
   [key: string]: any;

@@ -1,5 +1,5 @@
-import { Node } from './internal/Node';
-import { StackItem } from './internal/types';
+import { Node } from './internal/Node.js';
+import { StackItem } from './internal/types.js';
 
 export class DocsyError extends Error {
   constructor(message: string) {

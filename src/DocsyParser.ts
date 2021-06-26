@@ -10,10 +10,10 @@ import {
   ElementAny,
   DottableExpression,
   ExpressionDocument,
-} from './internal/Node';
-import * as Combinator from './internal/Combinator';
-import { StringReader } from './internal/StringReader';
-import { DocsyParsingError, DocsyUnexpectedError } from './DocsyError';
+} from './internal/Node.js';
+import * as Combinator from './internal/Combinator.js';
+import { StringReader } from './internal/StringReader.js';
+import { DocsyParsingError, DocsyUnexpectedError } from './DocsyError.js';
 import {
   IDENTIFIER_START_REGEX,
   IDENTIFIER_REGEX,

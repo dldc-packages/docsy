@@ -1,5 +1,5 @@
-import { Node, NodeIs, NodeType, Nodes } from './internal/Node';
-import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './internal/constants';
+import { Node, NodeIs, NodeType, Nodes } from './internal/Node.js';
+import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './internal/constants.js';
 
 export const DocsyFomatter = {
   format,

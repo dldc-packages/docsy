@@ -13,49 +13,40 @@
   },
   "license": "MIT",
   "author": "Etienne Dldc",
-  "main": "dist/index.js",
-  "module": "dist/docsy.esm.js",
-  "typings": "dist/index.d.ts",
-  "directories": {
-    "example": "example",
-    "test": "test"
-  },
+  "type": "module",
+  "exports": "./dist/index.js",
+  "module": "dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "dist",
-    "bin"
+    "dist"
   ],
   "scripts": {
-    "analyze": "size-limit --why",
-    "build": "tsdx build",
-    "lint": "tsdx lint src",
-    "prepare": "tsdx build",
-    "pub": "yarn build && np",
-    "size": "size-limit",
-    "start": "tsdx watch",
-    "test": "tsdx test --coverage",
-    "test:watch": "tsdx test --watch"
+    "build": "rimraf dist && tsc -p ./tsconfig.build.json",
+    "lint": "prettier --check . && eslint && tsc --noEmit",
+    "lint:fix": "prettier --write . && eslint --fix",
+    "release": "yarn build && np",
+    "test": "yarn lint && jest --coverage",
+    "test:run": "jest",
+    "test:watch": "jest --watch"
   },
-  "eslintConfig": {
-    "settings": {
-      "react": {
-        "version": "999.999.999"
-      }
-    },
-    "extends": [
-      "react-app",
-      "prettier/@typescript-eslint",
-      "plugin:prettier/recommended"
-    ]
+  "dependencies": {
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.4",
-    "@types/jest": "^26.0.16",
-    "fs-extra": "^9.0.1",
-    "np": "^7.0.0",
-    "prettier": "2.2.1",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.0.3",
-    "typescript": "^4.0.5"
+    "@types/fs-extra": "^9.0.11",
+    "@types/jest": "^26.0.23",
+    "@typescript-eslint/eslint-plugin": "^4.28.0",
+    "@typescript-eslint/parser": "^4.28.0",
+    "eslint": "^7.29.0",
+    "eslint-config-prettier": "^8.3.0",
+    "fs-extra": "^10.0.0",
+    "jest": "^27.0.5",
+    "jest-ts-tsx-resolver": "^1.0.0",
+    "np": "^7.5.0",
+    "prettier": "^2.3.1",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^27.0.3",
+    "typescript": "^4.3.4"
   },
   "publishConfig": {
     "access": "public",

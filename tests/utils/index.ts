@@ -3,7 +3,7 @@ import path from 'path';
 import { NodeIs } from '../../src';
 
 export function readFile(name: string): string {
-  const testFileFolder = path.resolve(process.cwd(), 'test/files');
+  const testFileFolder = path.resolve(process.cwd(), 'tests/files');
   const filePath = path.resolve(testFileFolder, `${name}.docsy`);
   const file = fse.readFileSync(filePath, { encoding: 'utf8' });
   return file;
