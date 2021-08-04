@@ -1,19 +1,19 @@
 import { DocsyResolver, DocsyParser } from '../src';
 
 test('Resolve simple text', () => {
-  const node = DocsyParser.parseDocumentSync('Hello');
+  const node = DocsyParser.parseDocument('Hello');
   const resolved = DocsyResolver.resolve(node.document, {});
   expect(resolved).toEqual('Hello');
 });
 
 test('Resolve Inject text', () => {
-  const node = DocsyParser.parseDocumentSync(`Hello {'Paul'}`);
+  const node = DocsyParser.parseDocument(`Hello {'Paul'}`);
   const resolved = DocsyResolver.resolve(node.document, {});
   expect(resolved).toEqual('Hello Paul');
 });
 
 test('Resolve variable', () => {
-  const node = DocsyParser.parseDocumentSync(`The sky is {color}`);
+  const node = DocsyParser.parseDocument(`The sky is {color}`);
   const resolved = DocsyResolver.resolve(node.document, {
     globals: {
       color: 'Blue',
@@ -23,7 +23,7 @@ test('Resolve variable', () => {
 });
 
 test('Resolve element', () => {
-  const node = DocsyParser.parseDocumentSync(`<|Demo|>`);
+  const node = DocsyParser.parseDocument(`<|Demo|>`);
   const Demo = 'DemoType';
   const resolved = DocsyResolver.resolve(node.document, {
     jsx: (type, props, key) => ({ type, props, key }),

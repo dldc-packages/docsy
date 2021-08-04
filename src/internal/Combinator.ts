@@ -1,5 +1,5 @@
 import { DocsyUnexpectedError } from '../DocsyError.js';
-import { createJob, ParseFailure, ParseSuccess } from './Parser.js';
+import { ParseFailure, ParseSuccess } from './Parser.js';
 import { Parser, ParseResult, ParseResultSuccess, Rule } from './types.js';
 
 function expectNever<T extends never>(_val: T): never {
@@ -9,13 +9,12 @@ function expectNever<T extends never>(_val: T): never {
 export function many<T, Ctx>(parser: Parser<T, Ctx>): Parser<Array<T>, Ctx> {
   return {
     name: `Many(${parser.name})`,
-    *parse(input, parent, ctx) {
+    parse(input, parent, ctx) {
       let nextInput = input;
       const items: Array<T> = [];
       let next: ParseResult<T>;
       while (true) {
-        const [parserJob, unwrapParser] = createJob(parser.parse(nextInput, items.length === 0 ? parent : [], ctx));
-        next = unwrapParser(yield parserJob);
+        next = parser.parse(nextInput, items.length === 0 ? parent : [], ctx);
         if (next.type === 'Failure') {
           break;
         }
@@ -38,32 +37,26 @@ export function manyBetween<Begin, Item, End, Ctx>(
   const nameResolved = name === null ? `${begin.name} Many(${item.name}) ${end.name}` : name;
   return {
     name: nameResolved,
-    *parse(input, skip, ctx) {
+    parse(input, skip, ctx) {
       let current = input;
-      const [beginJob, unwrapBegin] = createJob(begin.parse(current, skip, ctx));
-      const beginResult = unwrapBegin(yield beginJob);
+      const beginResult = begin.parse(current, skip, ctx);
       if (beginResult.type === 'Failure') {
         return ParseFailure();
       }
       current = beginResult.rest;
-      // let stacks: StackOrNull = beginResult.stack;
-      const [endJob, unwrapEnd] = createJob(end.parse(current, skip, ctx));
-      let endResult = unwrapEnd(yield endJob);
+      let endResult = end.parse(current, skip, ctx);
       const items: Array<Item> = [];
       while (endResult.type === 'Failure') {
         if (current.size === 0) {
           return ParseFailure();
         }
-        const [itemJob, unwrapItem] = createJob(item.parse(current, skip, ctx));
-        const itemResult = unwrapItem(yield itemJob);
+        const itemResult = item.parse(current, skip, ctx);
         if (itemResult.type === 'Failure') {
           return ParseFailure();
         }
         items.push(itemResult.value);
-        // stacks = mergeStacks(stacks, itemResult.stack);
         current = itemResult.rest;
-        const [endJob, unwrapEnd] = createJob(end.parse(current, skip, ctx));
-        endResult = unwrapEnd(yield endJob);
+        endResult = end.parse(current, skip, ctx);
       }
       const result: [Begin, Array<Item>, End] = [beginResult.value, items, endResult.value];
       return ParseSuccess(input.position, endResult.rest, result);
@@ -81,12 +74,11 @@ export function manySepBy<T, Ctx>(
   const name = `ManySepBy(${itemParser.name}, ${sepParser.name})`;
   return {
     name,
-    *parse(input, parent, ctx) {
+    parse(input, parent, ctx) {
       let nextInput = input;
       const items: Array<T> = [];
       // parse first
-      const [itemJob, unwrapItem] = createJob(itemParser.parse(nextInput, parent, ctx));
-      const next = unwrapItem(yield itemJob);
+      const next = itemParser.parse(nextInput, parent, ctx);
       if (next.type === 'Failure') {
         return ParseSuccess<ManySepByResult<T>>(input.position, nextInput, { items, trailing: false });
       }
@@ -96,13 +88,11 @@ export function manySepBy<T, Ctx>(
       }
       let nextSep: ParseResult<any>;
       while (true) {
-        const [sepJob, unwrapSep] = createJob(sepParser.parse(nextInput, [], ctx));
-        nextSep = unwrapSep(yield sepJob);
+        nextSep = sepParser.parse(nextInput, [], ctx);
         if (nextSep.type === 'Failure') {
           break;
         }
-        const [itemJob, unwrapItem] = createJob(itemParser.parse(nextSep.rest, [], ctx));
-        const nextItem = unwrapItem(yield itemJob);
+        const nextItem = itemParser.parse(nextSep.rest, [], ctx);
         if (nextItem.type === 'Failure') {
           if (allowTrailing) {
             return ParseSuccess<ManySepByResult<T>>(input.position, nextSep.rest, { items, trailing: true });
@@ -123,10 +113,9 @@ export function manySepBy<T, Ctx>(
 export function maybe<T, Ctx>(parser: Parser<T, Ctx>): Parser<T | null, Ctx> {
   return {
     name: `Maybe(${parser.name})`,
-    *parse(input, parent, ctx) {
+    parse(input, parent, ctx) {
       const nextInput = input;
-      const [job, unwrap] = createJob(parser.parse(nextInput, parent, ctx));
-      const next = unwrap(yield job);
+      const next = parser.parse(nextInput, parent, ctx);
       if (next.type === 'Failure') {
         return ParseSuccess(input.position, input, null);
       }
@@ -159,19 +148,16 @@ export function oneOf<V, Ctx>(name: string | null, ...parsers: Array<Parser<V, C
   const nameResolved = name === null ? `OneOf(${parsers.map((p) => p.name).join(',')})` : name;
   return {
     name: nameResolved,
-    *parse(input, skip, ctx) {
-      // const stacks: StackOrNull = [];
+    parse(input, skip, ctx) {
       for (const parser of parsers) {
         if (skip.includes(parser)) {
           continue;
         }
-        const [job, unwrap] = createJob(parser.parse(input, [...skip], ctx));
-        const next = unwrap(yield job);
+        const next = parser.parse(input, skip, ctx);
         if (next.type === 'Success') {
           return ParseSuccess(input.position, next.rest, next.value);
         }
         if (next.type === 'Failure') {
-          // stacks.push(next.stack);
           continue;
         }
         expectNever(next);
@@ -187,14 +173,12 @@ export function apply<T, U, Ctx>(
 ): Parser<U, Ctx> {
   return {
     name: parser.name,
-    *parse(input, skip, ctx) {
-      const [job, unwrap] = createJob(parser.parse(input, skip, ctx));
-      const next = unwrap(yield job);
+    parse(input, skip, ctx) {
+      const next = parser.parse(input, skip, ctx);
       if (next.type === 'Success') {
-        return {
-          ...next,
-          value: transformer(next.value, next.start, next.end, ctx),
-        };
+        const result: ParseResultSuccess<U> = Object.assign({}, next) as any;
+        result.value = transformer(next.value, next.start, next.end, ctx);
+        return result;
       }
       return next;
     },
@@ -207,42 +191,18 @@ export function transform<T, U, Ctx>(
 ): Parser<U, Ctx> {
   return {
     name: parser.name,
-    *parse(input, skip, ctx) {
-      const [job, unwrap] = createJob(parser.parse(input, skip, ctx));
-      const next = unwrap(yield job);
+    parse(input, skip, ctx) {
+      const next = parser.parse(input, skip, ctx);
       return transformer(next, ctx);
     },
   };
 }
 
-// export function whileNotMatch<Ctx>(name: string | null, matchers: Array<string>): Parser<string, Ctx> {
-//   const nameResolved = name !== null ? name : `WhileNot(${matchers.join(', ')})`;
-//   return {
-//     name: nameResolved,
-//     *parse(input) {
-//       let content = '';
-//       let current = input;
-//       if (current.empty) {
-//         return ParseFailure();
-//       }
-//       const noMatches = () => matchers.every((matcher) => current.peek(matcher.length) !== matcher);
-//       while (!current.empty && noMatches()) {
-//         content += current.peek();
-//         current = current.skip();
-//       }
-//       if (content.length === 0) {
-//         return ParseFailure();
-//       }
-//       return ParseSuccess(input.position, current, content);
-//     },
-//   };
-// }
-
 export function whileNotMatch<Ctx>(name: string | null, matchers: Array<string>): Parser<string, Ctx> {
   const nameResolved = name !== null ? name : `WhileNot(${matchers.join(', ')})`;
   return {
     name: nameResolved,
-    *parse(input) {
+    parse(input) {
       const rest = input.peek(Infinity);
       if (rest.length === 0) {
         return ParseFailure();
@@ -272,7 +232,7 @@ export function regexp<Ctx>(name: string, reg: RegExp): Parser<string, Ctx> {
 
   return {
     name,
-    *parse(input) {
+    parse(input) {
       if (input.empty) {
         return ParseFailure();
       }
@@ -294,7 +254,7 @@ export function whileMatch<Ctx>(
 ): Parser<string, Ctx> {
   return {
     name,
-    *parse(input) {
+    parse(input) {
       let content = '';
       let current = input;
       if (current.empty) {
@@ -315,7 +275,7 @@ export function whileMatch<Ctx>(
 export function singleChar<Ctx>(name: string, matcher?: (char: string) => boolean): Parser<string, Ctx> {
   return {
     name,
-    *parse(input) {
+    parse(input) {
       if (input.empty) {
         return ParseFailure();
       }
@@ -333,7 +293,7 @@ export function exact<T extends string, Ctx>(str: T, name: string = `'${str}'`):
   const nameResolved = name.replace(/\n/, '\\n');
   return {
     name: nameResolved,
-    *parse(input) {
+    parse(input) {
       const peek = input.peek(str.length);
       if (peek.length < str.length) {
         return ParseFailure();
@@ -350,7 +310,7 @@ export function exact<T extends string, Ctx>(str: T, name: string = `'${str}'`):
 export function eof<Ctx>(): Parser<null, Ctx> {
   return {
     name: 'EOF',
-    *parse(input) {
+    parse(input) {
       if (input.empty) {
         return ParseSuccess(input.position, input, null);
       }
@@ -375,7 +335,7 @@ export function pipe<V, Ctx>(name: string | null, ...parsers: Array<Parser<V, Ct
   const nameResolved = name === null ? `[${parsers.map((p) => p.name).join(' ')}]` : name;
   return {
     name: nameResolved,
-    *parse(input, skip, ctx) {
+    parse(input, skip, ctx) {
       let current = input;
       const result: Array<V> = [];
       if (skip.includes(parsers[0])) {
@@ -384,8 +344,12 @@ export function pipe<V, Ctx>(name: string | null, ...parsers: Array<Parser<V, Ct
 
       for (let i = 0; i < parsers.length; i++) {
         const parser = parsers[i];
-        const [job, unwrap] = createJob(parser.parse(current, i === 0 ? [...skip, parser] : [], ctx));
-        const next = unwrap(yield job);
+        let nextSkip = skip;
+        if (i === 0) {
+          nextSkip = skip.slice();
+          nextSkip.push(parser);
+        }
+        const next = parser.parse(current, nextSkip, ctx);
         if (next.type === 'Failure') {
           // const prevError = prevResult === null ? null : prevResult.result.stack;
           return ParseFailure();
@@ -421,18 +385,16 @@ export function reduceRight<I, C, O, Ctx>(
 ): Parser<O, Ctx> {
   return {
     name,
-    *parse(input, skip, ctx) {
+    parse(input, skip, ctx) {
       if (skip.includes(init)) {
         return ParseFailure();
       }
-      const [initJob, unwrapInit] = createJob(init.parse(input, [...skip, init], ctx));
-      const initParsed = unwrapInit(yield initJob);
+      const initParsed = init.parse(input, [...skip, init], ctx);
       if (initParsed.type === 'Failure') {
         return ParseFailure();
       }
       let current = initParsed.rest;
-      const [conditionJob, unwrapCondition] = createJob(condition.parse(current, [], ctx));
-      let cond = unwrapCondition(yield conditionJob);
+      let cond = condition.parse(current, [], ctx);
       if (cond.type === 'Failure') {
         return ParseFailure();
       }
@@ -445,8 +407,7 @@ export function reduceRight<I, C, O, Ctx>(
       let result = firstResult;
       while (cond.type === 'Success') {
         current = cond.rest;
-        const [conditionJob, unwrapCondition] = createJob(condition.parse(current, [], ctx));
-        cond = unwrapCondition(yield conditionJob);
+        cond = condition.parse(current, [], ctx);
         if (cond.type === 'Success') {
           // count++;
           const nextResult = transform(result, cond, ctx);

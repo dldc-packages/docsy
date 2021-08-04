@@ -15,7 +15,7 @@ import * as Combinator from './internal/Combinator.js';
 import { StringReader } from './internal/StringReader.js';
 import { DocsyParsingError, DocsyUnexpectedError } from './DocsyError.js';
 import { BACKSLASH, SINGLE_QUOTE, NEW_LINE, DOUBLE_QUOTE, BACKTICK, WHITESPACES } from './internal/constants';
-import { executeParserAsync, executeParserSync, ParseFailure, ParseSuccess } from './internal/Parser.js';
+import { executeParserSync, ParseFailure, ParseSuccess } from './internal/Parser.js';
 import { Parser, ParseResult, ParseResultSuccess } from './internal/types.js';
 
 export type Ranges = Map<Node, { start: number; end: number }>;
@@ -34,8 +34,6 @@ type Ctx = {
 export const DocsyParser = {
   parseDocument,
   parseExpression,
-  parseDocumentSync,
-  parseExpressionSync,
 };
 
 export interface ParseDocumentResult {
@@ -64,7 +62,7 @@ function createContext(): Ctx {
   };
 }
 
-function parseDocumentSync(file: string): ParseDocumentResult {
+function parseDocument(file: string): ParseDocumentResult {
   const ctx = createContext();
   const input = StringReader(file);
   const result = executeParserSync(documentParser, input, ctx);
@@ -74,30 +72,10 @@ function parseDocumentSync(file: string): ParseDocumentResult {
   return { document: result.value, ranges: ctx.ranges };
 }
 
-function parseExpressionSync(file: string): ParseDocumentExpressionResult {
+function parseExpression(file: string): ParseDocumentExpressionResult {
   const ctx = createContext();
   const input = StringReader(file);
   const result = executeParserSync(expressionDocumentParser, input, ctx);
-  if (result.type === 'Failure') {
-    throw new DocsyParsingError();
-  }
-  return { expression: result.value, ranges: ctx.ranges };
-}
-
-async function parseDocument(file: string): Promise<ParseDocumentResult> {
-  const ctx = createContext();
-  const input = StringReader(file);
-  const result = await executeParserAsync(documentParser, input, ctx);
-  if (result.type === 'Failure') {
-    throw new DocsyParsingError();
-  }
-  return { document: result.value, ranges: ctx.ranges };
-}
-
-async function parseExpression(file: string): Promise<ParseDocumentExpressionResult> {
-  const ctx = createContext();
-  const input = StringReader(file);
-  const result = await executeParserAsync(expressionDocumentParser, input, ctx);
   if (result.type === 'Failure') {
     throw new DocsyParsingError();
   }
