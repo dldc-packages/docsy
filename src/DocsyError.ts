@@ -1,5 +1,4 @@
 import { Node } from './internal/Node.js';
-import { StackItem } from './internal/types.js';
 
 export class DocsyError extends Error {
   constructor(message: string) {
@@ -19,12 +18,8 @@ export class DocsyError extends Error {
 }
 
 export class DocsyParsingError extends DocsyError {
-  constructor(public docsyStack: StackItem) {
+  constructor() {
     super('Parsing error');
-  }
-
-  public docsyStackToString(): string {
-    return printParseError(this.docsyStack);
   }
 }
 
@@ -85,19 +80,3 @@ DocsyError.CannotResolveInjectError = DocsyCannotResolveInjectError;
 DocsyError.CannotResolveNodeError = DocsyCannotResolveNodeError;
 DocsyError.MissingJsxFunctionError = DocsyMissingJsxFunctionError;
 DocsyError.CannotSerializeNodeError = DocsyCannotSerializeNodeError;
-
-export function printParseError(error: StackItem): string {
-  return `Docsy Parse Error: \n` + parseErrorToLines(error, 0).join('\n');
-}
-
-function parseErrorToLines(error: StackItem, depth: number): Array<string> {
-  return [
-    `${error.message} (at offset ${error.position})`,
-    ...(error.stack === null
-      ? []
-      : Array.isArray(error.stack)
-      ? error.stack.map((p) => parseErrorToLines(p, depth + 1)).flat(1)
-      : parseErrorToLines(error.stack, depth + 1)
-    ).map((l) => (depth % 2 === 0 ? '| ' : '| ') + l),
-  ];
-}

@@ -662,7 +662,7 @@ test(`Parse long.docsy file asyn`, async () => {
   const start = Date.now();
   DocsyParser.parseDocumentSync(file);
   const time = Date.now() - start;
-  expect(time).toBeLessThan(3000);
+  expect(time).toBeLessThan(200);
 }, 20000);
 
 test(`Parse long.docsy file asyn`, async () => {

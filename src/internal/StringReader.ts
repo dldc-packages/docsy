@@ -3,7 +3,6 @@ import { DocsyUnexpectedError } from '../DocsyError.js';
 export interface StringReader {
   peek(size?: number): string;
   skip(size?: number): StringReader;
-  // reverse(): StringReader;
   size: number;
   position: number;
   empty: boolean;
@@ -35,10 +34,6 @@ function StringReaderInternal(input: string, options: StringReaderOptions): Stri
     position,
     empty,
   };
-
-  // function reverse(): StringReader {
-  //   return StringReaderInternal(input, { start: options.end, end: options.start });
-  // }
 
   function peek(s: number = 1): string {
     const peekSize = Math.min(s, size);
