@@ -105,7 +105,7 @@ function getNodeNodes(item: Node): Array<NodeWithPath> {
   return getNodesFromNodes(item.nodes, []);
 }
 
-function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void) {
+function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void): void {
   return traverseInternal(node, []);
 
   function traverseInternal(item: Node, path: TraversePath) {
@@ -116,7 +116,7 @@ function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void) 
   }
 }
 
-function createNodeFromValue(value: any): Expression {
+function createNodeFromValue(value: unknown): Expression {
   if (value === null) {
     return CreateNode.Null({}, {});
   }
@@ -164,7 +164,7 @@ function createNodeFromValue(value: any): Expression {
                       quote: 'Single',
                     }
                   ),
-                  value: createNodeFromValue(value[key]),
+                  value: createNodeFromValue((value as any)[key]),
                   whitespaceAfterColon: null,
                   whitespaceBeforeColon: null,
                 },
@@ -191,7 +191,7 @@ function isObjectObject(o: any) {
   return isObject(o) === true && Object.prototype.toString.call(o) === '[object Object]';
 }
 
-function isPlainObject(o: any): boolean {
+function isPlainObject(o: any): o is {} {
   if (isObjectObject(o) === false) return false;
 
   // If has modified constructor
@@ -203,6 +203,7 @@ function isPlainObject(o: any): boolean {
   if (isObjectObject(prot) === false) return false;
 
   // If constructor does not have an Object-specific method
+  // eslint-disable-next-line no-prototype-builtins
   if (prot.hasOwnProperty('isPrototypeOf') === false) {
     return false;
   }

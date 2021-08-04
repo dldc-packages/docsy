@@ -85,7 +85,7 @@ function serialize(node: Node): string {
   }
 
   function serializeElement(elem: Node<'Element'>): string {
-    let childrenStr = serializeChildren(elem.nodes.children, false);
+    const childrenStr = serializeChildren(elem.nodes.children, false);
     return [
       `<|`,
       serializeInternal(elem.nodes.component),
@@ -97,7 +97,7 @@ function serialize(node: Node): string {
   }
 
   function serializeRawElement(elem: Node<'RawElement'>): string {
-    let childrenStr = serializeChildren(elem.nodes.children, true);
+    const childrenStr = serializeChildren(elem.nodes.children, true);
     return [
       `<#`,
       serializeInternal(elem.nodes.component),

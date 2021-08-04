@@ -35,7 +35,7 @@ export class DocsyNotImplementedError extends DocsyError {
 }
 
 export class DocsyCannotTransformValueError extends DocsyError {
-  constructor(public value: any) {
+  constructor(public value: unknown) {
     super(`Cannot transform value of type: ${typeof value}`);
   }
 }
@@ -86,7 +86,7 @@ DocsyError.CannotResolveNodeError = DocsyCannotResolveNodeError;
 DocsyError.MissingJsxFunctionError = DocsyMissingJsxFunctionError;
 DocsyError.CannotSerializeNodeError = DocsyCannotSerializeNodeError;
 
-export function printParseError(error: StackItem) {
+export function printParseError(error: StackItem): string {
   return `Docsy Parse Error: \n` + parseErrorToLines(error, 0).join('\n');
 }
 

@@ -1,6 +1,6 @@
 import { DocsyParser, DocsyParsingError } from '../src';
 import { readFile } from './utils';
-// @ts-ignore
+// @ts-expect-error unused but fine
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { logNode } from './utils';
 
@@ -656,6 +656,14 @@ test(`Parse long.docsy file`, () => {
   const file = readFile('long');
   expect(() => DocsyParser.parseDocumentSync(file)).not.toThrow();
 });
+
+test(`Parse long.docsy file asyn`, async () => {
+  const file = readFile('long');
+  const start = Date.now();
+  DocsyParser.parseDocumentSync(file);
+  const time = Date.now() - start;
+  expect(time).toBeLessThan(3000);
+}, 20000);
 
 test(`Parse long.docsy file asyn`, async () => {
   const file = readFile('long');

@@ -119,31 +119,22 @@ const singleQuoteParser = createExact(SINGLE_QUOTE);
 const backslashParser = createExact(BACKSLASH);
 const doubleQuoteParser = createExact(DOUBLE_QUOTE);
 const backtickParser = createExact(BACKTICK);
-const intergerParser = Combinator.whileMatch('Integer', isDigit);
+const intergerParser = Combinator.whileMatch<Ctx>('Integer', isDigit);
 const eofParser = Combinator.eof<Ctx>();
 
-const lazyExpression: Combinator.Parser<Expression, Ctx> = Combinator.lazy('LazyExpression', () => expressionParser);
-const lazyDottableExpression: Combinator.Parser<DottableExpression, Ctx> = Combinator.lazy(
-  'LazyDottableExpression',
-  () => dottableExpressionParser
-);
-const lazyChildParser: Combinator.Parser<Child, Ctx> = Combinator.lazy('Child', () => childParser);
-const lazyRawChildParser: Combinator.Parser<Child | Array<Child>, Ctx> = Combinator.lazy(
-  'RawChild',
-  () => rawChildParser
-);
-const lazyUnrawChildParser: Combinator.Parser<Child, Ctx> = Combinator.lazy('UnrawChild', () => unrawChildParser);
-const lazyUnrawElementAnyParser: Combinator.Parser<ElementAny, Ctx> = Combinator.lazy(
-  'LazyUnrawElementAnyParser',
-  () => unrawElementAnyParser
-);
+const expressionParser = Combinator.rule<Expression, Ctx>('Expression');
+const dottableExpressionParser = Combinator.rule<DottableExpression, Ctx>('DottableExpression');
+const childParser = Combinator.rule<Child, Ctx>('Child');
+const rawChildParser = Combinator.rule<Child | Array<Child>, Ctx>('RawChild');
+const unrawChildParser = Combinator.rule<Child, Ctx>('UnrawChild');
+const unrawElementAnyParser = Combinator.rule<ElementAny, Ctx>('UnrawElementAnyParser');
 
-const whitespaceParser = Combinator.named(
-  'WhiteSpace',
-  Combinator.transformSuccess(Combinator.whileMatch<Ctx>('Whitespace', isWhitespace), (content, start, end, ctx) => {
+const whitespaceParser = Combinator.transformSuccess(
+  Combinator.whileMatch<Ctx>('Whitespace', isWhitespace),
+  (content, start, end, ctx) => {
     const hasNewLine = content.indexOf('\n') >= 0;
     return createNode(ctx.ranges, 'Whitespace', start, end, {}, { content, hasNewLine });
-  })
+  }
 );
 
 const identifierParser = Combinator.transformSuccess(
@@ -178,19 +169,13 @@ const booleanParser = Combinator.transformSuccess(
   }
 );
 
-const nullParser = Combinator.named(
-  'Null',
-  Combinator.transformSuccess(createExact('null'), (_null, start, end, ctx) => {
-    return createNode(ctx.ranges, 'Null', start, end, {}, {});
-  })
-);
+const nullParser = Combinator.transformSuccess(createExact('null'), (_null, start, end, ctx) => {
+  return createNode(ctx.ranges, 'Null', start, end, {}, {});
+});
 
-const undefinedParser = Combinator.named(
-  'Undefined',
-  Combinator.transformSuccess(createExact('undefined'), (_null, start, end, ctx) => {
-    return createNode(ctx.ranges, 'Undefined', start, end, {}, {});
-  })
-);
+const undefinedParser = Combinator.transformSuccess(createExact('undefined'), (_null, start, end, ctx) => {
+  return createNode(ctx.ranges, 'Undefined', start, end, {}, {});
+});
 
 const maybeWhitespaceParser = Combinator.maybe(whitespaceParser);
 
@@ -243,14 +228,14 @@ const emptyObjectParser = Combinator.transformSuccess(
 );
 
 const parenthesisParser = Combinator.transformSuccess(
-  Combinator.pipe('Parenthesis', parenthesisOpenParser, lazyExpression, parenthesisCloseParser),
+  Combinator.pipe('Parenthesis', parenthesisOpenParser, expressionParser, parenthesisCloseParser),
   ([_open, value], start, end, ctx) => {
     return createNode(ctx.ranges, 'Parenthesis', start, end, { value }, {});
   }
 );
 
 const spreadParser = Combinator.transformSuccess(
-  Combinator.pipe('Spread', spreadOperatorParser, lazyExpression),
+  Combinator.pipe('Spread', spreadOperatorParser, expressionParser),
   ([_op, target], start, end, ctx) => {
     return createNode(ctx.ranges, 'Spread', start, end, { target }, {});
   }
@@ -260,7 +245,7 @@ const arrayItemParser = Combinator.transformSuccess(
   Combinator.pipe(
     'ArrayItem',
     maybeWhitespaceParser,
-    Combinator.oneOf(null, spreadParser, lazyExpression),
+    Combinator.oneOf(null, spreadParser, expressionParser),
     maybeWhitespaceParser
   ),
   ([whitespaceBefore, item, whitespaceAfter], start, end, ctx) => {
@@ -322,7 +307,7 @@ const propertyParser = Combinator.transformSuccess(
     maybeWhitespaceParser,
     colonParser,
     maybeWhitespaceParser,
-    lazyExpression
+    expressionParser
   ),
   ([name, whitespaceBeforeColon, _colon, whitespaceAfterColon, value], start, end, ctx) => {
     return createNode(
@@ -340,12 +325,12 @@ const computedPropertyParser = Combinator.transformSuccess(
   Combinator.pipe(
     'ComputedProperty',
     squareBracketOpenParser,
-    lazyExpression,
+    expressionParser,
     squareBracketCloseParser,
     maybeWhitespaceParser,
     colonParser,
     maybeWhitespaceParser,
-    lazyExpression
+    expressionParser
   ),
   (
     [_openBracket, expression, _closeBracket, whitespaceBeforeColon, _colon, whitespaceAfterColon, value],
@@ -424,7 +409,7 @@ const propNoValue = Combinator.transformSuccess(identifierParser, (name, start, 
 });
 
 const propValue = Combinator.transformSuccess(
-  Combinator.pipe('PropValue', identifierParser, equalParser, lazyExpression),
+  Combinator.pipe('PropValue', identifierParser, equalParser, expressionParser),
   ([name, _equal, value], start, end, ctx) => {
     return createNode(ctx.ranges, 'PropValue', start, end, { name, value }, {});
   }
@@ -483,16 +468,17 @@ const elementSelfClosingParser = Combinator.transformSuccess(
   }
 );
 
-const textParser = Combinator.named(
-  'Text',
-  Combinator.transformSuccess(
-    Combinator.whileNotMatch<Ctx>('Text', ['|>', '<', '//', ...WHITESPACES]),
-    (content, start, end, ctx) => createNode(ctx.ranges, 'Text', start, end, {}, { content })
-  )
+const textParser = Combinator.transformSuccess(
+  Combinator.whileNotMatch<Ctx>('Text', ['|>', '<', '//', ...WHITESPACES]),
+  (content, start, end, ctx) => createNode(ctx.ranges, 'Text', start, end, {}, { content })
 );
 
 const rawTextParser = Combinator.transformSuccess(
-  Combinator.oneOf('RawText', Combinator.whileNotMatch(null, ['#>', '<']), Combinator.singleChar<Ctx>('RawSingleChar')),
+  Combinator.oneOf(
+    'RawText',
+    Combinator.whileNotMatch<Ctx>(null, ['#>', '<']),
+    Combinator.singleChar<Ctx>('RawSingleChar')
+  ),
   (content, start, end, ctx) => {
     return createNode(ctx.ranges, 'Text', start, end, {}, { content });
   }
@@ -516,7 +502,7 @@ const elementClosingTagParser = Combinator.pipe(
 const elementClosingParser = Combinator.oneOf('ClosingTag', elementTokenCloseParser, elementClosingTagParser);
 
 const elementParser = Combinator.transform(
-  Combinator.manyBetween('Element', elementOpeningTagParser, lazyChildParser, elementClosingParser),
+  Combinator.manyBetween('Element', elementOpeningTagParser, childParser, elementClosingParser),
   (result, ctx) => {
     if (result.type === 'Failure') {
       return result;
@@ -572,7 +558,7 @@ const rawElementClosingTagParser = Combinator.pipe(
 const rawElementClosingParser = Combinator.oneOf('ClosingTag', rawElementTokenCloseParser, rawElementClosingTagParser);
 
 const rawElementParser = Combinator.transform(
-  Combinator.manyBetween('RawElement', rawElementOpeningTagParser, lazyRawChildParser, rawElementClosingParser),
+  Combinator.manyBetween('RawElement', rawElementOpeningTagParser, rawChildParser, rawElementClosingParser),
   (result, ctx) => {
     if (result.type === 'Failure') {
       return result;
@@ -621,7 +607,7 @@ const rawElementParser = Combinator.transform(
 );
 
 const fragmentParser = Combinator.transformSuccess(
-  Combinator.manyBetween('Fragment', fragmentTokenParser, lazyChildParser, fragmentTokenParser),
+  Combinator.manyBetween('Fragment', fragmentTokenParser, childParser, fragmentTokenParser),
   ([_open, children], start, end, ctx) => {
     return createNode(
       ctx.ranges,
@@ -649,7 +635,7 @@ const rawFragmentParser = Combinator.transformSuccess(
 );
 
 const unrawElementParser = Combinator.transformSuccess(
-  Combinator.manyBetween('Unraw', rawFragmentTokenParser, lazyUnrawChildParser, rawFragmentTokenParser),
+  Combinator.manyBetween('Unraw', rawFragmentTokenParser, unrawChildParser, rawFragmentTokenParser),
   ([_begin, items], _start, _end, ctx) => normalizeChildren(items, true, ctx.ranges)
 );
 
@@ -658,7 +644,7 @@ const injectParser = Combinator.transformSuccess(
     'Inject',
     curlyBracketOpenParser,
     maybeWhitespaceParser,
-    lazyExpression,
+    expressionParser,
     maybeWhitespaceParser,
     curlyBracketCloseParser
   ),
@@ -667,19 +653,11 @@ const injectParser = Combinator.transformSuccess(
   }
 );
 
-const unrawChildParser = Combinator.oneOf(
-  'Child',
-  whitespaceParser,
-  commentParser,
-  lazyUnrawElementAnyParser,
-  textParser
+unrawChildParser.setParser(
+  Combinator.oneOf('Child', whitespaceParser, commentParser, unrawElementAnyParser, textParser)
 );
 
-const rawChildParser: Combinator.Parser<Child | Array<Child>, Ctx> = Combinator.oneOf(
-  'RawChild',
-  unrawElementParser,
-  rawTextParser
-);
+rawChildParser.setParser(Combinator.oneOf('RawChild', unrawElementParser, rawTextParser));
 
 const elementAnyParser: Combinator.Parser<ElementAny, Ctx> = Combinator.oneOf(
   'ElementAny',
@@ -691,21 +669,12 @@ const elementAnyParser: Combinator.Parser<ElementAny, Ctx> = Combinator.oneOf(
 );
 
 // All elements except rawFragment
-const unrawElementAnyParser: Combinator.Parser<ElementAny, Ctx> = Combinator.oneOf(
-  'UnrawElementAny',
-  fragmentParser,
-  elementSelfClosingParser,
-  elementParser,
-  rawElementParser
+unrawElementAnyParser.setParser(
+  Combinator.oneOf('UnrawElementAny', fragmentParser, elementSelfClosingParser, elementParser, rawElementParser)
 );
 
-const childParser = Combinator.oneOf(
-  'Child',
-  whitespaceParser,
-  commentParser,
-  elementAnyParser,
-  injectParser,
-  textParser
+childParser.setParser(
+  Combinator.oneOf('Child', whitespaceParser, commentParser, elementAnyParser, injectParser, textParser)
 );
 
 type AccessItem =
@@ -723,7 +692,7 @@ const dotMemberAccessParser = Combinator.transformSuccess(
 );
 
 const bracketMemberAccessParser = Combinator.transformSuccess(
-  Combinator.pipe('BracketMemberAccess', squareBracketOpenParser, lazyExpression, squareBracketCloseParser),
+  Combinator.pipe('BracketMemberAccess', squareBracketOpenParser, expressionParser, squareBracketCloseParser),
   ([_bracket, value]): AccessItem => ({ type: 'BracketMember', value })
 );
 
@@ -741,7 +710,7 @@ const accessItemParser = Combinator.oneOf(
 
 const accessParser = Combinator.reduceRight(
   'AccessExpression',
-  lazyDottableExpression,
+  dottableExpressionParser,
   accessItemParser,
   (left: Combinator.ParseResultSuccess<DottableExpression>, right, ctx): Combinator.ParseResult<DottableExpression> => {
     const start = left.start;
@@ -805,20 +774,12 @@ const arrayOrObjectParser = Combinator.oneOf(
   objectParser
 );
 
-const expressionParser = Combinator.oneOf(
-  'Expression',
-  primitiveParser,
-  callableExpressionParser,
-  arrayOrObjectParser,
-  elementAnyParser
+expressionParser.setParser(
+  Combinator.oneOf('Expression', primitiveParser, callableExpressionParser, arrayOrObjectParser, elementAnyParser)
 );
 
-const dottableExpressionParser: Combinator.Parser<DottableExpression, Ctx> = Combinator.oneOf(
-  'DottableExpression',
-  arrayOrObjectParser,
-  elementAnyParser,
-  callableExpressionParser,
-  stringParser
+dottableExpressionParser.setParser(
+  Combinator.oneOf('DottableExpression', arrayOrObjectParser, elementAnyParser, callableExpressionParser, stringParser)
 );
 
 const documentParser = Combinator.transformSuccess(
@@ -835,7 +796,7 @@ const expressionDocumentParser = Combinator.transformSuccess(
   Combinator.pipe(
     'ExpressionDocument',
     Combinator.many(whitespaceOrComment),
-    lazyExpression,
+    expressionParser,
     Combinator.many(whitespaceOrComment)
   ),
   ([before, value, after], start, end, ctx) =>

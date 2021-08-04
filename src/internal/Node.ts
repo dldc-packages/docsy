@@ -216,8 +216,8 @@ function nodeIsOneIf<T extends NodeType>(node: Node, types: ReadonlyArray<T>): n
   return types.includes(node.type as any);
 }
 
-export function isValidNodeType(type: any): boolean {
-  return type && typeof type === 'string' && NODES.includes(type as any);
+export function isValidNodeType(type: unknown): boolean {
+  return Boolean(type && typeof type === 'string' && NODES.includes(type as any));
 }
 
 const NodeIsInternal: { oneOf: typeof nodeIsOneIf } & {
