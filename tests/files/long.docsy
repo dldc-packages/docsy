@@ -52,7 +52,8 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript">
+<#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -63,7 +64,8 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#>
+<Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -127,7 +129,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -138,7 +140,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -202,7 +204,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -213,7 +215,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -277,7 +279,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -288,7 +290,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -352,7 +354,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -363,7 +365,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -427,7 +429,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -438,7 +440,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -502,7 +504,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -513,7 +515,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -577,7 +579,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -588,7 +590,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -652,7 +654,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -663,7 +665,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -727,7 +729,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -738,7 +740,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -802,7 +804,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -813,7 +815,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -877,7 +879,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -888,7 +890,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -952,7 +954,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -963,7 +965,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1027,7 +1029,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1038,7 +1040,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1102,7 +1104,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1113,7 +1115,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1177,7 +1179,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1188,7 +1190,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1252,7 +1254,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1263,7 +1265,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1327,7 +1329,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1338,7 +1340,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1402,7 +1404,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1413,7 +1415,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1477,7 +1479,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1488,7 +1490,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1552,7 +1554,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1563,7 +1565,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1627,7 +1629,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1638,7 +1640,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1702,7 +1704,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1713,7 +1715,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1777,7 +1779,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1788,7 +1790,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1852,7 +1854,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1863,7 +1865,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -1927,7 +1929,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -1938,7 +1940,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2002,7 +2004,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2013,7 +2015,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2077,7 +2079,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2088,7 +2090,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2152,7 +2154,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2163,7 +2165,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2227,7 +2229,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2238,7 +2240,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2302,7 +2304,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2313,7 +2315,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2377,7 +2379,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2388,7 +2390,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2452,7 +2454,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2463,7 +2465,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2527,7 +2529,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2538,7 +2540,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2602,7 +2604,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2613,7 +2615,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2677,7 +2679,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2688,7 +2690,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2752,7 +2754,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2763,7 +2765,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2827,7 +2829,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2838,7 +2840,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2902,7 +2904,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2913,7 +2915,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -2977,7 +2979,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -2988,7 +2990,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3052,7 +3054,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3063,7 +3065,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3127,7 +3129,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3138,7 +3140,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3202,7 +3204,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3213,7 +3215,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3277,7 +3279,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3288,7 +3290,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3352,7 +3354,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3363,7 +3365,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3427,7 +3429,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3438,7 +3440,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3502,7 +3504,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3513,7 +3515,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3577,7 +3579,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3588,7 +3590,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3652,7 +3654,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3663,7 +3665,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3727,7 +3729,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3738,7 +3740,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3802,7 +3804,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3813,7 +3815,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3877,7 +3879,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3888,7 +3890,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -3952,7 +3954,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -3963,7 +3965,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4027,7 +4029,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4038,7 +4040,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4102,7 +4104,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4113,7 +4115,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4177,7 +4179,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4188,7 +4190,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4252,7 +4254,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4263,7 +4265,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4327,7 +4329,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4338,7 +4340,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4402,7 +4404,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4413,7 +4415,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4477,7 +4479,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4488,7 +4490,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4552,7 +4554,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4563,7 +4565,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4627,7 +4629,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4638,7 +4640,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4702,7 +4704,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4713,7 +4715,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4777,7 +4779,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4788,7 +4790,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4852,7 +4854,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4863,7 +4865,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -4927,7 +4929,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -4938,7 +4940,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -5002,7 +5004,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -5013,7 +5015,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -5077,7 +5079,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -5088,7 +5090,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -5152,7 +5154,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -5163,7 +5165,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -5227,7 +5229,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -5238,7 +5240,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -5302,7 +5304,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -5313,7 +5315,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -5377,7 +5379,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -5388,7 +5390,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
@@ -5452,7 +5454,7 @@ Some raw code
 <|Footer color="red">
 <#>
 
-<#Code language="javascript">
+<|Code language="javascript"><#>
 Some raw code
 // No comments in this !
 <#><|Block color="red"|><#>
@@ -5463,7 +5465,7 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<#><Code|>
 
 <|Block color="red">
 <|Footer color="red">
