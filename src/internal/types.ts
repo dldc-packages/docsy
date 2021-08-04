@@ -26,7 +26,6 @@ export interface ParseResultSuccess<T> {
 export type ParseResult<T> = ParseResultSuccess<T> | ParseResultFailure;
 
 export type Parser<T, Ctx> = {
-  name: string;
   parse(input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx): ParseResult<T>;
 };
 
