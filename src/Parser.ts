@@ -1,13 +1,5 @@
 import { StringReader } from './StringReader';
-import {
-  ErrorTracker,
-  Parser,
-  ParseResult,
-  ParseResultFailure,
-  ParseResultSuccess,
-  ResultTracker,
-  Stack,
-} from './types';
+import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types';
 import { DocsyError } from './DocsyError';
 
 export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
@@ -61,21 +53,6 @@ export function ParseSuccess<T>(
     end: rest.position,
     value,
     ifError,
-  };
-}
-
-export function errorTracker(): ErrorTracker {
-  let selectedError: { error: ParseResultFailure; pos: number } | null = null;
-  return {
-    get() {
-      return selectedError?.error ?? null;
-    },
-    update(failure: ParseResultFailure) {
-      const pos = failurePosition(failure);
-      if (selectedError === null || pos >= selectedError.pos) {
-        selectedError = { pos, error: failure };
-      }
-    },
   };
 }
 

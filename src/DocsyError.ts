@@ -1,4 +1,4 @@
-import { Node } from './Node.js';
+import { Node } from './Ast.js';
 import { stackToString } from './Parser.js';
 import { StringReader } from './StringReader.js';
 import { Stack } from './types.js';

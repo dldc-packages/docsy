@@ -11,7 +11,7 @@ import {
   DottableExpression,
   ExpressionDocument,
   AnyComment,
-} from './Node.js';
+} from './Ast.js';
 import * as Combinator from './Combinator.js';
 import { StringReader } from './StringReader.js';
 import { DocsyError } from './DocsyError.js';

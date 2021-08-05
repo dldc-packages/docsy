@@ -78,6 +78,20 @@ test(`Parse then serialize complete file`, () => {
   expect(DocsySerializer.serialize(result)).toBe(file);
 });
 
+test(`Parse then serialize long file`, () => {
+  const file = readFile('long');
+  const result = DocsyParser.parseDocument(file).document;
+  expect(() => DocsySerializer.serialize(result)).not.toThrow();
+  expect(DocsySerializer.serialize(result)).toBe(file);
+});
+
+test(`Parse then serialize content file`, () => {
+  const file = readFile('content');
+  const result = DocsyParser.parseDocument(file).document;
+  expect(() => DocsySerializer.serialize(result)).not.toThrow();
+  expect(DocsySerializer.serialize(result)).toBe(file);
+});
+
 test(`Parse then serialize expression doc`, () => {
   const file = '  { foo: "Bar", component: <|Hello>Test|> } \n';
   const result = DocsyParser.parseDocument(file).document;

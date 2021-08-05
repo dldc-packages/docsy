@@ -212,7 +212,7 @@ export type Expression = typeof Expression['__type'];
 
 export type MaybeWhitespace = Node<'Whitespace'> | null;
 
-function nodeIsOneIf<T extends NodeType>(node: Node, types: ReadonlyArray<T>): node is Node<T> {
+function nodeIsOneOf<T extends NodeType>(node: Node, types: ReadonlyArray<T>): node is Node<T> {
   return types.includes(node.type as any);
 }
 
@@ -220,14 +220,14 @@ export function isValidNodeType(type: unknown): boolean {
   return Boolean(type && typeof type === 'string' && NODES.includes(type as any));
 }
 
-const NodeIsInternal: { oneOf: typeof nodeIsOneIf } & {
+const NodeIsInternal: { oneOf: typeof nodeIsOneOf } & {
   [K in NodeType]: (node: Node) => node is Node<K>;
 } = NODES.reduce<any>(
   (acc, key) => {
     acc[key] = (node: Node) => node.type === key;
     return acc;
   },
-  { oneOf: nodeIsOneIf }
+  { oneOf: nodeIsOneOf }
 );
 
 export const NodeIs = {

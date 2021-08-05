@@ -1,5 +1,5 @@
 import { DocsyError } from './DocsyError.js';
-import { Node, NodeType, CreateNode, Expression, NodeNodesItem, isValidNodeType } from './Node.js';
+import { Node, NodeType, CreateNode, Expression, NodeNodesItem, isValidNodeType } from './Ast.js';
 
 type TraversePath = Array<number | string>;
 

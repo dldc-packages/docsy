@@ -1,5 +1,5 @@
 import { DocsyError } from './DocsyError.js';
-import { MaybeWhitespace, Node, NodeIs } from './Node.js';
+import { MaybeWhitespace, Node, NodeIs } from './Ast.js';
 import { DocsySerializer } from './DocsySerializer.js';
 
 export type ResolveValues = {

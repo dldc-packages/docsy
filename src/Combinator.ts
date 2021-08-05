@@ -1,19 +1,19 @@
 import { DocsyError } from './DocsyError.js';
-import { errorTracker, ParseFailure, ParseSuccess, resultTracker } from './Parser.js';
+import { ParseFailure, ParseSuccess, resultTracker } from './Parser.js';
 import { Parser, ParseResult, ParseResultSuccess, Rule } from './types.js';
 
 export function many<T, Ctx>(name: string, parser: Parser<T, Ctx>): Parser<Array<T>, Ctx> {
   return {
     name,
     parse(input, parent, ctx) {
-      const error = errorTracker();
+      const tracker = resultTracker();
       let nextInput = input;
       const items: Array<T> = [];
       let next: ParseResult<T>;
       while (true) {
         next = parser.parse(nextInput, items.length === 0 ? parent : [], ctx);
         if (next.type === 'Failure') {
-          error.update(next);
+          tracker.update(next);
           break;
         }
         if (next.type === 'Success') {
@@ -21,7 +21,7 @@ export function many<T, Ctx>(name: string, parser: Parser<T, Ctx>): Parser<Array
           nextInput = next.rest;
         }
       }
-      return ParseSuccess(input.position, nextInput, items, error.get());
+      return ParseSuccess(input.position, nextInput, items, tracker.getFailure());
     },
   };
 }

@@ -1,4 +1,4 @@
-import { Node, NodeIs, Child, ObjectPart, Prop } from './Node.js';
+import { Node, NodeIs, Child, ObjectPart, Prop } from './Ast.js';
 import { DocsyError } from './DocsyError.js';
 
 const SINGLE_QUOTE = "'";

@@ -42,11 +42,6 @@ export interface Rule<T, Ctx> extends Parser<T, Ctx> {
 export type StackItem = { position: number; name: string; message: string };
 export type Stack = Array<StackItem>;
 
-export type ErrorTracker = {
-  get(): ParseResultFailure | null;
-  update(failure: ParseResultFailure): void;
-};
-
 export type ResultTracker<T> = {
   get(): ParseResult<T>;
   getFailure(): ParseResultFailure | null;
