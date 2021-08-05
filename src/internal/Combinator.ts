@@ -198,16 +198,16 @@ export function whileNotMatch<Ctx>(matchers: Array<string>): Parser<string, Ctx>
       if (rest.length === 0) {
         return ParseFailure();
       }
-      const matches = matchers.map((matcher) => rest.indexOf(matcher)).filter((v) => v !== -1);
-      if (matches.length === 0) {
-        // no match, take the entire string
-        return ParseSuccess(input.position, input.skip(rest.length), rest);
+      let text = rest;
+      for (const matcher of matchers) {
+        const pos = text.indexOf(matcher);
+        if (pos === 0) {
+          return ParseFailure();
+        }
+        if (pos !== -1) {
+          text = text.slice(0, pos);
+        }
       }
-      const firstMatch = Math.min(...matches);
-      if (firstMatch === 0) {
-        return ParseFailure();
-      }
-      const text = rest.slice(0, firstMatch);
       return ParseSuccess(input.position, input.skip(text.length), text);
     },
   };

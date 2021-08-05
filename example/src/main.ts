@@ -1,4 +1,4 @@
-import longText from '../../tests/files/long.docsy?raw';
+import longText from '../../tests/files/content.docsy?raw';
 import { DocsyParser } from '../../dist';
 
 console.time('parse');

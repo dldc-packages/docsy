@@ -14,7 +14,7 @@ import {
 import * as Combinator from './internal/Combinator.js';
 import { StringReader } from './internal/StringReader.js';
 import { DocsyParsingError, DocsyUnexpectedError } from './DocsyError.js';
-import { BACKSLASH, SINGLE_QUOTE, NEW_LINE, DOUBLE_QUOTE, BACKTICK, WHITESPACES } from './internal/constants';
+import { BACKSLASH, SINGLE_QUOTE, NEW_LINE, DOUBLE_QUOTE, BACKTICK } from './internal/constants';
 import { executeParserSync, ParseFailure, ParseSuccess } from './internal/Parser.js';
 import { Parser, ParseResult, ParseResultSuccess } from './internal/types.js';
 
@@ -394,7 +394,7 @@ const elementSelfClosingParser = Combinator.apply(
 );
 
 const textParser = Combinator.apply(
-  Combinator.whileNotMatch<Ctx>(['|>', '<', '//', ...WHITESPACES]),
+  Combinator.whileNotMatch<Ctx>([' ', '\n', '\t', '\r', '|>', '<', '//']),
   (content, start, end, ctx) => ctx.createNode('Text', start, end, {}, { content })
 );
 
