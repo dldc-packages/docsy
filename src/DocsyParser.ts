@@ -358,13 +358,11 @@ const elementTypeMemberParser: Parser<Node<'ElementTypeMember'>, Ctx> = Combinat
     const start = left.start;
     const end = right.end;
 
-    return {
-      type: 'Success',
+    return ParseSuccess(
       start,
-      end,
-      value: ctx.createNode('ElementTypeMember', start, end, { target: left.value, property: identifier }, {}),
-      rest: right.rest,
-    };
+      right.rest,
+      ctx.createNode('ElementTypeMember', start, end, { target: left.value, property: identifier }, {})
+    );
   }
 );
 
@@ -752,8 +750,9 @@ anyCommentParser.setParser(Combinator.oneOf('AnyComment', lineCommentParser, blo
 
 const documentParser = Combinator.apply(
   Combinator.pipe('Document', Combinator.many('DocumentChildren', childParser), eofParser),
-  ([children], start, end, ctx) =>
-    ctx.createNode('Document', start, end, { children: normalizeChildren(children, true, ctx.ranges) }, {})
+  ([children], start, end, ctx) => {
+    return ctx.createNode('Document', start, end, { children: normalizeChildren(children, true, ctx.ranges) }, {});
+  }
 );
 
 const whitespaceOrCommentParser = Combinator.oneOf('WhitespaceOrComment', whitespaceParser, anyCommentParser);

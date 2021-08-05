@@ -270,6 +270,12 @@ test(`Throw when you close the wrong tag`, () => {
   expect(() => DocsyParser.parseDocument(file)).toThrow(DocsyError.ParsingError);
 });
 
+test(`Throw when you invalid tag`, () => {
+  const file = `<|Demo>Something<Demo`;
+  expect(() => DocsyParser.parseDocument(file)).toThrow(DocsyError.ParsingError);
+  expect(() => DocsyParser.parseDocument(file)).toThrow('"|>" did not match');
+});
+
 test(`Parse function call`, () => {
   const file = `<|Demo foo=getProps() |>`;
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();

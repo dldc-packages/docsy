@@ -1,17 +1,19 @@
 import { DocsyError } from '../DocsyError.js';
-import { failurePosition, ParseFailure, ParseSuccess } from './Parser.js';
-import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, Rule } from './types.js';
+import { errorTracker, ParseFailure, ParseSuccess, resultTracker } from './Parser.js';
+import { Parser, ParseResult, ParseResultSuccess, Rule } from './types.js';
 
 export function many<T, Ctx>(name: string, parser: Parser<T, Ctx>): Parser<Array<T>, Ctx> {
   return {
     name,
     parse(input, parent, ctx) {
+      const error = errorTracker();
       let nextInput = input;
       const items: Array<T> = [];
       let next: ParseResult<T>;
       while (true) {
         next = parser.parse(nextInput, items.length === 0 ? parent : [], ctx);
         if (next.type === 'Failure') {
+          error.update(next);
           break;
         }
         if (next.type === 'Success') {
@@ -19,7 +21,7 @@ export function many<T, Ctx>(name: string, parser: Parser<T, Ctx>): Parser<Array
           nextInput = next.rest;
         }
       }
-      return ParseSuccess(input.position, nextInput, items);
+      return ParseSuccess(input.position, nextInput, items, error.get());
     },
   };
 }
@@ -38,20 +40,24 @@ export function manyBetween<Begin, Item, End, Ctx>(
       if (beginResult.type === 'Failure') {
         return ParseFailure(beginResult.pos, name, `${begin.name} did not match`, beginResult);
       }
+      const tracker = resultTracker();
       current = beginResult.rest;
       let endResult = end.parse(current, skip, ctx);
+      tracker.update(endResult);
       const items: Array<Item> = [];
       while (endResult.type === 'Failure') {
         if (current.empty) {
-          return ParseFailure(current.position, name, `${end.name} did not match before EOF`, endResult);
+          return ParseFailure(current.position, name, `${end.name} did not match before EOF`, tracker.getFailure());
         }
         const itemResult = item.parse(current, skip, ctx);
+        tracker.update(itemResult);
         if (itemResult.type === 'Failure') {
-          return ParseFailure(current.position, name, `${item.name} did not match`, itemResult);
+          return ParseFailure(current.position, name, `${item.name} did not match`, tracker.getFailure());
         }
         items.push(itemResult.value);
         current = itemResult.rest;
         endResult = end.parse(current, skip, ctx);
+        tracker.update(endResult);
       }
       const result: [Begin, Array<Item>, End] = [beginResult.value, items, endResult.value];
       return ParseSuccess(input.position, endResult.rest, result);
@@ -73,9 +79,11 @@ export function manySepBy<T, Ctx>(
       let current = input;
       const items: Array<T> = [];
       // parse first
+      const tracker = resultTracker();
       const next = itemParser.parse(current, parent, ctx);
+      tracker.update(next);
       if (next.type === 'Failure') {
-        return ParseSuccess<ManySepByResult<T>>(input.position, current, { items, trailing: false });
+        return ParseSuccess<ManySepByResult<T>>(input.position, current, { items, trailing: false }, next);
       }
       if (next.type === 'Success') {
         items.push(next.value);
@@ -84,28 +92,39 @@ export function manySepBy<T, Ctx>(
       let nextSep: ParseResult<any>;
       while (true) {
         nextSep = sepParser.parse(current, [], ctx);
+        tracker.update(nextSep);
         if (nextSep.type === 'Failure') {
           break;
         }
         const nextItem = itemParser.parse(nextSep.rest, [], ctx);
+        tracker.update(nextItem);
         if (nextItem.type === 'Failure') {
           if (allowTrailing) {
-            return ParseSuccess<ManySepByResult<T>>(input.position, nextSep.rest, { items, trailing: true });
+            return ParseSuccess<ManySepByResult<T>>(
+              input.position,
+              nextSep.rest,
+              { items, trailing: true },
+              tracker.getFailure()
+            );
           }
           // fail
           return ParseFailure(
             nextItem.pos,
             name,
             `${sepParser.name} matched bu ${itemParser.name} did not and trailing separator is not allowed`,
-            nextItem
+            tracker.getFailure()
           );
-        }
-        if (nextItem.type === 'Success') {
+        } else {
           items.push(nextItem.value);
           current = nextItem.rest;
         }
       }
-      return ParseSuccess<ManySepByResult<T>>(input.position, current, { items, trailing: false });
+      return ParseSuccess<ManySepByResult<T>>(
+        input.position,
+        current,
+        { items, trailing: false },
+        tracker.getFailure()
+      );
     },
   };
 }
@@ -118,7 +137,7 @@ export function maybe<T, Ctx>(parser: Parser<T, Ctx>): Parser<T | null, Ctx> {
       const nextInput = input;
       const next = parser.parse(nextInput, parent, ctx);
       if (next.type === 'Failure') {
-        return ParseSuccess(input.position, input, null);
+        return ParseSuccess(input.position, input, null, next);
       }
       return ParseSuccess(input.position, next.rest, next.value);
     },
@@ -149,23 +168,16 @@ export function oneOf<V, Ctx>(name: string, ...parsers: Array<Parser<V, Ctx>>): 
   return {
     name,
     parse(input, skip, ctx) {
-      let selectedError: { error: ParseResultFailure; pos: number } | null = null;
-      for (const parser of parsers) {
+      const tracker = resultTracker<V>();
+      parsers.forEach((parser) => {
         if (skip.includes(parser)) {
-          continue;
+          tracker.update(ParseFailure(input.position, name, `${parser.name} is skiped`));
+          return;
         }
         const next = parser.parse(input, skip, ctx);
-        if (next.type === 'Success') {
-          return ParseSuccess(input.position, next.rest, next.value);
-        } else {
-          const pos = failurePosition(next);
-          if (selectedError === null || selectedError.pos < pos) {
-            selectedError = { pos, error: next };
-          }
-          continue;
-        }
-      }
-      return ParseFailure(input.position, name, `${name} did not match`, selectedError?.error);
+        tracker.update(next);
+      });
+      return tracker.get();
     },
   };
 }
@@ -179,13 +191,7 @@ export function apply<T, U, Ctx>(
     parse(input, skip, ctx) {
       const next = parser.parse(input, skip, ctx);
       if (next.type === 'Success') {
-        return {
-          type: 'Success',
-          start: next.start,
-          end: next.end,
-          rest: next.rest,
-          value: transformer(next.value, next.start, next.end, ctx),
-        };
+        return ParseSuccess(next.start, next.rest, transformer(next.value, next.start, next.end, ctx));
       }
       return next;
     },
@@ -217,7 +223,7 @@ export function whileNotMatch<Ctx>(name: string, matchers: Array<string>): Parse
       for (const matcher of matchers) {
         const pos = text.indexOf(matcher);
         if (pos === 0) {
-          return ParseFailure(input.position, name, `Founc ${matcher} at index 0`);
+          return ParseFailure(input.position, name, `Found ${matcher}`);
         }
         if (pos !== -1) {
           text = text.slice(0, pos);
@@ -354,19 +360,26 @@ export function pipe<V, Ctx>(name: string, ...parsers: Array<Parser<V, Ctx>>): P
         return ParseFailure(input.position, name, `${parsers[0].name} is in skip list`);
       }
       let current = input;
+      const tracker = resultTracker();
       const result: Array<V> = [];
       for (let i = 0; i < parsers.length; i++) {
         const parser = parsers[i];
         let nextSkip = skip;
         if (i === 0) {
-          nextSkip = skip.slice();
-          nextSkip.push(parser);
+          if (skip.length === 0) {
+            nextSkip = [parser];
+          } else if (skip.length === 1) {
+            nextSkip = [skip[0], parser];
+          } else if (skip.includes(parser) === false) {
+            nextSkip = skip.slice();
+            nextSkip.push(parser);
+          }
         }
         const next = parser.parse(current, nextSkip, ctx);
+        tracker.update(next);
         if (next.type === 'Failure') {
-          return ParseFailure(current.position, name, `${parser.name} did not match`, next);
-        }
-        if (next.type === 'Success') {
+          return ParseFailure(current.position, name, `${parser.name} did not match`, tracker.getFailure());
+        } else {
           current = next.rest;
           result.push(next.value);
         }

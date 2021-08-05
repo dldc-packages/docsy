@@ -1,5 +1,13 @@
 import { StringReader } from './StringReader';
-import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, Stack } from './types';
+import {
+  ErrorTracker,
+  Parser,
+  ParseResult,
+  ParseResultFailure,
+  ParseResultSuccess,
+  ResultTracker,
+  Stack,
+} from './types';
 import { DocsyError } from '../DocsyError';
 
 export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
@@ -40,14 +48,79 @@ export function failurePosition(failure: ParseResultFailure): number {
   return failurePosition(failure.child);
 }
 
-export function ParseSuccess<T>(start: number, rest: StringReader, value: T): ParseResultSuccess<T> {
+export function ParseSuccess<T>(
+  start: number,
+  rest: StringReader,
+  value: T,
+  ifError: ParseResultFailure | null = null
+): ParseResultSuccess<T> {
   return {
     type: 'Success',
     rest,
     start,
     end: rest.position,
     value,
+    ifError,
   };
+}
+
+export function errorTracker(): ErrorTracker {
+  let selectedError: { error: ParseResultFailure; pos: number } | null = null;
+  return {
+    get() {
+      return selectedError?.error ?? null;
+    },
+    update(failure: ParseResultFailure) {
+      const pos = failurePosition(failure);
+      if (selectedError === null || pos >= selectedError.pos) {
+        selectedError = { pos, error: failure };
+      }
+    },
+  };
+}
+
+class ResultTrackerImpl<T> implements ResultTracker<T> {
+  private selectedError: { error: ParseResultFailure; pos: number } | null = null;
+  private selectedResult: ParseResultSuccess<T> | null = null;
+
+  update(result: ParseResult<T>): void {
+    if (result.type === 'Failure') {
+      const pos = failurePosition(result);
+      if (this.selectedError === null || pos > this.selectedError.pos) {
+        this.selectedError = { pos, error: result };
+      }
+    } else {
+      if (this.selectedResult === null || result.end > this.selectedResult.end) {
+        this.selectedResult = result;
+      }
+      if (this.selectedResult.ifError) {
+        this.update(this.selectedResult.ifError);
+      }
+    }
+  }
+
+  get(): ParseResult<T> {
+    if (this.selectedResult) {
+      return {
+        ...this.selectedResult,
+        ifError: this.selectedError?.error ?? null,
+      };
+    }
+    if (this.selectedError) {
+      return this.selectedError.error;
+    }
+    throw new DocsyError.UnexpectedError(`Tracker did not receive result`);
+  }
+  getFailure() {
+    if (this.selectedError) {
+      return this.selectedError.error;
+    }
+    return null;
+  }
+}
+
+export function resultTracker<T>(): ResultTracker<T> {
+  return new ResultTrackerImpl<T>();
 }
 
 export function failureToStack(failure: ParseResultFailure): Stack {
