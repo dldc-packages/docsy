@@ -1,6 +1,6 @@
-import { StringReader } from './StringReader';
-import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types';
-import { DocsyError } from './DocsyError';
+import { StringReader } from './StringReader.js';
+import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types.js';
+import { DocsyError } from './DocsyError.js';
 
 export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
   return parser.parse(input, [], ctx);

@@ -1,4 +1,4 @@
-import { StringReader } from './StringReader';
+import { StringReader } from './StringReader.js';
 
 export type Position = {
   line: number;
