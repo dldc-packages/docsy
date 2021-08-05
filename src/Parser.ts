@@ -8,7 +8,7 @@ import {
   ResultTracker,
   Stack,
 } from './types';
-import { DocsyError } from '../DocsyError';
+import { DocsyError } from './DocsyError';
 
 export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
   return parser.parse(input, [], ctx);

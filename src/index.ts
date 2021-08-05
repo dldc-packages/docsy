@@ -4,7 +4,7 @@ export * from './DocsyResolver.js';
 export * from './DocsyFomatter.js';
 export * from './DocsyError.js';
 export { DocsyUtils, NodePath, NodeWithPath } from './DocsyUtils.js';
-export { Position, Range } from './internal/types.js';
+export { Position, Range } from './types.js';
 export {
   Node,
   NodeIs,
@@ -18,4 +18,4 @@ export {
   ObjectPart,
   Prop,
   QuoteType,
-} from './internal/Node.js';
+} from './Node.js';

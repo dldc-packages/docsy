@@ -1,6 +1,9 @@
-import { Node, NodeIs, Child, ObjectPart, Prop } from './internal/Node.js';
-import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './internal/constants.js';
+import { Node, NodeIs, Child, ObjectPart, Prop } from './Node.js';
 import { DocsyError } from './DocsyError.js';
+
+const SINGLE_QUOTE = "'";
+const DOUBLE_QUOTE = '"';
+const BACKTICK = '`';
 
 const COMMONT_TYPE = ['LineComment', 'BlockComment'] as const;
 

@@ -1,4 +1,4 @@
-import { DocsyError } from '../DocsyError.js';
+import { DocsyError } from './DocsyError.js';
 import { errorTracker, ParseFailure, ParseSuccess, resultTracker } from './Parser.js';
 import { Parser, ParseResult, ParseResultSuccess, Rule } from './types.js';
 

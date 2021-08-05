@@ -1,6 +1,9 @@
-import longText from '../../tests/files/content.docsy?raw';
+import longText from '../../tests/files/complex-raw.docsy?raw';
 import { DocsyParser } from '../../dist';
 
 console.time('parse');
-DocsyParser.parseDocument(longText);
+const result = DocsyParser.parseDocument(longText);
 console.timeEnd('parse');
+
+const app = document.getElementById('app')!;
+app.innerHTML = `<pre>${JSON.stringify(result.document, null, 2)}</pre>`;

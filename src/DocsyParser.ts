@@ -11,13 +11,18 @@ import {
   DottableExpression,
   ExpressionDocument,
   AnyComment,
-} from './internal/Node.js';
-import * as Combinator from './internal/Combinator.js';
-import { StringReader } from './internal/StringReader.js';
+} from './Node.js';
+import * as Combinator from './Combinator.js';
+import { StringReader } from './StringReader.js';
 import { DocsyError } from './DocsyError.js';
-import { BACKSLASH, SINGLE_QUOTE, NEW_LINE, DOUBLE_QUOTE, BACKTICK } from './internal/constants';
-import { executeParser, failureToStack, ParseFailure, ParseSuccess } from './internal/Parser.js';
-import { Parser, ParseResult, ParseResultSuccess } from './internal/types.js';
+import { executeParser, failureToStack, ParseFailure, ParseSuccess } from './Parser.js';
+import { Parser, ParseResult, ParseResultSuccess } from './types.js';
+
+const SINGLE_QUOTE = "'";
+const DOUBLE_QUOTE = '"';
+const BACKTICK = '`';
+const BACKSLASH = '\\';
+const NEW_LINE = '\n';
 
 export type Ranges = Map<Node, { start: number; end: number }>;
 

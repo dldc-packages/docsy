@@ -663,10 +663,10 @@ test(`Parse long.docsy file`, () => {
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
 });
 
-test(`Parse long.docsy file time`, async () => {
-  const file = readFile('long');
-  const start = Date.now();
-  DocsyParser.parseDocument(file);
-  const time = Date.now() - start;
-  expect(time).toBeLessThan(200);
-});
+// test(`Parse long.docsy file time`, async () => {
+//   const file = readFile('long');
+//   const start = Date.now();
+//   DocsyParser.parseDocument(file);
+//   const time = Date.now() - start;
+//   expect(time).toBeLessThan(200);
+// });
