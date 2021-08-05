@@ -1,6 +1,6 @@
 import { Node, NodeIs, Child, ObjectPart, Prop } from './internal/Node.js';
 import { SINGLE_QUOTE, DOUBLE_QUOTE, BACKTICK } from './internal/constants.js';
-import { DocsyCannotSerializeNodeError, DocsyUnexpectedError } from './DocsyError.js';
+import { DocsyError } from './DocsyError.js';
 
 const COMMONT_TYPE = ['LineComment', 'BlockComment'] as const;
 
@@ -81,7 +81,7 @@ function serialize(node: Node): string {
     if (NodeIs.oneOf(item, CHILDREN_TYPE)) {
       return serializeChild(item, false);
     }
-    throw new DocsyCannotSerializeNodeError(item, `serializer not implemented`);
+    throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
   }
 
   function serializeElement(elem: Node<'Element'>): string {
@@ -149,7 +149,7 @@ function serialize(node: Node): string {
     if (NodeIs.ComputedProperty(item)) {
       return `[${serializeInternal(item.nodes.expression)}]: ${serializeInternal(item.nodes.value)}`;
     }
-    throw new DocsyCannotSerializeNodeError(item, `serializer not implemented`);
+    throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
   }
 
   function serializeString(item: Node<'Str'>) {
@@ -162,7 +162,7 @@ function serialize(node: Node): string {
     if (item.meta.quote === 'Backtick') {
       return BACKTICK + item.meta.value.replace(/`/g, '\\`') + BACKTICK;
     }
-    throw new DocsyUnexpectedError(`Invalid Qutote type on Str`);
+    throw new DocsyError.UnexpectedError(`Invalid Qutote type on Str`);
   }
 
   function serializeChildren(items: null | Array<Child>, isInRaw: boolean): string {
@@ -240,7 +240,7 @@ function serialize(node: Node): string {
     if (NodeIs.oneOf(item, COMMONT_TYPE)) {
       return serializeComment(item);
     }
-    throw new DocsyCannotSerializeNodeError(item, `serializer not implemented`);
+    throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
   }
 
   function serializeComment(item: Node<'BlockComment' | 'LineComment'>): string {
@@ -251,7 +251,7 @@ function serialize(node: Node): string {
     if (NodeIs.BlockComment(item)) {
       return `/*${item.meta.content}*/`;
     }
-    throw new DocsyCannotSerializeNodeError(item, `serializer not implemented`);
+    throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
   }
 
   function serializeProps(props: Node<'Props'>): string {
@@ -277,6 +277,6 @@ function serialize(node: Node): string {
     if (NodeIs.PropBlockComment(prop)) {
       return `/*${prop.meta.content}*/`;
     }
-    throw new DocsyCannotSerializeNodeError(prop, `serializer not implemented`);
+    throw new DocsyError.CannotSerializeNodeError(prop, `serializer not implemented`);
   }
 }

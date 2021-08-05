@@ -1,4 +1,4 @@
-import { DocsyParser, DocsyParsingError } from '../src';
+import { DocsyParser, DocsyError } from '../src';
 import { readFile } from './utils';
 // @ts-expect-error unused but fine
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -267,7 +267,7 @@ test(`Parse simple element with no content`, () => {
 
 test(`Throw when you close the wrong tag`, () => {
   const file = `<|Demo>Something<Yolo|>`;
-  expect(() => DocsyParser.parseDocument(file)).toThrow(DocsyParsingError);
+  expect(() => DocsyParser.parseDocument(file)).toThrow(DocsyError.ParsingError);
 });
 
 test(`Parse function call`, () => {

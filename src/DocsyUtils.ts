@@ -1,4 +1,4 @@
-import { DocsyCannotTransformValueError, DocsyNotImplementedError } from './DocsyError.js';
+import { DocsyError } from './DocsyError.js';
 import { Node, NodeType, CreateNode, Expression, NodeNodesItem, isValidNodeType } from './internal/Node.js';
 
 type TraversePath = Array<number | string>;
@@ -34,7 +34,7 @@ function transform(node: Node, onNode: (item: Node, path: TraversePath) => Node)
     //     : item;
     //   return { changed: childRes.changed, value };
     // }
-    throw new DocsyNotImplementedError(`Node of type ${item.type}`);
+    throw new DocsyError.NotImplementedError(`Node of type ${item.type}`);
   }
 
   // function transformArray<K extends NodeType>(
@@ -180,7 +180,7 @@ function createNodeFromValue(value: unknown): Expression {
       { trailingComma: false }
     );
   }
-  throw new DocsyCannotTransformValueError(value);
+  throw new DocsyError.CannotTransformValueError(value);
 }
 
 function isObject(val: any): boolean {

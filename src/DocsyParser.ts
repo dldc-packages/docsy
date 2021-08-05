@@ -10,12 +10,13 @@ import {
   ElementAny,
   DottableExpression,
   ExpressionDocument,
+  AnyComment,
 } from './internal/Node.js';
 import * as Combinator from './internal/Combinator.js';
 import { StringReader } from './internal/StringReader.js';
-import { DocsyParsingError, DocsyUnexpectedError } from './DocsyError.js';
+import { DocsyError } from './DocsyError.js';
 import { BACKSLASH, SINGLE_QUOTE, NEW_LINE, DOUBLE_QUOTE, BACKTICK } from './internal/constants';
-import { executeParserSync, ParseFailure, ParseSuccess } from './internal/Parser.js';
+import { executeParser, failureToStack, ParseFailure, ParseSuccess } from './internal/Parser.js';
 import { Parser, ParseResult, ParseResultSuccess } from './internal/types.js';
 
 export type Ranges = Map<Node, { start: number; end: number }>;
@@ -65,9 +66,9 @@ function createContext(): Ctx {
 function parseDocument(file: string): ParseDocumentResult {
   const ctx = createContext();
   const input = StringReader(file);
-  const result = executeParserSync(documentParser, input, ctx);
+  const result = executeParser(documentParser, input, ctx);
   if (result.type === 'Failure') {
-    throw new DocsyParsingError();
+    throw new DocsyError.ParsingError(failureToStack(result));
   }
   return { document: result.value, ranges: ctx.ranges };
 }
@@ -75,9 +76,9 @@ function parseDocument(file: string): ParseDocumentResult {
 function parseExpression(file: string): ParseDocumentExpressionResult {
   const ctx = createContext();
   const input = StringReader(file);
-  const result = executeParserSync(expressionDocumentParser, input, ctx);
+  const result = executeParser(expressionDocumentParser, input, ctx);
   if (result.type === 'Failure') {
-    throw new DocsyParsingError();
+    throw new DocsyError.ParsingError(failureToStack(result));
   }
   return { expression: result.value, ranges: ctx.ranges };
 }
@@ -115,12 +116,13 @@ const doubleQuoteParser = createExact(DOUBLE_QUOTE);
 const backtickParser = createExact(BACKTICK);
 const eofParser = Combinator.eof<Ctx>();
 
-const expressionParser = Combinator.rule<Expression, Ctx>();
-const dottableExpressionParser = Combinator.rule<DottableExpression, Ctx>();
-const childParser = Combinator.rule<Child, Ctx>();
-const rawChildParser = Combinator.rule<Child | Array<Child>, Ctx>();
-const unrawChildParser = Combinator.rule<Child, Ctx>();
-const unrawElementAnyParser = Combinator.rule<ElementAny, Ctx>();
+const expressionParser = Combinator.rule<Expression, Ctx>('Expression');
+const dottableExpressionParser = Combinator.rule<DottableExpression, Ctx>('DottableExpression');
+const childParser = Combinator.rule<Child, Ctx>('Child');
+const rawChildParser = Combinator.rule<Child | Array<Child>, Ctx>('RawChild');
+const unrawChildParser = Combinator.rule<Child, Ctx>('Child');
+const unrawElementAnyParser = Combinator.rule<ElementAny, Ctx>('ElementAny');
+const anyCommentParser = Combinator.rule<AnyComment, Ctx>('AnyComment');
 
 const whitespaceParser = Combinator.apply(Combinator.regexp<Ctx>(/^\s+/g), (content, start, end, ctx) => {
   const hasNewLine = content.indexOf('\n') >= 0;
@@ -138,7 +140,7 @@ const numberParser = Combinator.apply(
 );
 
 const booleanParser = Combinator.apply(
-  Combinator.oneOf(createExact('true'), createExact('false')),
+  Combinator.oneOf('Bool', createExact('true'), createExact('false')),
   (val, start, end, ctx) => ctx.createNode('Bool', start, end, {}, { value: val === 'true' ? true : false })
 );
 
@@ -152,33 +154,37 @@ const undefinedParser = Combinator.apply(createExact('undefined'), (_null, start
 
 const maybeWhitespaceParser = Combinator.maybe(whitespaceParser);
 
-const notNewLineParser = Combinator.singleChar<Ctx>((char) => char !== '\n');
+const notNewLineParser = Combinator.singleChar<Ctx>('NotNewLine', (char) => char !== '\n');
 
 const escapedStringValue = Combinator.apply(
-  Combinator.pipe(backslashParser, notNewLineParser),
+  Combinator.pipe('EscapedString', backslashParser, notNewLineParser),
   ([_backslash, char]) => {
     return char;
   }
 );
 
-const createStringParser = <Q>(quote: Parser<Q, Ctx>, contentRegexp: RegExp) =>
+const createStringParser = <Q>(name: string, quote: Parser<Q, Ctx>, contentRegexp: RegExp) =>
   Combinator.apply(
     Combinator.pipe(
+      name,
       quote,
-      Combinator.many(Combinator.oneOf(escapedStringValue, Combinator.regexp(contentRegexp))),
+      Combinator.many(
+        'StringContent',
+        Combinator.oneOf('StringContent', escapedStringValue, Combinator.regexp(contentRegexp))
+      ),
       quote
     ),
     ([q1, content, _q2]) => ({ quote: q1, content: content.join('') })
   );
 
-const singleQuoteStringParser = createStringParser(singleQuoteParser, /^[^\\\n']+/g);
+const singleQuoteStringParser = createStringParser('SingleQuoteString', singleQuoteParser, /^[^\\\n']+/g);
 
-const doubleQuoteStringParser = createStringParser(doubleQuoteParser, /^[^\\\n"]+/g);
+const doubleQuoteStringParser = createStringParser('DoubleQuoteString', doubleQuoteParser, /^[^\\\n"]+/g);
 
-const backtickStringParser = createStringParser(backtickParser, /^[^\\`]+/g);
+const backtickStringParser = createStringParser('BacktickString', backtickParser, /^[^\\`]+/g);
 
 const stringParser = Combinator.apply(
-  Combinator.oneOf(singleQuoteStringParser, doubleQuoteStringParser, backtickStringParser),
+  Combinator.oneOf('String', singleQuoteStringParser, doubleQuoteStringParser, backtickStringParser),
   (data, start, end, ctx) => {
     const quote = data.quote === SINGLE_QUOTE ? 'Single' : data.quote === DOUBLE_QUOTE ? 'Double' : 'Backtick';
     return ctx.createNode('Str', start, end, {}, { value: data.content, quote });
@@ -186,44 +192,55 @@ const stringParser = Combinator.apply(
 );
 
 const emptyArrayParser = Combinator.apply(
-  Combinator.pipe(squareBracketOpenParser, Combinator.maybe(whitespaceParser), squareBracketCloseParser),
+  Combinator.pipe('EmptyArray', squareBracketOpenParser, Combinator.maybe(whitespaceParser), squareBracketCloseParser),
   ([_open, whitespace, _close], start, end, ctx) => {
     return ctx.createNode('EmptyArray', start, end, { whitespace }, {});
   }
 );
 
 const emptyObjectParser = Combinator.apply(
-  Combinator.pipe(curlyBracketOpenParser, Combinator.maybe(whitespaceParser), curlyBracketCloseParser),
+  Combinator.pipe('EmptyObject', curlyBracketOpenParser, Combinator.maybe(whitespaceParser), curlyBracketCloseParser),
   ([_open, whitespace, _close], start, end, ctx) => {
     return ctx.createNode('EmptyObject', start, end, { whitespace }, {});
   }
 );
 
 const parenthesisParser = Combinator.apply(
-  Combinator.pipe(parenthesisOpenParser, expressionParser, parenthesisCloseParser),
+  Combinator.pipe('Parenthesis', parenthesisOpenParser, expressionParser, parenthesisCloseParser),
   ([_open, value], start, end, ctx) => {
     return ctx.createNode('Parenthesis', start, end, { value }, {});
   }
 );
 
 const spreadParser = Combinator.apply(
-  Combinator.pipe(spreadOperatorParser, expressionParser),
+  Combinator.pipe('Spread', spreadOperatorParser, expressionParser),
   ([_op, target], start, end, ctx) => {
     return ctx.createNode('Spread', start, end, { target }, {});
   }
 );
 
 const arrayItemParser = Combinator.apply(
-  Combinator.pipe(maybeWhitespaceParser, Combinator.oneOf(spreadParser, expressionParser), maybeWhitespaceParser),
+  Combinator.pipe(
+    'ArrayItem',
+    maybeWhitespaceParser,
+    Combinator.oneOf('ArrayItemInner', spreadParser, expressionParser),
+    maybeWhitespaceParser
+  ),
   ([whitespaceBefore, item, whitespaceAfter], start, end, ctx) => {
     return ctx.createNode('ArrayItem', start, end, { whitespaceBefore, item, whitespaceAfter }, {});
   }
 );
 
-const arrayItemsParser = Combinator.manySepBy(arrayItemParser, commaParser, true);
+const arrayItemsParser = Combinator.manySepBy('ArrayItems', arrayItemParser, commaParser, true);
 
 const arrayParser = Combinator.apply(
-  Combinator.pipe(squareBracketOpenParser, arrayItemsParser, Combinator.maybe(commaParser), squareBracketCloseParser),
+  Combinator.pipe(
+    'Array',
+    squareBracketOpenParser,
+    arrayItemsParser,
+    Combinator.maybe(commaParser),
+    squareBracketCloseParser
+  ),
   ([_open, { items, trailing }, _close], start, end, ctx) => {
     return ctx.createNode('Array', start, end, { items }, { trailingComma: trailing });
   }
@@ -231,9 +248,10 @@ const arrayParser = Combinator.apply(
 
 const lineCommentParser = Combinator.apply(
   Combinator.pipe(
+    'LineComment',
     doubleSlashParser,
     Combinator.maybe(Combinator.regexp(/^[^\n]+/g)),
-    Combinator.oneOf(eofParser, newLineParser)
+    Combinator.oneOf('LineCommentEnd', eofParser, newLineParser)
   ),
   ([_start, content], start, end, ctx) => {
     return ctx.createNode('LineComment', start, end, {}, { content: content || '' });
@@ -241,22 +259,32 @@ const lineCommentParser = Combinator.apply(
 );
 
 const blockCommentParser = Combinator.apply(
-  Combinator.pipe(blockCommentStartParser, Combinator.maybe(Combinator.whileNotMatch(['*/'])), blockCommentEndParser),
+  Combinator.pipe(
+    'BlockComment',
+    blockCommentStartParser,
+    Combinator.maybe(Combinator.whileNotMatch('BlockCommentContent', ['*/'])),
+    blockCommentEndParser
+  ),
   ([_start, content], start, end, ctx) => {
     return ctx.createNode('BlockComment', start, end, {}, { content: content || '' });
   }
 );
 
-const commentParser = Combinator.oneOf(lineCommentParser, blockCommentParser);
-
 const propertyShorthandParser = Combinator.apply(identifierParser, (name, start, end, ctx) => {
   return ctx.createNode('PropertyShorthand', start, end, { name }, {});
 });
 
-const propertyNameParser = Combinator.oneOf(identifierParser, stringParser);
+const propertyNameParser = Combinator.oneOf('PropertyName', identifierParser, stringParser);
 
 const propertyParser = Combinator.apply(
-  Combinator.pipe(propertyNameParser, maybeWhitespaceParser, colonParser, maybeWhitespaceParser, expressionParser),
+  Combinator.pipe(
+    'Property',
+    propertyNameParser,
+    maybeWhitespaceParser,
+    colonParser,
+    maybeWhitespaceParser,
+    expressionParser
+  ),
   ([name, whitespaceBeforeColon, _colon, whitespaceAfterColon, value], start, end, ctx) => {
     return createNode(
       ctx.ranges,
@@ -271,6 +299,7 @@ const propertyParser = Combinator.apply(
 
 const computedPropertyParser = Combinator.apply(
   Combinator.pipe(
+    'ComputedProperty',
     squareBracketOpenParser,
     expressionParser,
     squareBracketCloseParser,
@@ -298,8 +327,9 @@ const computedPropertyParser = Combinator.apply(
 
 const objectItemParser = Combinator.apply(
   Combinator.pipe(
+    'ObjectItem',
     maybeWhitespaceParser,
-    Combinator.oneOf(propertyParser, propertyShorthandParser, spreadParser, computedPropertyParser),
+    Combinator.oneOf('ObjectItemInner', propertyParser, propertyShorthandParser, spreadParser, computedPropertyParser),
     maybeWhitespaceParser
   ),
   ([whitespaceBefore, item, whitespaceAfter], start, end, ctx) => {
@@ -309,8 +339,9 @@ const objectItemParser = Combinator.apply(
 
 const objectParser = Combinator.apply(
   Combinator.pipe(
+    'Object',
     curlyBracketOpenParser,
-    Combinator.manySepBy(objectItemParser, commaParser, true),
+    Combinator.manySepBy('ObjectInner', objectItemParser, commaParser, true),
     curlyBracketCloseParser
   ),
   ([_open, { items, trailing }, _close], start, end, ctx) => {
@@ -319,8 +350,9 @@ const objectParser = Combinator.apply(
 );
 
 const elementTypeMemberParser: Parser<Node<'ElementTypeMember'>, Ctx> = Combinator.reduceRight(
+  'ElementTypeMember',
   identifierParser,
-  Combinator.pipe(dotParser, identifierParser),
+  Combinator.pipe('ElementTypeMemberInner', dotParser, identifierParser),
   (left, right, ctx): ParseResult<Node<'ElementTypeMember'>> => {
     const [, identifier] = right.value;
     const start = left.start;
@@ -332,28 +364,39 @@ const elementTypeMemberParser: Parser<Node<'ElementTypeMember'>, Ctx> = Combinat
       end,
       value: ctx.createNode('ElementTypeMember', start, end, { target: left.value, property: identifier }, {}),
       rest: right.rest,
-      // stack: [],
     };
   }
 );
 
-const componentTypeParser = Combinator.oneOf(elementTypeMemberParser, identifierParser);
+const componentTypeParser = Combinator.oneOf('ComponentType', elementTypeMemberParser, identifierParser);
 
-const primitiveParser = Combinator.oneOf(numberParser, booleanParser, nullParser, undefinedParser, stringParser);
+const primitiveParser = Combinator.oneOf(
+  'Primitive',
+  numberParser,
+  booleanParser,
+  nullParser,
+  undefinedParser,
+  stringParser
+);
 
 const propNoValue = Combinator.apply(identifierParser, (name, start, end, ctx) => {
   return ctx.createNode('PropNoValue', start, end, { name }, {});
 });
 
 const propValue = Combinator.apply(
-  Combinator.pipe(identifierParser, equalParser, expressionParser),
+  Combinator.pipe('PropValue', identifierParser, equalParser, expressionParser),
   ([name, _equal, value], start, end, ctx) => {
     return ctx.createNode('PropValue', start, end, { name, value }, {});
   }
 );
 
 const propBlockCommentParser = Combinator.apply(
-  Combinator.pipe(blockCommentStartParser, Combinator.maybe(Combinator.whileNotMatch(['*/'])), blockCommentEndParser),
+  Combinator.pipe(
+    'PropBlockComment',
+    blockCommentStartParser,
+    Combinator.maybe(Combinator.whileNotMatch('NotBlockCommentEnd', ['*/'])),
+    blockCommentEndParser
+  ),
   ([_start, content], start, end, ctx) => {
     return ctx.createNode('PropBlockComment', start, end, {}, { content: content || '' });
   }
@@ -361,63 +404,80 @@ const propBlockCommentParser = Combinator.apply(
 
 const propLineCommentParser = Combinator.apply(
   Combinator.pipe(
+    'PropLineComment',
     doubleSlashParser,
     Combinator.maybe(Combinator.regexp(/^[^\n]+/g)),
-    Combinator.oneOf(eofParser, newLineParser)
+    Combinator.oneOf('PropLineCommentEnd', eofParser, newLineParser)
   ),
   ([_start, content], start, end, ctx) => {
     return ctx.createNode('PropLineComment', start, end, {}, { content: content || '' });
   }
 );
 
-const propParser = Combinator.oneOf(propValue, propNoValue, propBlockCommentParser, propLineCommentParser);
+const propParser = Combinator.oneOf('Prop', propValue, propNoValue, propBlockCommentParser, propLineCommentParser);
 
 const propItemParser = Combinator.apply(
-  Combinator.pipe(whitespaceParser, propParser),
+  Combinator.pipe('PropItem', whitespaceParser, propParser),
   ([whitespace, item], start, end, ctx) => {
     return ctx.createNode('PropItem', start, end, { item, whitespaceBefore: whitespace }, {});
   }
 );
 
 const propsParser = Combinator.apply(
-  Combinator.pipe(Combinator.many(propItemParser), Combinator.maybe(whitespaceParser)),
+  Combinator.pipe('Props', Combinator.many('PropsInner', propItemParser), Combinator.maybe(whitespaceParser)),
   ([items, whitespaceAfter], start, end, ctx) => {
     return ctx.createNode('Props', start, end, { items, whitespaceAfter }, {});
   }
 );
 
 const elementSelfClosingParser = Combinator.apply(
-  Combinator.pipe(elementTokenOpenParser, componentTypeParser, propsParser, elementTokenCloseParser),
+  Combinator.pipe(
+    'SelfClosingElement',
+    elementTokenOpenParser,
+    componentTypeParser,
+    propsParser,
+    elementTokenCloseParser
+  ),
   ([_tagOpen, component, props], start, end, ctx) => {
     return ctx.createNode('SelfClosingElement', start, end, { component, props }, { namedCloseTag: false });
   }
 );
 
 const textParser = Combinator.apply(
-  Combinator.whileNotMatch<Ctx>([' ', '\n', '\t', '\r', '|>', '<', '//']),
+  Combinator.whileNotMatch<Ctx>('Text', [' ', '\n', '\t', '\r', '|>', '<', '//']),
   (content, start, end, ctx) => ctx.createNode('Text', start, end, {}, { content })
 );
 
 const rawTextParser = Combinator.apply(
-  Combinator.oneOf(Combinator.whileNotMatch<Ctx>(['#>', '<']), Combinator.singleChar<Ctx>()),
+  Combinator.oneOf(
+    'RawText',
+    Combinator.whileNotMatch<Ctx>('RawTextInner', ['#>', '<']),
+    Combinator.singleChar<Ctx>('RawTextInner')
+  ),
   (content, start, end, ctx) => {
     return ctx.createNode('Text', start, end, {}, { content });
   }
 );
 
 const elementOpeningTagParser = Combinator.pipe(
+  'ElementOpeningTag',
   elementTokenOpenParser,
   componentTypeParser,
   propsParser,
   greaterThanParser
 );
 
-const elementClosingTagParser = Combinator.pipe(lessThanParser, componentTypeParser, elementTokenCloseParser);
+const elementClosingTagParser = Combinator.pipe(
+  'ElementClosingTag',
+  lessThanParser,
+  componentTypeParser,
+  elementTokenCloseParser
+);
 
-const elementClosingParser = Combinator.oneOf(elementTokenCloseParser, elementClosingTagParser);
+const elementClosingParser = Combinator.oneOf('ElementClosing', elementTokenCloseParser, elementClosingTagParser);
 
 const elementParser = Combinator.transform(
-  Combinator.manyBetween(elementOpeningTagParser, childParser, elementClosingParser),
+  Combinator.manyBetween('Element', elementOpeningTagParser, childParser, elementClosingParser),
   (result, ctx) => {
     if (result.type === 'Failure') {
       return result;
@@ -426,9 +486,9 @@ const elementParser = Combinator.transform(
     const [open, children, close] = result.value;
     const [, componentType, props] = open;
     const closeComponentType = typeof close === 'string' ? componentType : close[1];
-
     if (!sameComponent(componentType, closeComponentType)) {
-      return ParseFailure();
+      const closeRange = ctx.ranges.get(closeComponentType);
+      return ParseFailure(closeRange?.end ?? 0, 'Element', `Invalid close tag: wrong component`);
     }
     const node = createNode(
       ctx.ranges,
@@ -452,18 +512,28 @@ const elementParser = Combinator.transform(
 );
 
 const rawElementOpeningTagParser = Combinator.pipe(
+  'RawElementOpeningTag',
   rawElementTokenOpenParser,
   componentTypeParser,
   propsParser,
   greaterThanParser
 );
 
-const rawElementClosingTagParser = Combinator.pipe(lessThanParser, componentTypeParser, rawElementTokenCloseParser);
+const rawElementClosingTagParser = Combinator.pipe(
+  'RawElementClosingTag',
+  lessThanParser,
+  componentTypeParser,
+  rawElementTokenCloseParser
+);
 
-const rawElementClosingParser = Combinator.oneOf(rawElementTokenCloseParser, rawElementClosingTagParser);
+const rawElementClosingParser = Combinator.oneOf(
+  'RawElementClosing',
+  rawElementTokenCloseParser,
+  rawElementClosingTagParser
+);
 
 const rawElementParser = Combinator.transform(
-  Combinator.manyBetween(rawElementOpeningTagParser, rawChildParser, rawElementClosingParser),
+  Combinator.manyBetween('RawElement', rawElementOpeningTagParser, rawChildParser, rawElementClosingParser),
   (result, ctx) => {
     if (result.type === 'Failure') {
       return result;
@@ -474,7 +544,8 @@ const rawElementParser = Combinator.transform(
     const closeComponentType = typeof close === 'string' ? componentType : close[1];
 
     if (!sameComponent(componentType, closeComponentType)) {
-      return ParseFailure();
+      const closeRange = ctx.ranges.get(closeComponentType);
+      return ParseFailure(closeRange?.end ?? 0, 'Element', `Invalid close tag: wrong component`);
     }
 
     const childrenFlat: Array<Child> = [];
@@ -508,7 +579,7 @@ const rawElementParser = Combinator.transform(
 );
 
 const fragmentParser = Combinator.apply(
-  Combinator.manyBetween(fragmentTokenParser, childParser, fragmentTokenParser),
+  Combinator.manyBetween('Fragment', fragmentTokenParser, childParser, fragmentTokenParser),
   ([_open, children], start, end, ctx) => {
     return createNode(
       ctx.ranges,
@@ -522,7 +593,7 @@ const fragmentParser = Combinator.apply(
 );
 
 const rawFragmentParser = Combinator.apply(
-  Combinator.manyBetween(rawFragmentTokenParser, rawTextParser, rawFragmentTokenParser),
+  Combinator.manyBetween('RawFragment', rawFragmentTokenParser, rawTextParser, rawFragmentTokenParser),
   ([_open, children], start, end, ctx) => {
     return createNode(
       ctx.ranges,
@@ -536,12 +607,13 @@ const rawFragmentParser = Combinator.apply(
 );
 
 const unrawElementParser = Combinator.apply(
-  Combinator.manyBetween(rawFragmentTokenParser, unrawChildParser, rawFragmentTokenParser),
+  Combinator.manyBetween('UnrawElement', rawFragmentTokenParser, unrawChildParser, rawFragmentTokenParser),
   ([_begin, items], _start, _end, ctx) => normalizeChildren(items, true, ctx.ranges)
 );
 
 const injectParser = Combinator.apply(
   Combinator.pipe(
+    'Inject',
     curlyBracketOpenParser,
     maybeWhitespaceParser,
     expressionParser,
@@ -553,11 +625,14 @@ const injectParser = Combinator.apply(
   }
 );
 
-unrawChildParser.setParser(Combinator.oneOf(whitespaceParser, commentParser, unrawElementAnyParser, textParser));
+unrawChildParser.setParser(
+  Combinator.oneOf('UnrawChild', whitespaceParser, anyCommentParser, unrawElementAnyParser, textParser)
+);
 
-rawChildParser.setParser(Combinator.oneOf(unrawElementParser, rawTextParser));
+rawChildParser.setParser(Combinator.oneOf('RawChild', unrawElementParser, rawTextParser));
 
 const elementAnyParser: Parser<ElementAny, Ctx> = Combinator.oneOf(
+  'ElementAny',
   fragmentParser,
   rawFragmentParser,
   elementSelfClosingParser,
@@ -567,38 +642,47 @@ const elementAnyParser: Parser<ElementAny, Ctx> = Combinator.oneOf(
 
 // All elements except rawFragment
 unrawElementAnyParser.setParser(
-  Combinator.oneOf(fragmentParser, elementSelfClosingParser, elementParser, rawElementParser)
+  Combinator.oneOf('UnrawElementAny', fragmentParser, elementSelfClosingParser, elementParser, rawElementParser)
 );
 
-childParser.setParser(Combinator.oneOf(whitespaceParser, commentParser, elementAnyParser, injectParser, textParser));
+childParser.setParser(
+  Combinator.oneOf('Child', whitespaceParser, anyCommentParser, elementAnyParser, injectParser, textParser)
+);
 
 type AccessItem =
-  | { type: 'DotMember'; indentifier: Node<'Identifier'> }
-  | { type: 'BracketMember'; value: Expression }
+  | { type: 'DotMember'; indentifier: Node<'Identifier'>; end: number }
+  | { type: 'BracketMember'; value: Expression; end: number }
   | {
       type: 'FunctionCall';
       args: Array<Node<'ArrayItem'>>;
       trailingComma: boolean;
+      end: number;
     };
 
-const dotMemberAccessParser = Combinator.apply(
-  Combinator.pipe(dotParser, identifierParser),
-  ([_dot, indentifier]): AccessItem => ({ type: 'DotMember', indentifier })
+const dotMemberParser = Combinator.apply(
+  Combinator.pipe('DotMember', dotParser, identifierParser),
+  ([_dot, indentifier], _start, end): AccessItem => ({ type: 'DotMember', indentifier, end })
 );
 
-const bracketMemberAccessParser = Combinator.apply(
-  Combinator.pipe(squareBracketOpenParser, expressionParser, squareBracketCloseParser),
-  ([_bracket, value]): AccessItem => ({ type: 'BracketMember', value })
+const bracketMemberParser = Combinator.apply(
+  Combinator.pipe('BracketMember', squareBracketOpenParser, expressionParser, squareBracketCloseParser),
+  ([_bracket, value], _start, end): AccessItem => ({ type: 'BracketMember', value, end })
 );
 
-const functionCallAccessParser = Combinator.apply(
-  Combinator.pipe(parenthesisOpenParser, arrayItemsParser, parenthesisCloseParser),
-  ([_parenthesis, { items, trailing }]): AccessItem => ({ type: 'FunctionCall', args: items, trailingComma: trailing })
+const functionCallParser = Combinator.apply(
+  Combinator.pipe('FunctionCall', parenthesisOpenParser, arrayItemsParser, parenthesisCloseParser),
+  ([_parenthesis, { items, trailing }], _start, end): AccessItem => ({
+    type: 'FunctionCall',
+    args: items,
+    trailingComma: trailing,
+    end,
+  })
 );
 
-const accessItemParser = Combinator.oneOf(dotMemberAccessParser, bracketMemberAccessParser, functionCallAccessParser);
+const accessItemParser = Combinator.oneOf('AccessItem', dotMemberParser, bracketMemberParser, functionCallParser);
 
 const accessParser = Combinator.reduceRight(
+  'Access',
   dottableExpressionParser,
   accessItemParser,
   (left: ParseResultSuccess<DottableExpression>, right, ctx): ParseResult<DottableExpression> => {
@@ -635,36 +719,52 @@ const accessParser = Combinator.reduceRight(
           )
         );
       }
-      return ParseFailure();
+      return ParseFailure(item.end, 'Access', `FunctionCall target id not a callable`);
     }
-    throw new DocsyUnexpectedError(`Access on invalid type`);
+    throw new DocsyError.UnexpectedError(`Access on invalid type`);
   }
 );
 
-const callableExpressionParser = Combinator.oneOf(accessParser, identifierParser, parenthesisParser);
+const callableExpressionParser = Combinator.oneOf(
+  'CallableExpression',
+  accessParser,
+  identifierParser,
+  parenthesisParser
+);
 
-const arrayOrObjectParser = Combinator.oneOf(emptyArrayParser, arrayParser, emptyObjectParser, objectParser);
+const arrayOrObjectParser = Combinator.oneOf(
+  'ArrayOrObject',
+  emptyArrayParser,
+  arrayParser,
+  emptyObjectParser,
+  objectParser
+);
 
 expressionParser.setParser(
-  Combinator.oneOf(primitiveParser, callableExpressionParser, arrayOrObjectParser, elementAnyParser)
+  Combinator.oneOf('Expression', primitiveParser, callableExpressionParser, arrayOrObjectParser, elementAnyParser)
 );
 
 dottableExpressionParser.setParser(
-  Combinator.oneOf(arrayOrObjectParser, elementAnyParser, callableExpressionParser, stringParser)
+  Combinator.oneOf('DottableExpression', arrayOrObjectParser, elementAnyParser, callableExpressionParser, stringParser)
 );
 
+anyCommentParser.setParser(Combinator.oneOf('AnyComment', lineCommentParser, blockCommentParser));
+
 const documentParser = Combinator.apply(
-  Combinator.pipe(Combinator.many(childParser), eofParser),
+  Combinator.pipe('Document', Combinator.many('DocumentChildren', childParser), eofParser),
   ([children], start, end, ctx) =>
     ctx.createNode('Document', start, end, { children: normalizeChildren(children, true, ctx.ranges) }, {})
 );
 
-const anyCommentParser = Combinator.oneOf(lineCommentParser, blockCommentParser);
-
-const whitespaceOrComment = Combinator.oneOf(whitespaceParser, anyCommentParser);
+const whitespaceOrCommentParser = Combinator.oneOf('WhitespaceOrComment', whitespaceParser, anyCommentParser);
 
 const expressionDocumentParser = Combinator.apply(
-  Combinator.pipe(Combinator.many(whitespaceOrComment), expressionParser, Combinator.many(whitespaceOrComment)),
+  Combinator.pipe(
+    'ExpressionDocument',
+    Combinator.many('WhitespaceOrComments', whitespaceOrCommentParser),
+    expressionParser,
+    Combinator.many('WhitespaceOrComments', whitespaceOrCommentParser)
+  ),
   ([before, value, after], start, end, ctx) =>
     createNode(
       ctx.ranges,
@@ -753,7 +853,7 @@ function createNode<K extends NodeType>(
 
 function notNil<T>(val: T | null | undefined, errorMessage?: string): T {
   if (val === null || val === undefined) {
-    throw new DocsyUnexpectedError(errorMessage || `Unexpected nil value`);
+    throw new DocsyError.UnexpectedError(errorMessage || `Unexpected nil value`);
   }
   return val;
 }

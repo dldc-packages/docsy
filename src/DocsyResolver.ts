@@ -1,9 +1,4 @@
-import {
-  DocsyMissingGlobalError,
-  DocsyCannotResolveInjectError,
-  DocsyCannotResolveNodeError,
-  DocsyMissingJsxFunctionError,
-} from './DocsyError.js';
+import { DocsyError } from './DocsyError.js';
 import { MaybeWhitespace, Node, NodeIs } from './internal/Node.js';
 import { DocsySerializer } from './DocsySerializer.js';
 
@@ -52,7 +47,7 @@ function resolve(node: Node, options: ResolveOptions): any {
       const children = NodeIs.SelfClosingElement(item) ? undefined : resolveChildren(item.nodes.children);
       const type = resolveNode(item.nodes.component);
       if (type === undefined) {
-        throw new DocsyMissingGlobalError(
+        throw new DocsyError.MissingGlobalError(
           item.nodes.component,
           `You probably forgot to provide a value for ${DocsySerializer.serialize(item.nodes.component)}`
         );
@@ -64,7 +59,7 @@ function resolve(node: Node, options: ResolveOptions): any {
       const children = resolveChildren(item.nodes.children);
       const type = resolveNode(item.nodes.component);
       if (type === undefined) {
-        throw new DocsyMissingGlobalError(
+        throw new DocsyError.MissingGlobalError(
           item.nodes.component,
           `You probably forgot to provide a value for ${DocsySerializer.serialize(item.nodes.component)}`
         );
@@ -98,7 +93,7 @@ function resolve(node: Node, options: ResolveOptions): any {
     if (NodeIs.DotMember(item)) {
       const target = resolveNode(item.nodes.target);
       if (target === undefined) {
-        throw new DocsyMissingGlobalError(
+        throw new DocsyError.MissingGlobalError(
           item.nodes.target,
           `Cannot access property "${DocsySerializer.serialize(item.nodes.property)}" of \`${DocsySerializer.serialize(
             item.nodes.target
@@ -107,7 +102,7 @@ function resolve(node: Node, options: ResolveOptions): any {
       }
       const keys = Object.keys(target);
       if (keys.indexOf(item.nodes.property.meta.name) === -1) {
-        throw new DocsyMissingGlobalError(
+        throw new DocsyError.MissingGlobalError(
           item.nodes.target,
           `Cannot access property "${DocsySerializer.serialize(item.nodes.property)}" of \`${DocsySerializer.serialize(
             item.nodes.target
@@ -138,7 +133,7 @@ function resolve(node: Node, options: ResolveOptions): any {
       const content = resolveNode(item.nodes.value);
       if (typeof content !== 'string') {
         // Should we .toString() and allow any value here ?
-        throw new DocsyCannotResolveInjectError(item.nodes.value);
+        throw new DocsyError.CannotResolveInjectError(item.nodes.value);
       }
       return (
         resolveMaybeWhitespaceToString(item.nodes.whitespaceBefore) +
@@ -146,7 +141,7 @@ function resolve(node: Node, options: ResolveOptions): any {
         resolveMaybeWhitespaceToString(item.nodes.whitespaceAfter)
       );
     }
-    throw new DocsyCannotResolveNodeError(item, `resolver not implemented`);
+    throw new DocsyError.CannotResolveNodeError(item, `resolver not implemented`);
   }
 
   function resolveMaybeWhitespaceToString(item: MaybeWhitespace): string {
@@ -158,7 +153,7 @@ function resolve(node: Node, options: ResolveOptions): any {
 
   function resolveJsx(type: string, props: any): any {
     if (!jsx || typeof jsx !== 'function') {
-      throw new DocsyMissingJsxFunctionError();
+      throw new DocsyError.MissingJsxFunctionError();
     }
     const key = props.key;
     if (props.key) {
@@ -202,7 +197,7 @@ function resolve(node: Node, options: ResolveOptions): any {
         obj[key] = resolveNode(inner.nodes.value);
         return;
       }
-      throw new DocsyCannotResolveNodeError(inner, `resolver not implemented`);
+      throw new DocsyError.CannotResolveNodeError(inner, `resolver not implemented`);
     });
     return obj;
   }
@@ -243,7 +238,7 @@ function resolve(node: Node, options: ResolveOptions): any {
         obj[key] = value;
         return;
       }
-      throw new DocsyCannotResolveNodeError(prop, `resolver not implemented`);
+      throw new DocsyError.CannotResolveNodeError(prop, `resolver not implemented`);
     });
     return obj;
   }
