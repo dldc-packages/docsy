@@ -16,10 +16,8 @@ export function many<T, Ctx>(name: string, parser: Parser<T, Ctx>): Parser<Array
           tracker.update(next);
           break;
         }
-        if (next.type === 'Success') {
-          items.push(next.value);
-          nextInput = next.rest;
-        }
+        items.push(next.value);
+        nextInput = next.rest;
       }
       return ParseSuccess(input.position, nextInput, items, tracker.getFailure());
     },
@@ -85,10 +83,8 @@ export function manySepBy<T, Ctx>(
       if (next.type === 'Failure') {
         return ParseSuccess<ManySepByResult<T>>(input.position, current, { items, trailing: false }, next);
       }
-      if (next.type === 'Success') {
-        items.push(next.value);
-        current = next.rest;
-      }
+      items.push(next.value);
+      current = next.rest;
       let nextSep: ParseResult<any>;
       while (true) {
         nextSep = sepParser.parse(current, [], ctx);
