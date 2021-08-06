@@ -10,12 +10,12 @@ import {
   DottableExpression,
   ExpressionDocument,
   AnyComment,
-} from './Ast.js';
-import * as Combinator from './Combinator.js';
-import { StringReader } from './StringReader.js';
-import { DocsyError } from './DocsyError.js';
-import { executeParser, failureToStack, ParseFailure, ParseSuccess } from './Parser.js';
-import { Parser, ParseResult, ParseResultSuccess } from './types.js';
+} from './Ast';
+import * as Combinator from './Combinator';
+import { StringReader } from './StringReader';
+import { DocsyError } from './DocsyError';
+import { executeParser, failureToStack, ParseFailure, ParseSuccess } from './Parser';
+import { Parser, ParseResult, ParseResultSuccess } from './types';
 
 const SINGLE_QUOTE = "'";
 const DOUBLE_QUOTE = '"';

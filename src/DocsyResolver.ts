@@ -1,6 +1,6 @@
-import { DocsyError } from './DocsyError.js';
-import { MaybeWhitespace, Node, NodeIs } from './Ast.js';
-import { DocsySerializer } from './DocsySerializer.js';
+import { DocsyError } from './DocsyError';
+import { MaybeWhitespace, Node, NodeIs } from './Ast';
+import { DocsySerializer } from './DocsySerializer';
 
 export type ResolveValues = {
   [key: string]: any;

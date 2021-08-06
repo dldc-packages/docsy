@@ -1,4 +1,4 @@
-import { Node, NodeIs, NodeKind } from './Ast.js';
+import { Node, NodeIs, NodeKind } from './Ast';
 
 const SINGLE_QUOTE = "'";
 const DOUBLE_QUOTE = '"';

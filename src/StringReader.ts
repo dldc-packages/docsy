@@ -1,4 +1,4 @@
-import { DocsyError } from './DocsyError.js';
+import { DocsyError } from './DocsyError';
 
 export interface StringReader {
   peek(size?: number): string;

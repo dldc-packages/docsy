@@ -14,15 +14,20 @@
   "license": "MIT",
   "author": "Etienne Dldc",
   "sideEffects": false,
-  "type": "module",
-  "exports": "./dist/index.js",
-  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/my-lib.es.js",
+      "require": "./dist/my-lib.umd.js"
+    }
+  },
+  "main": "./dist/my-lib.umd.js",
+  "module": "./dist/my-lib.es.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && tsc -p ./tsconfig.build.json",
+    "build": "rimraf dist && vite build",
     "build:watch": "tsc -p ./tsconfig.build.json --watch",
     "example:run": "vite serve example",
     "lint": "prettier . --check && eslint . && tsc --noEmit",

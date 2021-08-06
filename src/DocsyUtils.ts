@@ -1,6 +1,6 @@
-import { DocsyError } from './DocsyError.js';
-import { Node, CreateNode, Expression, NodeChildrenBase, isValidNodeKind } from './Ast.js';
-import { TraversePath } from './types.js';
+import { DocsyError } from './DocsyError';
+import { Node, CreateNode, Expression, NodeChildrenBase, isValidNodeKind } from './Ast';
+import { TraversePath } from './types';
 
 export const DocsyUtils = {
   filter,

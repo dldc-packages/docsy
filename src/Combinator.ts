@@ -1,6 +1,6 @@
-import { DocsyError } from './DocsyError.js';
-import { ParseFailure, ParseSuccess, resultTracker } from './Parser.js';
-import { Parser, ParseResult, ParseResultSuccess, Rule } from './types.js';
+import { DocsyError } from './DocsyError';
+import { ParseFailure, ParseSuccess, resultTracker } from './Parser';
+import { Parser, ParseResult, ParseResultSuccess, Rule } from './types';
 
 export function many<T, Ctx>(name: string, parser: Parser<T, Ctx>): Parser<Array<T>, Ctx> {
   return {

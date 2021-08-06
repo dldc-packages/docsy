@@ -1,5 +1,5 @@
-import { Node, NodeIs, Child, ObjectPart, Prop } from './Ast.js';
-import { DocsyError } from './DocsyError.js';
+import { Node, NodeIs, Child, ObjectPart, Prop } from './Ast';
+import { DocsyError } from './DocsyError';
 
 const SINGLE_QUOTE = "'";
 const DOUBLE_QUOTE = '"';

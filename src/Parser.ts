@@ -1,6 +1,6 @@
-import { StringReader } from './StringReader.js';
-import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types.js';
-import { DocsyError } from './DocsyError.js';
+import { StringReader } from './StringReader';
+import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types';
+import { DocsyError } from './DocsyError';
 
 export function ParseFailure(
   pos: number,

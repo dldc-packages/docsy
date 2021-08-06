@@ -1,7 +1,7 @@
-import { Node } from './Ast.js';
-import { stackToString } from './Parser.js';
-import { StringReader } from './StringReader.js';
-import { Stack } from './types.js';
+import { Node } from './Ast';
+import { stackToString } from './Parser';
+import { StringReader } from './StringReader';
+import { Stack } from './types';
 
 export class DocsyError extends Error {
   constructor(message: string) {
