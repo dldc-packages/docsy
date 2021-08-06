@@ -1,5 +1,5 @@
 /** @type {import('@jest/types').Config.InitialOptions} */
-export default {
+module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   resolver: 'jest-ts-tsx-resolver',
