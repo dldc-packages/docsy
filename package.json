@@ -16,19 +16,19 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "import": "./dist/my-lib.es.js",
-      "require": "./dist/my-lib.umd.js"
+      "import": "./dist/docsy.es.js",
+      "require": "./dist/docsy.umd.js"
     }
   },
-  "main": "./dist/my-lib.umd.js",
-  "module": "./dist/my-lib.es.js",
+  "main": "./dist/docsy.umd.js",
+  "module": "./dist/docsy.es.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && vite build",
-    "build:watch": "tsc -p ./tsconfig.build.json --watch",
+    "build": "rimraf dist && vite build && yarn build:types",
+    "build:types": "tsc -p ./tsconfig.build.json",
     "example:run": "vite serve example",
     "lint": "prettier . --check && eslint . && tsc --noEmit",
     "lint:fix": "prettier . --write . && eslint . --fix",
