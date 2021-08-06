@@ -17,10 +17,10 @@
   "exports": {
     ".": {
       "import": "./dist/docsy.es.js",
-      "require": "./dist/docsy.umd.js"
+      "require": "./dist/docsy.cjs.js"
     }
   },
-  "main": "./dist/docsy.umd.js",
+  "main": "./dist/docsy.cjs.js",
   "module": "./dist/docsy.es.js",
   "types": "./dist/index.d.ts",
   "files": [

@@ -4,6 +4,7 @@ import path from 'path';
 export default defineConfig({
   build: {
     lib: {
+      formats: ['es', 'cjs'],
       entry: path.resolve(process.cwd(), 'src/index.ts'),
       name: 'Dcosy',
       fileName: (format) => `docsy.${format}.js`,
