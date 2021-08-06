@@ -55,13 +55,13 @@ class DocsyCannotTransformValueError extends DocsyError {
 
 class DocsyCannotResolveNodeError extends DocsyError {
   constructor(public docsyNode: Node, message?: string) {
-    super(`Cannot resolve node ${docsyNode.type}${message ? ': ' + message : ''}`);
+    super(`Cannot resolve node ${docsyNode.kind}${message ? ': ' + message : ''}`);
   }
 }
 
 class DocsyCannotSerializeNodeError extends DocsyError {
   constructor(public docsyNode: Node, message?: string) {
-    super(`Cannot serialize node ${docsyNode.type}${message ? ': ' + message : ''}`);
+    super(`Cannot serialize node ${docsyNode.kind}${message ? ': ' + message : ''}`);
   }
 }
 

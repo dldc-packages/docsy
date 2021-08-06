@@ -13,6 +13,7 @@
   },
   "license": "MIT",
   "author": "Etienne Dldc",
+  "sideEffects": false,
   "type": "module",
   "exports": "./dist/index.js",
   "module": "dist/index.js",
@@ -23,13 +24,14 @@
   "scripts": {
     "build": "rimraf dist && tsc -p ./tsconfig.build.json",
     "build:watch": "tsc -p ./tsconfig.build.json --watch",
+    "example:run": "vite serve example",
     "lint": "prettier . --check && eslint . && tsc --noEmit",
     "lint:fix": "prettier . --write . && eslint . --fix",
     "release": "yarn build && np",
     "test": "yarn lint && jest --coverage",
     "test:run": "jest",
     "test:watch": "jest --watch",
-    "example:run": "vite serve example"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "tslib": "^2.3.0"

@@ -1,4 +1,4 @@
-import { Node, NodeIs, NodeType, Nodes } from './Ast.js';
+import { Node, NodeIs, NodeKind } from './Ast.js';
 
 const SINGLE_QUOTE = "'";
 const DOUBLE_QUOTE = '"';
@@ -84,10 +84,10 @@ function format(node: Node): Node {
     );
   }
 
-  function createNode<K extends NodeType>(type: K, nodes: Nodes[K]['nodes'], meta: Nodes[K]['meta']): Node<K> {
+  function createNode<K extends NodeKind>(kind: K, children: Node<K>['children'], meta: Node<K>['meta']): Node<K> {
     const node: Node<K> = {
-      type,
-      nodes,
+      kind,
+      children,
       meta,
     } as any;
     return node;

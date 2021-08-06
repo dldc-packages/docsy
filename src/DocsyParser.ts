@@ -1,7 +1,6 @@
 import {
   Document,
-  Nodes,
-  NodeType,
+  NodeKind,
   Node,
   Child,
   NodeIs,
@@ -28,12 +27,12 @@ export type Ranges = Map<Node, { start: number; end: number }>;
 
 type Ctx = {
   ranges: Ranges;
-  createNode<K extends NodeType>(
-    type: K,
+  createNode<K extends NodeKind>(
+    kind: K,
     start: number,
     end: number,
-    nodes: Nodes[K]['nodes'],
-    meta: Nodes[K]['meta']
+    children: Node<K>['children'],
+    meta: Node<K>['meta']
   ): Node<K>;
 };
 
@@ -56,14 +55,14 @@ function createContext(): Ctx {
   const ranges: Ranges = new Map();
   return {
     ranges,
-    createNode<K extends NodeType>(
-      type: K,
+    createNode<K extends NodeKind>(
+      kind: K,
       start: number,
       end: number,
-      nodes: Nodes[K]['nodes'],
-      meta: Nodes[K]['meta']
+      children: Node<K>['children'],
+      meta: Node<K>['meta']
     ): Node<K> {
-      return createNode(ranges, type, start, end, nodes, meta);
+      return createNode(ranges, kind, start, end, children, meta);
     },
   };
 }
@@ -584,28 +583,14 @@ const rawElementParser = Combinator.transform(
 const fragmentParser = Combinator.apply(
   Combinator.manyBetween('Fragment', fragmentTokenParser, childParser, fragmentTokenParser),
   ([_open, children], start, end, ctx) => {
-    return createNode(
-      ctx.ranges,
-      'Fragment',
-      start,
-      end,
-      { children: normalizeChildren(children, true, ctx.ranges) },
-      {}
-    );
+    return createNode(ctx.ranges, 'Fragment', start, end, normalizeChildren(children, true, ctx.ranges), {});
   }
 );
 
 const rawFragmentParser = Combinator.apply(
   Combinator.manyBetween('RawFragment', rawFragmentTokenParser, rawTextParser, rawFragmentTokenParser),
   ([_open, children], start, end, ctx) => {
-    return createNode(
-      ctx.ranges,
-      'RawFragment',
-      start,
-      end,
-      { children: normalizeChildren(children, true, ctx.ranges) },
-      {}
-    );
+    return createNode(ctx.ranges, 'RawFragment', start, end, normalizeChildren(children, true, ctx.ranges), {});
   }
 );
 
@@ -756,7 +741,7 @@ anyCommentParser.setParser(Combinator.oneOf('AnyComment', lineCommentParser, blo
 const documentParser = Combinator.apply(
   Combinator.pipe('Document', Combinator.many('DocumentChildren', childParser), eofParser),
   ([children], start, end, ctx) => {
-    return ctx.createNode('Document', start, end, { children: normalizeChildren(children, true, ctx.ranges) }, {});
+    return ctx.createNode('Document', start, end, normalizeChildren(children, true, ctx.ranges), {});
   }
 );
 
@@ -785,7 +770,7 @@ const expressionDocumentParser = Combinator.apply(
 );
 
 function sameComponent(left: ComponentType, right: ComponentType): boolean {
-  if (left.type !== right.type) {
+  if (left.kind !== right.kind) {
     return false;
   }
   if (NodeIs.Identifier(left) && NodeIs.Identifier(right) && left.meta.name === right.meta.name) {
@@ -793,7 +778,8 @@ function sameComponent(left: ComponentType, right: ComponentType): boolean {
   }
   if (NodeIs.ElementTypeMember(left) && NodeIs.ElementTypeMember(right)) {
     return (
-      sameComponent(left.nodes.target, right.nodes.target) && sameComponent(left.nodes.property, right.nodes.property)
+      sameComponent(left.children.target, right.children.target) &&
+      sameComponent(left.children.property, right.children.property)
     );
   }
   return false;
@@ -842,15 +828,15 @@ function normalizeChildren(nodes: Array<Child>, mergeWhitespaces: boolean, range
   return result;
 }
 
-function createNode<K extends NodeType>(
+function createNode<K extends NodeKind>(
   ranges: Ranges,
-  type: K,
+  kind: K,
   start: number,
   end: number,
-  nodes: Nodes[K]['nodes'],
-  meta: Nodes[K]['meta']
+  children: Node<K>['children'],
+  meta: Node<K>['meta']
 ): Node<K> {
-  const node: Node<K> = { type, nodes, meta } as any;
+  const node: Node<K> = { kind, children, meta } as any;
   ranges.set(node, { start, end });
   return node;
 }

@@ -30,7 +30,7 @@ function resolve(node: Node, options: ResolveOptions): any {
 
   function resolveNode(item: Node): any {
     if (NodeIs.Document(item)) {
-      const result = resolveChildren(item.nodes.children);
+      const result = resolveChildren(item.children);
       if (result.length === 0) {
         return '';
       }
@@ -40,34 +40,34 @@ function resolve(node: Node, options: ResolveOptions): any {
       return result;
     }
     if (NodeIs.ExpressionDocument(item)) {
-      return resolveNode(item.nodes.value);
+      return resolveNode(item.children.value);
     }
     if (NodeIs.Element(item) || NodeIs.SelfClosingElement(item)) {
-      const props = resolveNode(item.nodes.props);
-      const children = NodeIs.SelfClosingElement(item) ? undefined : resolveChildren(item.nodes.children);
-      const type = resolveNode(item.nodes.component);
+      const props = resolveNode(item.children.props);
+      const children = NodeIs.SelfClosingElement(item) ? undefined : resolveChildren(item.children.children);
+      const type = resolveNode(item.children.component);
       if (type === undefined) {
         throw new DocsyError.MissingGlobalError(
-          item.nodes.component,
-          `You probably forgot to provide a value for ${DocsySerializer.serialize(item.nodes.component)}`
+          item.children.component,
+          `You probably forgot to provide a value for ${DocsySerializer.serialize(item.children.component)}`
         );
       }
       return resolveJsx(type, { ...props, children });
     }
     if (NodeIs.RawElement(item)) {
-      const props = resolveNode(item.nodes.props);
-      const children = resolveChildren(item.nodes.children);
-      const type = resolveNode(item.nodes.component);
+      const props = resolveNode(item.children.props);
+      const children = resolveChildren(item.children.children);
+      const type = resolveNode(item.children.component);
       if (type === undefined) {
         throw new DocsyError.MissingGlobalError(
-          item.nodes.component,
-          `You probably forgot to provide a value for ${DocsySerializer.serialize(item.nodes.component)}`
+          item.children.component,
+          `You probably forgot to provide a value for ${DocsySerializer.serialize(item.children.component)}`
         );
       }
       return resolveJsx(type, { ...props, children });
     }
     if (NodeIs.Props(item)) {
-      return resolveProps(item.nodes.items);
+      return resolveProps(item.children.items);
     }
     if (NodeIs.Text(item)) {
       return item.meta.content;
@@ -91,37 +91,37 @@ function resolve(node: Node, options: ResolveOptions): any {
       return undefined;
     }
     if (NodeIs.DotMember(item)) {
-      const target = resolveNode(item.nodes.target);
+      const target = resolveNode(item.children.target);
       if (target === undefined) {
         throw new DocsyError.MissingGlobalError(
-          item.nodes.target,
-          `Cannot access property "${DocsySerializer.serialize(item.nodes.property)}" of \`${DocsySerializer.serialize(
-            item.nodes.target
-          )}\``
+          item.children.target,
+          `Cannot access property "${DocsySerializer.serialize(
+            item.children.property
+          )}" of \`${DocsySerializer.serialize(item.children.target)}\``
         );
       }
       const keys = Object.keys(target);
-      if (keys.indexOf(item.nodes.property.meta.name) === -1) {
+      if (keys.indexOf(item.children.property.meta.name) === -1) {
         throw new DocsyError.MissingGlobalError(
-          item.nodes.target,
-          `Cannot access property "${DocsySerializer.serialize(item.nodes.property)}" of \`${DocsySerializer.serialize(
-            item.nodes.target
-          )}\``
+          item.children.target,
+          `Cannot access property "${DocsySerializer.serialize(
+            item.children.property
+          )}" of \`${DocsySerializer.serialize(item.children.target)}\``
         );
       }
-      return resolveNode(item.nodes.target)[item.nodes.property.meta.name];
+      return resolveNode(item.children.target)[item.children.property.meta.name];
     }
     if (NodeIs.BracketMember(item)) {
-      return resolveNode(item.nodes.target)[resolveNode(item.nodes.property)];
+      return resolveNode(item.children.target)[resolveNode(item.children.property)];
     }
     if (NodeIs.Object(item)) {
-      return resolveObject(item.nodes.items);
+      return resolveObject(item.children.items);
     }
     if (NodeIs.EmptyObject(item)) {
       return {};
     }
     if (NodeIs.Array(item)) {
-      return resolveArray(item.nodes.items);
+      return resolveArray(item.children.items);
     }
     if (NodeIs.EmptyArray(item)) {
       return [];
@@ -130,15 +130,15 @@ function resolve(node: Node, options: ResolveOptions): any {
       return item.meta.content;
     }
     if (NodeIs.Inject(item)) {
-      const content = resolveNode(item.nodes.value);
+      const content = resolveNode(item.children.value);
       if (typeof content !== 'string') {
         // Should we .toString() and allow any value here ?
-        throw new DocsyError.CannotResolveInjectError(item.nodes.value);
+        throw new DocsyError.CannotResolveInjectError(item.children.value);
       }
       return (
-        resolveMaybeWhitespaceToString(item.nodes.whitespaceBefore) +
+        resolveMaybeWhitespaceToString(item.children.whitespaceBefore) +
         content +
-        resolveMaybeWhitespaceToString(item.nodes.whitespaceAfter)
+        resolveMaybeWhitespaceToString(item.children.whitespaceAfter)
       );
     }
     throw new DocsyError.CannotResolveNodeError(item, `resolver not implemented`);
@@ -186,15 +186,15 @@ function resolve(node: Node, options: ResolveOptions): any {
   function resolveProps(items: Array<Node<'PropItem'>>): any {
     const obj: any = {};
     items.forEach((prop) => {
-      const inner = prop.nodes.item;
+      const inner = prop.children.item;
       if (NodeIs.PropNoValue(inner)) {
-        const key: string = inner.nodes.name.meta.name;
+        const key: string = inner.children.name.meta.name;
         obj[key] = true;
         return;
       }
       if (NodeIs.PropValue(inner)) {
-        const key: string = inner.nodes.name.meta.name;
-        obj[key] = resolveNode(inner.nodes.value);
+        const key: string = inner.children.name.meta.name;
+        obj[key] = resolveNode(inner.children.value);
         return;
       }
       throw new DocsyError.CannotResolveNodeError(inner, `resolver not implemented`);
@@ -205,9 +205,9 @@ function resolve(node: Node, options: ResolveOptions): any {
   function resolveObject(items: Array<Node<'ObjectItem'>>): any {
     let obj: any = {};
     items.forEach((propItem) => {
-      const prop = propItem.nodes.item;
+      const prop = propItem.children.item;
       if (NodeIs.Spread(prop)) {
-        const value = resolveNode(prop.nodes.target);
+        const value = resolveNode(prop.children.target);
         obj = {
           ...obj,
           ...value,
@@ -215,26 +215,26 @@ function resolve(node: Node, options: ResolveOptions): any {
         return;
       }
       if (NodeIs.Property(prop)) {
-        const value = resolveNode(prop.nodes.value);
-        if (NodeIs.Identifier(prop.nodes.name)) {
-          obj[prop.nodes.name.meta.name] = value;
+        const value = resolveNode(prop.children.value);
+        if (NodeIs.Identifier(prop.children.name)) {
+          obj[prop.children.name.meta.name] = value;
           return;
         }
-        if (NodeIs.Str(prop.nodes.name)) {
-          obj[prop.nodes.name.meta.value] = value;
+        if (NodeIs.Str(prop.children.name)) {
+          obj[prop.children.name.meta.value] = value;
           return;
         }
         return;
       }
       if (NodeIs.ComputedProperty(prop)) {
-        const key = resolveNode(prop.nodes.expression);
-        const value = resolveNode(prop.nodes.value);
+        const key = resolveNode(prop.children.expression);
+        const value = resolveNode(prop.children.value);
         obj[key] = value;
         return;
       }
       if (NodeIs.PropertyShorthand(prop)) {
-        const key = prop.nodes.name.meta.name;
-        const value = resolveNode(prop.nodes.name);
+        const key = prop.children.name.meta.name;
+        const value = resolveNode(prop.children.name);
         obj[key] = value;
         return;
       }
@@ -246,9 +246,9 @@ function resolve(node: Node, options: ResolveOptions): any {
   function resolveArray(items: Array<Node<'ArrayItem'>>): any {
     let arr: Array<any> = [];
     items.forEach((arrayItem) => {
-      const item = arrayItem.nodes.item;
+      const item = arrayItem.children.item;
       if (NodeIs.Spread(item)) {
-        const value = resolveNode(item.nodes.target);
+        const value = resolveNode(item.children.target);
         arr = [...arr, ...value];
         return;
       }

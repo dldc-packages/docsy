@@ -2,19 +2,6 @@ import { StringReader } from './StringReader.js';
 import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types.js';
 import { DocsyError } from './DocsyError.js';
 
-export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
-  return parser.parse(input, [], ctx);
-}
-
-export function expectEOF<T>(result: ParseResult<T>): ParseResult<T> {
-  if (result.type === 'Success') {
-    if (result.rest.empty === false) {
-      throw new DocsyError.NotEOF(result.rest);
-    }
-  }
-  return result;
-}
-
 export function ParseFailure(
   pos: number,
   name: string,
@@ -28,16 +15,6 @@ export function ParseFailure(
     pos,
     child,
   };
-}
-
-export function failurePosition(failure: ParseResultFailure): number {
-  if (failure.child === null) {
-    return failure.pos;
-  }
-  if (Array.isArray(failure.child)) {
-    return Math.max(...failure.child.map((child) => failurePosition(child)));
-  }
-  return failurePosition(failure.child);
 }
 
 export function ParseSuccess<T>(
@@ -96,8 +73,27 @@ class ResultTrackerImpl<T> implements ResultTracker<T> {
   }
 }
 
-export function resultTracker<T>(): ResultTracker<T> {
-  return new ResultTrackerImpl<T>();
+export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
+  return parser.parse(input, [], ctx);
+}
+
+export function expectEOF<T>(result: ParseResult<T>): ParseResult<T> {
+  if (result.type === 'Success') {
+    if (result.rest.empty === false) {
+      throw new DocsyError.NotEOF(result.rest);
+    }
+  }
+  return result;
+}
+
+export function failurePosition(failure: ParseResultFailure): number {
+  if (failure.child === null) {
+    return failure.pos;
+  }
+  if (Array.isArray(failure.child)) {
+    return Math.max(...failure.child.map((child) => failurePosition(child)));
+  }
+  return failurePosition(failure.child);
 }
 
 export function failureToStack(failure: ParseResultFailure): Stack {
@@ -114,4 +110,8 @@ export function failureToStack(failure: ParseResultFailure): Stack {
 export function stackToString(stack: Stack, indent: number = 0): string {
   const indentText = ' '.repeat(indent);
   return stack.map((item) => `${indentText}${item.name}:${item.position} ${item.message}`).join('\n');
+}
+
+export function resultTracker<T>(): ResultTracker<T> {
+  return new ResultTrackerImpl<T>();
 }

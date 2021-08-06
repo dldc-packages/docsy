@@ -1,27 +1,25 @@
 export type QuoteType = 'Single' | 'Double' | 'Backtick';
 
-type ArrayOfNodes = Array<Node>;
-
-export type NodeNodesItem = null | Node | ArrayOfNodes | NodeNodesBase;
-
-type NodeNodesBase = { [key: string]: NodeNodesItem };
+export type NodeChildrenBase = null | Node | Array<Node> | { [key: string]: NodeChildrenBase };
 
 type NodeMetaBase = { [key: string]: string | number | null | boolean };
 
-type CreateNode<Nodes extends NodeNodesBase, Meta extends NodeMetaBase = {}> = {
-  nodes: Nodes;
+interface CreateNode<Children, Meta = {}> {
+  children: Children;
   meta: Meta;
-};
+}
 
 interface NodeBase {
-  nodes: NodeNodesBase;
+  children: NodeChildrenBase;
   meta: NodeMetaBase;
 }
 
 type CreateNodes<Nodes extends { [key: string]: NodeBase }> = Nodes;
 
-export type Nodes = CreateNodes<{
-  Document: CreateNode<{ children: Array<Child> }>;
+type Nodes = CreateNodes<{
+  Document: { children: Array<Child>; meta: {} };
+  Fragment: { children: Array<Child>; meta: {} };
+  RawFragment: { children: Array<Child>; meta: {} };
   ExpressionDocument: CreateNode<{
     before: Array<WhitespaceOrComment>;
     value: Expression;
@@ -40,8 +38,6 @@ export type Nodes = CreateNodes<{
     { namedCloseTag: boolean }
   >;
   Whitespace: CreateNode<{}, { content: string; hasNewLine: boolean }>;
-  Fragment: CreateNode<{ children: Array<Child> }>;
-  RawFragment: CreateNode<{ children: Array<Child> }>;
   Props: CreateNode<{ items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace }, {}>;
   PropItem: CreateNode<{ whitespaceBefore: Node<'Whitespace'>; item: Prop }, {}>;
   PropValue: CreateNode<{ name: Node<'Identifier'>; value: Expression }, {}>;
@@ -115,13 +111,11 @@ export type Nodes = CreateNodes<{
   >;
 }>;
 
-export type NodeType = keyof Nodes;
+export type NodeKind = keyof Nodes;
 
-export type Node<K extends NodeType = NodeType> = {
-  [J in keyof Nodes[K]]: Nodes[K][J];
-} & { type: K };
+export type Node<K extends NodeKind = NodeKind> = Nodes[K] & { kind: K };
 
-const NODES_OBJ: { [K in NodeType]: null } = {
+const NODES_OBJ: { [K in NodeKind]: null } = {
   Array: null,
   ArrayItem: null,
   BlockComment: null,
@@ -163,7 +157,7 @@ const NODES_OBJ: { [K in NodeType]: null } = {
   Whitespace: null,
 };
 
-const NODES = Object.keys(NODES_OBJ) as Array<NodeType>;
+const NODES = Object.keys(NODES_OBJ) as Array<NodeKind>;
 
 // Alias
 export type Document = Node<'Document'>;
@@ -178,7 +172,7 @@ export type Prop = typeof Prop['__type'];
 const ElementAny = combine('Element', 'SelfClosingElement', 'Fragment', 'RawFragment', 'RawElement');
 export type ElementAny = typeof ElementAny['__type'];
 
-const Child = combine(...ElementAny.types, 'Whitespace', 'Inject', 'Text', 'BlockComment', 'LineComment');
+const Child = combine(...ElementAny.kinds, 'Whitespace', 'Inject', 'Text', 'BlockComment', 'LineComment');
 export type Child = typeof Child['__type'];
 
 const CallableExpression = combine('FunctionCall', 'BracketMember', 'Identifier', 'DotMember', 'Parenthesis');
@@ -193,38 +187,38 @@ export type ObjectOrArray = typeof ObjectOrArray['__type'];
 const ObjectPart = combine('PropertyShorthand', 'Property', 'ComputedProperty', 'Spread');
 export type ObjectPart = typeof ObjectPart['__type'];
 
-const DottableExpression = combine(...ElementAny.types, ...CallableExpression.types, ...ObjectOrArray.types, 'Str');
+const DottableExpression = combine(...ElementAny.kinds, ...CallableExpression.kinds, ...ObjectOrArray.kinds, 'Str');
 export type DottableExpression = typeof DottableExpression['__type'];
 
 const AnyComment = combine('LineComment', 'BlockComment');
 export type AnyComment = typeof AnyComment['__type'];
 
-const WhitespaceOrComment = combine('Whitespace', ...AnyComment.types);
+const WhitespaceOrComment = combine('Whitespace', ...AnyComment.kinds);
 export type WhitespaceOrComment = typeof WhitespaceOrComment['__type'];
 
 const Expression = combine(
-  ...ElementAny.types,
-  ...Primitive.types,
-  ...ObjectOrArray.types,
-  ...CallableExpression.types
+  ...ElementAny.kinds,
+  ...Primitive.kinds,
+  ...ObjectOrArray.kinds,
+  ...CallableExpression.kinds
 );
 export type Expression = typeof Expression['__type'];
 
 export type MaybeWhitespace = Node<'Whitespace'> | null;
 
-function nodeIsOneOf<T extends NodeType>(node: Node, types: ReadonlyArray<T>): node is Node<T> {
-  return types.includes(node.type as any);
+function nodeIsOneOf<T extends NodeKind>(node: Node, kinds: ReadonlyArray<T>): node is Node<T> {
+  return kinds.includes(node.kind as any);
 }
 
-export function isValidNodeType(type: unknown): boolean {
-  return Boolean(type && typeof type === 'string' && NODES.includes(type as any));
+export function isValidNodeKind(kind: unknown): boolean {
+  return Boolean(kind && typeof kind === 'string' && NODES.includes(kind as any));
 }
 
 const NodeIsInternal: { oneOf: typeof nodeIsOneOf } & {
-  [K in NodeType]: (node: Node) => node is Node<K>;
+  [K in NodeKind]: (node: Node) => node is Node<K>;
 } = NODES.reduce<any>(
   (acc, key) => {
-    acc[key] = (node: Node) => node.type === key;
+    acc[key] = (node: Node) => node.kind === key;
     return acc;
   },
   { oneOf: nodeIsOneOf }
@@ -245,30 +239,26 @@ export const NodeIs = {
 };
 
 export const CreateNode: {
-  [K in NodeType]: (nodes: Nodes[K]['nodes'], meta: Nodes[K]['meta']) => Node<K>;
-} = NODES.reduce<any>((acc, type) => {
-  acc[type] = (nodes: Nodes[NodeType]['nodes'], meta: Nodes[NodeType]['meta']) => ({
-    type,
-    nodes,
+  [K in NodeKind]: (children: Nodes[K]['children'], meta: Nodes[K]['meta']) => Node<K>;
+} = NODES.reduce<any>((acc, kind) => {
+  acc[kind] = (children: Nodes[NodeKind]['children'], meta: Nodes[NodeKind]['meta']) => ({
+    kind,
+    children,
     meta,
   });
   return acc;
 }, {});
 
-// type NodeTypeFromArray<T extends ReadonlyArray<NodeType>> = {
-//   [K in T[number]]: Node<K>;
-// }[T[number]];
+type NodeTypeFromArray<T extends ReadonlyArray<NodeKind>> = Node<T[number]>;
 
-type NodeTypeFromArray<T extends ReadonlyArray<NodeType>> = Node<T[number]>;
-
-function combine<T extends ReadonlyArray<NodeType>>(
-  ...types: T
+function combine<T extends ReadonlyArray<NodeKind>>(
+  ...kinds: T
 ): {
   (node: Node): node is NodeTypeFromArray<T>;
-  types: T;
+  kinds: T;
   __type: NodeTypeFromArray<T>;
 } {
-  const fn = ((node: Node) => types.includes(node.type)) as any;
-  fn.types = types;
+  const fn = ((node: Node) => kinds.includes(node.kind)) as any;
+  fn.kinds = kinds;
   return fn;
 }

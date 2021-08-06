@@ -312,7 +312,7 @@ export function exact<T extends string, Ctx>(str: T): Parser<T, Ctx> {
         return ParseFailure(input.position, name, `Remaining text is shoprter than "${str}"`);
       }
       if (peek !== str) {
-        return ParseFailure(input.position, name, `String "${peek}" is nopt equal to "${str}"`);
+        return ParseFailure(input.position, name, `String "${peek}" is not equal to "${str}"`);
       }
       const nextInput = input.skip(str.length);
       return ParseSuccess(input.position, nextInput, str);

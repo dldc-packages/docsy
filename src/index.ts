@@ -15,4 +15,5 @@ export {
   Rule,
   Stack,
   StackItem,
+  TraversePath,
 } from './types.js';

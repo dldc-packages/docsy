@@ -1,81 +1,17 @@
 import { DocsyError } from './DocsyError.js';
-import { Node, NodeType, CreateNode, Expression, NodeNodesItem, isValidNodeType } from './Ast.js';
-
-type TraversePath = Array<number | string>;
-
-type TransformResult<T> = {
-  value: T;
-  changed: boolean;
-};
+import { Node, CreateNode, Expression, NodeChildrenBase, isValidNodeKind } from './Ast.js';
+import { TraversePath } from './types.js';
 
 export const DocsyUtils = {
+  filter,
   traverse,
-  transform,
-  transformDeep,
   createNodeFromValue,
-  getNodeNodes,
+  getNodeChildren,
+  cloneAtPaths,
+  transform,
+  updateNodeMeta,
+  updateNodeChildren,
 };
-
-/**
- * If the onNode return a different node, we replace the node and don't go deeper
- */
-function transform(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
-  return transformInternal(node, []).value;
-
-  function transformInternal<K extends NodeType>(item: Node<K>, path: TraversePath): TransformResult<Node> {
-    const result = onNode(item, path);
-    if (result !== item) {
-      return { changed: true, value: result };
-    }
-    // if (NodeIs.Document(item)) {
-    //   const childRes = transformArray(item.children, [...path, 'children']);
-    //   const value: Node<'Document'> = childRes.changed
-    //     ? { ...item, children: childRes.value }
-    //     : item;
-    //   return { changed: childRes.changed, value };
-    // }
-    throw new DocsyError.NotImplementedError(`Node of type ${item.type}`);
-  }
-
-  // function transformArray<K extends NodeType>(
-  //   items: Array<Node<K>>,
-  //   path: TraversePath
-  // ): TransformResult<Array<Node>> {
-  //   let changed = false;
-  //   const updated = items.map((node, i) => {
-  //     const res = transformInternal(node, [...path, i]);
-  //     if (res.changed && changed === false) {
-  //       changed = true;
-  //     }
-  //     return res.value;
-  //   });
-  //   return { changed, value: changed ? updated : items };
-  // }
-}
-
-function transformDeep(node: Node, onNode: (item: Node, path: TraversePath) => Node): Node {
-  return transformDeepInternal(node, []);
-
-  function transformDeepInternal(parent: Node, parentPath: TraversePath): Node {
-    const nextParent = onNode(parent, parentPath);
-    if (nextParent === parent) {
-      return parent;
-    }
-    return transform(parent, (item, path) => {
-      if (item === parent) {
-        // we have already transform the parent so we skip it
-        return item;
-      }
-      const next = onNode(item, path);
-      if (next === item) {
-        // same, let transform going
-        return item;
-      }
-      // item changed, transfomr will stop so we start it again
-      return transformDeepInternal(next, path);
-    });
-  }
-}
 
 export type NodePath = Array<string | number>;
 export interface NodeWithPath {
@@ -83,37 +19,111 @@ export interface NodeWithPath {
   path: NodePath;
 }
 
-function getNodesFromNodes(nodes: NodeNodesItem, path: NodePath): Array<NodeWithPath> {
-  if (nodes === null) {
+function updateNodeMeta<T extends Node>(node: T, updater: (meta: T['meta']) => T['meta']): T {
+  return {
+    ...node,
+    meta: updater(node.meta),
+  };
+}
+
+function updateNodeChildren<T extends Node>(node: T, updater: (meta: T['children']) => T['children']): T {
+  return {
+    ...node,
+    children: updater(node.children),
+  };
+}
+
+function getChildren(children: NodeChildrenBase, path: NodePath): Array<NodeWithPath> {
+  if (children === null) {
     return [];
   }
-  if (Array.isArray(nodes)) {
-    return nodes.map((node, index) => ({ node, path: [...path, index] }));
+  if (Array.isArray(children)) {
+    return children.map((node, index) => ({ node, path: [...path, index] }));
   }
-  if (nodes.type && isValidNodeType(nodes.type)) {
+  if (children.kind && isValidNodeKind(children.kind)) {
     // is node
-    return [{ node: nodes as any, path }];
+    return [{ node: children as any, path }];
   }
   // Object
-  return Object.keys(nodes).reduce<Array<NodeWithPath>>((acc, key) => {
-    acc.push(...getNodesFromNodes((nodes as any)[key], [...path, key]));
+  return Object.keys(children).reduce<Array<NodeWithPath>>((acc, key) => {
+    acc.push(...getChildren((children as any)[key], [...path, key]));
     return acc;
   }, []);
 }
 
-function getNodeNodes(item: Node): Array<NodeWithPath> {
-  return getNodesFromNodes(item.nodes, []);
+function getNodeChildren(item: Node): Array<NodeWithPath> {
+  return getChildren(item.children, ['children']);
 }
 
-function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void): void {
+/**
+ * Traverse Node tree, return false to skip children
+ *
+ * @param node
+ * @param onNode
+ * @returns
+ */
+function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void | false | null): void {
   return traverseInternal(node, []);
 
   function traverseInternal(item: Node, path: TraversePath) {
-    onNode(item, path);
-    getNodeNodes(item).forEach((child) => {
+    const traverseChildren = onNode(item, path);
+    if (traverseChildren === false) {
+      return;
+    }
+    getNodeChildren(item).forEach((child) => {
       traverseInternal(child.node, [...path, ...child.path]);
     });
   }
+}
+
+function filter<N extends Node>(node: N, onNode: (item: Node, path: TraversePath) => boolean): N {
+  const removePaths: Array<TraversePath> = [];
+
+  if (onNode(node, []) === false) {
+    throw new Error('Cannot filter root node !');
+  }
+
+  traverse(node, (node, path) => {
+    const keep = onNode(node, path);
+    if (keep === false) {
+      removePaths.push(path);
+      return false;
+    }
+    return;
+  });
+
+  // we need to update in reverse order
+  const sortedRemovePaths = removePaths.reverse();
+  // clone parents
+  const clonePaths = sortedRemovePaths.map((v) => v.slice(0, -1)).filter((p) => p.length > 0);
+  const cloned = cloneAtPaths(node, clonePaths);
+  sortedRemovePaths.forEach((removePath) => {
+    deleteAtPath(cloned, removePath);
+  });
+
+  return cloned;
+}
+
+function transform<N extends Node>(node: N, onNode: (item: Node, path: TraversePath) => Node): N {
+  const replaceItems: Array<{ path: TraversePath; node: Node }> = [];
+
+  traverse(node, (node, path) => {
+    const updated = onNode(node, path);
+    if (updated !== node) {
+      replaceItems.push({ path, node: updated });
+      return false;
+    }
+    return;
+  });
+
+  // clone parents
+  const clonePaths = replaceItems.map((v) => v.path.slice(0, -1)).filter((p) => p.length > 0);
+  const cloned = cloneAtPaths(node, clonePaths);
+  replaceItems.forEach(({ path, node }) => {
+    updateAtPath(cloned, path, node);
+  });
+
+  return cloned;
 }
 
 function createNodeFromValue(value: unknown): Expression {
@@ -191,7 +201,7 @@ function isObjectObject(o: any) {
   return isObject(o) === true && Object.prototype.toString.call(o) === '[object Object]';
 }
 
-function isPlainObject(o: any): o is {} {
+function isPlainObject(o: any): o is Record<string, any> {
   if (isObjectObject(o) === false) return false;
 
   // If has modified constructor
@@ -210,4 +220,57 @@ function isPlainObject(o: any): o is {} {
 
   // Most likely a plain Object
   return true;
+}
+
+/**
+ * Clone node
+ */
+function cloneAtPaths<T>(obj: T, paths: Array<TraversePath>): T {
+  return transformInternal(obj, []);
+
+  function transformInternal<T>(item: T, path: TraversePath): T {
+    const isInPath = paths.some((clonePath) => arrayStartsWith(clonePath, path));
+    if (!isInPath) {
+      return item;
+    }
+    if (Array.isArray(item)) {
+      return item.map((v, i) => transformInternal(v, [...path, i])) as any;
+    }
+    if (isPlainObject(item)) {
+      return Object.fromEntries(Object.entries(item).map(([k, v]) => [k, transformInternal(v, [...path, k])])) as any;
+    }
+    return item;
+  }
+}
+
+function arrayStartsWith<T>(arr: Array<T>, start: Array<T>): boolean {
+  return start.every((v, i) => arr[i] === v);
+}
+
+function deleteAtPath(obj: unknown, path: TraversePath) {
+  let parent: any = obj;
+  const parentPath = path.slice(0, -1);
+  const removeKey = path[path.length - 1];
+  parentPath.forEach((part) => {
+    parent = parent[part];
+  });
+  if (Array.isArray(parent)) {
+    parent.splice(removeKey as any, 1);
+    return;
+  }
+  if (isPlainObject(parent)) {
+    delete parent[removeKey];
+    return;
+  }
+  throw new Error('[deleteAtPath] Unsuported type');
+}
+
+function updateAtPath(obj: unknown, path: TraversePath, value: unknown) {
+  let parent: any = obj;
+  const parentPath = path.slice(0, -1);
+  const updateKey = path[path.length - 1];
+  parentPath.forEach((part) => {
+    parent = parent[part];
+  });
+  parent[updateKey as any] = value;
 }

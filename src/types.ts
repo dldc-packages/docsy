@@ -47,3 +47,5 @@ export type ResultTracker<T> = {
   getFailure(): ParseResultFailure | null;
   update(result: ParseResult<T>): void;
 };
+
+export type TraversePath = Array<number | string>;

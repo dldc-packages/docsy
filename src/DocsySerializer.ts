@@ -29,13 +29,13 @@ function serialize(node: Node): string {
       return '';
     }
     if (NodeIs.Document(item)) {
-      return serializeChildren(item.nodes.children, false);
+      return serializeChildren(item.children, false);
     }
     if (NodeIs.ExpressionDocument(item)) {
       return (
-        item.nodes.before.map(serializeInternal).join('') +
-        serializeInternal(item.nodes.value) +
-        item.nodes.after.map(serializeInternal).join('')
+        item.children.before.map(serializeInternal).join('') +
+        serializeInternal(item.children.value) +
+        item.children.after.map(serializeInternal).join('')
       );
     }
     if (NodeIs.Whitespace(item)) {
@@ -55,9 +55,9 @@ function serialize(node: Node): string {
     }
     if (NodeIs.ArrayItem(item)) {
       return (
-        serializeInternal(item.nodes.whitespaceBefore) +
-        serializeInternal(item.nodes.item) +
-        serializeInternal(item.nodes.whitespaceAfter)
+        serializeInternal(item.children.whitespaceBefore) +
+        serializeInternal(item.children.item) +
+        serializeInternal(item.children.whitespaceAfter)
       );
     }
     if (NodeIs.Bool(item)) {
@@ -70,16 +70,16 @@ function serialize(node: Node): string {
       return `null`;
     }
     if (NodeIs.DotMember(item)) {
-      return serializeInternal(item.nodes.target) + '.' + serializeInternal(item.nodes.property);
+      return serializeInternal(item.children.target) + '.' + serializeInternal(item.children.property);
     }
     if (NodeIs.BracketMember(item)) {
-      return serializeInternal(item.nodes.target) + `[${serializeInternal(item.nodes.property)}]`;
+      return serializeInternal(item.children.target) + `[${serializeInternal(item.children.property)}]`;
     }
     if (NodeIs.FunctionCall(item)) {
-      return serializeInternal(item.nodes.target) + serializeArguments(item.nodes.arguments);
+      return serializeInternal(item.children.target) + serializeArguments(item.children.arguments);
     }
     if (NodeIs.ElementTypeMember(item)) {
-      return serializeInternal(item.nodes.target) + '.' + serializeInternal(item.nodes.property);
+      return serializeInternal(item.children.target) + '.' + serializeInternal(item.children.property);
     }
     if (NodeIs.oneOf(item, CHILDREN_TYPE)) {
       return serializeChild(item, false);
@@ -88,42 +88,42 @@ function serialize(node: Node): string {
   }
 
   function serializeElement(elem: Node<'Element'>): string {
-    const childrenStr = serializeChildren(elem.nodes.children, false);
+    const childrenStr = serializeChildren(elem.children.children, false);
     return [
       `<|`,
-      serializeInternal(elem.nodes.component),
-      serializeProps(elem.nodes.props),
+      serializeInternal(elem.children.component),
+      serializeProps(elem.children.props),
       '>',
       childrenStr,
-      elem.meta.namedCloseTag ? `<${serializeInternal(elem.nodes.component)}|>` : `|>`,
+      elem.meta.namedCloseTag ? `<${serializeInternal(elem.children.component)}|>` : `|>`,
     ].join('');
   }
 
   function serializeRawElement(elem: Node<'RawElement'>): string {
-    const childrenStr = serializeChildren(elem.nodes.children, true);
+    const childrenStr = serializeChildren(elem.children.children, true);
     return [
       `<#`,
-      serializeInternal(elem.nodes.component),
-      serializeProps(elem.nodes.props),
+      serializeInternal(elem.children.component),
+      serializeProps(elem.children.props),
       '>',
       childrenStr,
-      elem.meta.namedCloseTag ? `<${serializeInternal(elem.nodes.component)}#>` : `#>`,
+      elem.meta.namedCloseTag ? `<${serializeInternal(elem.children.component)}#>` : `#>`,
     ].join('');
   }
 
   function serializeSelfClosingElement(elem: Node<'SelfClosingElement'>): string {
-    return [`<|`, serializeInternal(elem.nodes.component), serializeProps(elem.nodes.props), '|>'].join('');
+    return [`<|`, serializeInternal(elem.children.component), serializeProps(elem.children.props), '|>'].join('');
   }
 
   function serializeObject(item: Node<'Object'>): string {
     return (
       `{` +
-      item.nodes.items
+      item.children.items
         .map((objectItem) => {
           return (
-            serializeInternal(objectItem.nodes.whitespaceBefore) +
-            serializeObjectPart(objectItem.nodes.item) +
-            serializeInternal(objectItem.nodes.whitespaceAfter)
+            serializeInternal(objectItem.children.whitespaceBefore) +
+            serializeObjectPart(objectItem.children.item) +
+            serializeInternal(objectItem.children.whitespaceAfter)
           );
         })
         .join(',') +
@@ -132,7 +132,7 @@ function serialize(node: Node): string {
   }
 
   function serializeArray(item: Node<'Array'>): string {
-    return `[` + item.nodes.items.map(serializeInternal).join(',') + `]`;
+    return `[` + item.children.items.map(serializeInternal).join(',') + `]`;
   }
 
   function serializeArguments(items: Array<Node<'ArrayItem'>>): string {
@@ -141,16 +141,16 @@ function serialize(node: Node): string {
 
   function serializeObjectPart(item: ObjectPart): string {
     if (NodeIs.Spread(item)) {
-      return `...${serializeInternal(item.nodes.target)}`;
+      return `...${serializeInternal(item.children.target)}`;
     }
     if (NodeIs.PropertyShorthand(item)) {
-      return serializeInternal(item.nodes.name);
+      return serializeInternal(item.children.name);
     }
     if (NodeIs.Property(item)) {
-      return serializeInternal(item.nodes.name) + ': ' + serializeInternal(item.nodes.value);
+      return serializeInternal(item.children.name) + ': ' + serializeInternal(item.children.value);
     }
     if (NodeIs.ComputedProperty(item)) {
-      return `[${serializeInternal(item.nodes.expression)}]: ${serializeInternal(item.nodes.value)}`;
+      return `[${serializeInternal(item.children.expression)}]: ${serializeInternal(item.children.value)}`;
     }
     throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
   }
@@ -216,9 +216,9 @@ function serialize(node: Node): string {
     if (NodeIs.Inject(item)) {
       return (
         '{' +
-        serializeInternal(item.nodes.whitespaceBefore) +
-        serializeInternal(item.nodes.value) +
-        serializeInternal(item.nodes.whitespaceAfter) +
+        serializeInternal(item.children.whitespaceBefore) +
+        serializeInternal(item.children.value) +
+        serializeInternal(item.children.whitespaceAfter) +
         '}'
       );
     }
@@ -230,12 +230,12 @@ function serialize(node: Node): string {
     }
     if (NodeIs.Fragment(item)) {
       if (isInRaw) {
-        return `<#>${serializeChildren(item.nodes.children, false)}<#>`;
+        return `<#>${serializeChildren(item.children, false)}<#>`;
       }
-      return `<|>${serializeChildren(item.nodes.children, false)}<|>`;
+      return `<|>${serializeChildren(item.children, false)}<|>`;
     }
     if (NodeIs.RawFragment(item)) {
-      return `<#>${serializeChildren(item.nodes.children, false)}<#>`;
+      return `<#>${serializeChildren(item.children, false)}<#>`;
     }
     if (NodeIs.SelfClosingElement(item)) {
       return serializeSelfClosingElement(item);
@@ -259,20 +259,20 @@ function serialize(node: Node): string {
 
   function serializeProps(props: Node<'Props'>): string {
     return (
-      props.nodes.items
+      props.children.items
         .map((prop) => {
-          return serializeInternal(prop.nodes.whitespaceBefore) + serializeProp(prop.nodes.item);
+          return serializeInternal(prop.children.whitespaceBefore) + serializeProp(prop.children.item);
         })
-        .join('') + serializeInternal(props.nodes.whitespaceAfter)
+        .join('') + serializeInternal(props.children.whitespaceAfter)
     );
   }
 
   function serializeProp(prop: Prop): string {
     if (NodeIs.PropValue(prop)) {
-      return `${serializeInternal(prop.nodes.name)}=${serializeInternal(prop.nodes.value)}`;
+      return `${serializeInternal(prop.children.name)}=${serializeInternal(prop.children.value)}`;
     }
     if (NodeIs.PropNoValue(prop)) {
-      return `${serializeInternal(prop.nodes.name)}`;
+      return `${serializeInternal(prop.children.name)}`;
     }
     if (NodeIs.PropLineComment(prop)) {
       return `//${prop.meta.content}\n`;
