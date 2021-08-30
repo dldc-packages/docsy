@@ -1,4 +1,4 @@
-import { DocsyResolver, DocsyParser } from '../src';
+import { DocsyResolver, DocsyParser } from '../src/mod';
 
 test('Resolve simple text', () => {
   const node = DocsyParser.parseDocument('Hello');

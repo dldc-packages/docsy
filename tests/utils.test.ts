@@ -1,4 +1,4 @@
-import { DocsyParser, DocsySerializer, DocsyUtils, NodeIs } from '../src';
+import { DocsyParser, DocsySerializer, DocsyUtils, NodeIs } from '../src/mod';
 
 test('should filter item', () => {
   const doc = `Hello <|Component|> Foo <|Bar|><|Content>Hello <|Bold|> |>`;

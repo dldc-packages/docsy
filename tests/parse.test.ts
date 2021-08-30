@@ -1,4 +1,4 @@
-import { DocsyParser, DocsyError } from '../src';
+import { DocsyParser, DocsyError } from '../src/mod';
 import { readFile } from './utils';
 // @ts-expect-error unused but fine
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

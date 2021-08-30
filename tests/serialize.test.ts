@@ -1,4 +1,4 @@
-import { DocsyParser, DocsySerializer } from '../src';
+import { DocsyParser, DocsySerializer } from '../src/mod';
 import { readFile } from './utils';
 
 test(`Parse then serialize an element`, () => {

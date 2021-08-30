@@ -1,6 +1,6 @@
 import fse from 'fs-extra';
 import path from 'path';
-import { NodeIs } from '../../src';
+import { NodeIs } from '../../src/mod';
 
 export function readFile(name: string): string {
   const testFileFolder = path.resolve(process.cwd(), 'tests/files');

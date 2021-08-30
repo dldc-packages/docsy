@@ -22,7 +22,7 @@
   },
   "main": "./dist/docsy.cjs.js",
   "module": "./dist/docsy.es.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/mod.d.ts",
   "files": [
     "dist"
   ],
