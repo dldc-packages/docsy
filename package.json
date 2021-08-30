@@ -27,7 +27,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && vite build && yarn build:types",
+    "build": "rimraf dist && vite build && yarn build:types && denoify",
     "build:types": "tsc -p ./tsconfig.build.json",
     "example:run": "vite serve example",
     "lint": "prettier . --check && eslint . && tsc --noEmit",
@@ -46,6 +46,7 @@
     "@types/jest": "^26.0.24",
     "@typescript-eslint/eslint-plugin": "^4.29.0",
     "@typescript-eslint/parser": "^4.29.0",
+    "denoify": "^0.9.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "fs-extra": "^10.0.0",
