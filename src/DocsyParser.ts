@@ -5,22 +5,32 @@ import {
   Child,
   NodeIs,
   Expression,
-  ComponentType,
-  ElementAny,
-  DottableExpression,
   ExpressionDocument,
+  NodeData,
+  NodeBase,
+  CreateNodeData,
+  NodeMetaBase,
+  NodeChildrenBase,
+  ChainExpression,
+  RawChild,
   AnyComment,
+  MaybeWhitespace,
+  Primitive,
+  ObjectOrArray,
+  Prop,
+  WhitespaceOrComment,
+  QuoteType,
 } from './Ast';
-import * as Combinator from './Combinator';
+import * as c from './Combinator';
 import { StringReader } from './StringReader';
 import { DocsyError } from './DocsyError';
 import { executeParser, failureToStack, ParseFailure, ParseSuccess } from './Parser';
-import { Parser, ParseResult, ParseResultSuccess } from './types';
+import { Parser, ParseResult } from './types';
+import { ManySepByResult } from './Combinator';
 
 const SINGLE_QUOTE = "'";
 const DOUBLE_QUOTE = '"';
 const BACKTICK = '`';
-const BACKSLASH = '\\';
 const NEW_LINE = '\n';
 
 export type Ranges = Map<Node, { start: number; end: number }>;
@@ -70,7 +80,7 @@ function createContext(): Ctx {
 function parseDocument(file: string): ParseDocumentResult {
   const ctx = createContext();
   const input = StringReader(file);
-  const result = executeParser(documentParser, input, ctx);
+  const result = executeParser(DocumentParser, input, ctx);
   if (result.type === 'Failure') {
     throw new DocsyError.ParsingError(failureToStack(result));
   }
@@ -80,7 +90,7 @@ function parseDocument(file: string): ParseDocumentResult {
 function parseExpression(file: string): ParseDocumentExpressionResult {
   const ctx = createContext();
   const input = StringReader(file);
-  const result = executeParser(expressionDocumentParser, input, ctx);
+  const result = executeParser(ExpressionDocumentParser, input, ctx);
   if (result.type === 'Failure') {
     throw new DocsyError.ParsingError(failureToStack(result));
   }
@@ -88,8 +98,15 @@ function parseExpression(file: string): ParseDocumentExpressionResult {
 }
 
 function createExact<T extends string>(str: T): Parser<T, Ctx> {
-  return Combinator.exact<T, Ctx>(str);
+  return c.exact<T, Ctx>(str);
 }
+
+interface NodeRule<K extends NodeKind> extends Parser<Node<K>, Ctx> {
+  setParser(parser: Parser<NodeData<K>, Ctx>): void;
+  setNodeParser(parser: Parser<Node<K>, Ctx>): void;
+}
+
+const NodeParserInternal: { [K in NodeKind]?: NodeRule<K> } = {};
 
 const elementTokenOpenParser = createExact('<|');
 const elementTokenCloseParser = createExact('|>');
@@ -115,590 +132,179 @@ const blockCommentStartParser = createExact('/*');
 const blockCommentEndParser = createExact('*/');
 const newLineParser = createExact(NEW_LINE);
 const singleQuoteParser = createExact(SINGLE_QUOTE);
-const backslashParser = createExact(BACKSLASH);
 const doubleQuoteParser = createExact(DOUBLE_QUOTE);
 const backtickParser = createExact(BACKTICK);
-const eofParser = Combinator.eof<Ctx>();
+const eofParser = c.eof<Ctx>();
 
-const expressionParser = Combinator.rule<Expression, Ctx>('Expression');
-const dottableExpressionParser = Combinator.rule<DottableExpression, Ctx>('DottableExpression');
-const childParser = Combinator.rule<Child, Ctx>('Child');
-const rawChildParser = Combinator.rule<Child | Array<Child>, Ctx>('RawChild');
-const unrawChildParser = Combinator.rule<Child, Ctx>('Child');
-const unrawElementAnyParser = Combinator.rule<ElementAny, Ctx>('ElementAny');
-const anyCommentParser = Combinator.rule<AnyComment, Ctx>('AnyComment');
+const whitespaceParser = c.regexp<Ctx>(/^\s+/g);
+const identifierParser = c.regexp<Ctx>(/^[A-Za-z][A-Za-z0-9_$]*/g);
+const numberParser = c.regexp<Ctx>(/^[+-]?((\d+(\.\d+)?)|(\.(\d+)))/g);
+const singleQuoteStringContentParser = c.regexp<Ctx>(/^((\\')|[^'\n])+/g);
+const doubleQuoteStringContentParser = c.regexp<Ctx>(/^((\\")|[^"\n])+/g);
+const backtickStringContentParser = c.regexp<Ctx>(/^((\\`)|[^`])+/g);
+const lineCommentContentParser = c.regexp<Ctx>(/^[^\n]+/g);
+const blockCommentContentParser = c.regexp<Ctx>(/^(((?!\*\/))(.|\n))+/g);
+const textContentParser = c.regexp<Ctx>(/^((?!(\|>)|(<[A-Z])|(<\|)|(\/\/)|(\/\*)|\s)(.|\n))+/g); // Not |> | <[A-Z] | <|[A-Z] | // | /* | Whitespace
+const rawTextContentParser = c.regexp<Ctx>(/^((?!((#>)|(<#)|(<[A-Z])))(.|\n))+/g); // Not <[A-Z] | <#>
 
-const whitespaceParser = Combinator.apply(Combinator.regexp<Ctx>(/^\s+/g), (content, start, end, ctx) => {
-  const hasNewLine = content.indexOf('\n') >= 0;
-  return ctx.createNode('Whitespace', start, end, {}, { content, hasNewLine });
-});
+type ArrayItems = { items: Array<Node<'ArrayItem'>>; trailingComma: boolean };
+type ComponentType = Node<'ElementTypeMember' | 'Identifier'>;
 
-const identifierParser = Combinator.apply(
-  Combinator.regexp<Ctx>(/^[A-Za-z][A-Za-z0-9_$]*/g),
-  (identifier, start, end, ctx) => ctx.createNode('Identifier', start, end, {}, { name: identifier })
+type ChainExpressionDotMember = { type: 'ChainExpressionDotMember'; indentifier: Node<'Identifier'>; end: number };
+type ChainExpressionBracketMember = { type: 'ChainExpressionBracketMember'; value: Expression; end: number };
+type ChainExpressionFunctionCall = {
+  type: 'ChainExpressionFunctionCall';
+  args: Array<Node<'ArrayItem'>>;
+  trailingComma: boolean;
+  end: number;
+};
+
+type ChainExpressionItem = ChainExpressionDotMember | ChainExpressionBracketMember | ChainExpressionFunctionCall;
+
+type ChainExpressionBase = Node<'Identifier' | 'Parenthesis'>;
+
+const ChainExpressionItemParser = c.rule<ChainExpressionItem, Ctx>('ChainExpressionItem');
+const ChainExpressionParser = c.rule<ChainExpression, Ctx>('ChainExpression');
+const AnyCommentParser = c.rule<AnyComment, Ctx>('AnyComment');
+const ArrayItemsParser = c.rule<ArrayItems, Ctx>('ArrayItems');
+const ChainExpressionBracketMemberParser = c.rule<ChainExpressionBracketMember, Ctx>('ChainExpressionBracketMember');
+const ChainExpressionDotMemberParser = c.rule<ChainExpressionDotMember, Ctx>('ChainExpressionDotMember');
+const ChainExpressionFunctionCallParser = c.rule<ChainExpressionFunctionCall, Ctx>('ChainExpressionFunctionCall');
+const ChainExpressionBaseParser = c.rule<ChainExpressionBase, Ctx>('ChainExpressionBase');
+const ChildParser = c.rule<Child, Ctx>('Child');
+const ComponentTypeParser = c.rule<ComponentType, Ctx>('ComponentType');
+const ExpressionParser = c.rule<Expression, Ctx>('Expression');
+const MaybeWhitespaceParser = c.rule<MaybeWhitespace, Ctx>('MaybeWhitespace');
+const ObjectOrArrayParser = c.rule<ObjectOrArray, Ctx>('ObjectOrArray');
+const PrimitiveParser = c.rule<Primitive, Ctx>('Primitive');
+const RawChildParser = c.rule<RawChild, Ctx>('RawChild');
+const UnrawChildParser = c.rule<Child, Ctx>('RawChild');
+const PropParser = c.rule<Prop, Ctx>('Prop');
+const WhitespaceOrCommentParser = c.rule<WhitespaceOrComment, Ctx>('WhitespaceOrComment');
+
+export const DocumentParser = nodeParser('Document') as Parser<Node<'Document'>, Ctx>;
+export const ExpressionDocumentParser = nodeParser('ExpressionDocument') as Parser<Node<'ExpressionDocument'>, Ctx>;
+
+WhitespaceOrCommentParser.setParser(c.oneOf(nodeParser('Whitespace'), AnyCommentParser));
+
+PropParser.setParser(
+  c.oneOf(
+    nodeParser('PropValue'),
+    nodeParser('PropNoValue'),
+    nodeParser('PropBlockComment'),
+    nodeParser('PropLineComment')
+  )
 );
 
-const numberParser = Combinator.apply(
-  Combinator.regexp<Ctx>(/^[+-]?((\d+(\.\d+)?)|(\.(\d+)))/g),
-  (rawValue, start, end, ctx) => ctx.createNode('Num', start, end, {}, { value: parseFloat(rawValue), rawValue })
+ComponentTypeParser.setParser(c.oneOf(nodeParser('ElementTypeMember'), nodeParser('Identifier')));
+
+PrimitiveParser.setParser(
+  c.oneOf(nodeParser('Num'), nodeParser('Bool'), nodeParser('Null'), nodeParser('Undefined'), nodeParser('Str'))
 );
 
-const booleanParser = Combinator.apply(
-  Combinator.oneOf('Bool', createExact('true'), createExact('false')),
-  (val, start, end, ctx) => ctx.createNode('Bool', start, end, {}, { value: val === 'true' ? true : false })
+MaybeWhitespaceParser.setParser(c.apply(c.maybe(nodeParser('Whitespace')), (node) => node ?? null));
+
+ArrayItemsParser.setParser(
+  c.apply(c.manySepBy(nodeParser('ArrayItem'), commaParser, { allowTrailing: true }), (items) => ({
+    items: flattenManySepBy(items),
+    trailingComma: items === null ? false : Boolean(items.trailing),
+  }))
 );
 
-const nullParser = Combinator.apply(createExact('null'), (_null, start, end, ctx) =>
-  ctx.createNode('Null', start, end, {}, {})
+ChildParser.setParser(
+  c.oneOf(
+    nodeParser('Element'),
+    nodeParser('Fragment'),
+    nodeParser('RawFragment'),
+    nodeParser('RawElement'),
+    nodeParser('SelfClosingElement'),
+    nodeParser('Whitespace'),
+    nodeParser('Inject'),
+    nodeParser('Text'),
+    AnyCommentParser
+  )
 );
 
-const undefinedParser = Combinator.apply(createExact('undefined'), (_null, start, end, ctx) =>
-  ctx.createNode('Undefined', start, end, {}, {})
+RawChildParser.setParser(c.oneOf(nodeParser('UnrawFragment'), nodeParser('RawText')));
+
+// All elements except RawFragment
+UnrawChildParser.setParser(
+  c.oneOf(
+    nodeParser('Element'),
+    nodeParser('Fragment'),
+    nodeParser('SelfClosingElement'),
+    nodeParser('Whitespace'),
+    nodeParser('Text'),
+    nodeParser('Inject'),
+    AnyCommentParser
+  )
 );
 
-const maybeWhitespaceParser = Combinator.maybe(whitespaceParser);
-
-const notNewLineParser = Combinator.singleChar<Ctx>('NotNewLine', (char) => char !== '\n');
-
-const escapedStringValue = Combinator.apply(
-  Combinator.pipe('EscapedString', backslashParser, notNewLineParser),
-  ([_backslash, char]) => {
-    return char;
-  }
+ObjectOrArrayParser.setParser(
+  c.oneOf(nodeParser('EmptyArray'), nodeParser('Array'), nodeParser('EmptyObject'), nodeParser('Object'))
 );
 
-const createStringParser = <Q>(name: string, quote: Parser<Q, Ctx>, contentRegexp: RegExp) =>
-  Combinator.apply(
-    Combinator.pipe(
-      name,
-      quote,
-      Combinator.many(
-        'StringContent',
-        Combinator.oneOf('StringContent', escapedStringValue, Combinator.regexp(contentRegexp))
-      ),
-      quote
-    ),
-    ([q1, content, _q2]) => ({ quote: q1, content: content.join('') })
-  );
-
-const singleQuoteStringParser = createStringParser('SingleQuoteString', singleQuoteParser, /^[^\\\n']+/g);
-
-const doubleQuoteStringParser = createStringParser('DoubleQuoteString', doubleQuoteParser, /^[^\\\n"]+/g);
-
-const backtickStringParser = createStringParser('BacktickString', backtickParser, /^[^\\`]+/g);
-
-const stringParser = Combinator.apply(
-  Combinator.oneOf('String', singleQuoteStringParser, doubleQuoteStringParser, backtickStringParser),
-  (data, start, end, ctx) => {
-    const quote = data.quote === SINGLE_QUOTE ? 'Single' : data.quote === DOUBLE_QUOTE ? 'Double' : 'Backtick';
-    return ctx.createNode('Str', start, end, {}, { value: data.content, quote });
-  }
-);
-
-const emptyArrayParser = Combinator.apply(
-  Combinator.pipe('EmptyArray', squareBracketOpenParser, Combinator.maybe(whitespaceParser), squareBracketCloseParser),
-  ([_open, whitespace, _close], start, end, ctx) => {
-    return ctx.createNode('EmptyArray', start, end, { whitespace }, {});
-  }
-);
-
-const emptyObjectParser = Combinator.apply(
-  Combinator.pipe('EmptyObject', curlyBracketOpenParser, Combinator.maybe(whitespaceParser), curlyBracketCloseParser),
-  ([_open, whitespace, _close], start, end, ctx) => {
-    return ctx.createNode('EmptyObject', start, end, { whitespace }, {});
-  }
-);
-
-const parenthesisParser = Combinator.apply(
-  Combinator.pipe('Parenthesis', parenthesisOpenParser, expressionParser, parenthesisCloseParser),
-  ([_open, value], start, end, ctx) => {
-    return ctx.createNode('Parenthesis', start, end, { value }, {});
-  }
-);
-
-const spreadParser = Combinator.apply(
-  Combinator.pipe('Spread', spreadOperatorParser, expressionParser),
-  ([_op, target], start, end, ctx) => {
-    return ctx.createNode('Spread', start, end, { target }, {});
-  }
-);
-
-const arrayItemParser = Combinator.apply(
-  Combinator.pipe(
-    'ArrayItem',
-    maybeWhitespaceParser,
-    Combinator.oneOf('ArrayItemInner', spreadParser, expressionParser),
-    maybeWhitespaceParser
-  ),
-  ([whitespaceBefore, item, whitespaceAfter], start, end, ctx) => {
-    return ctx.createNode('ArrayItem', start, end, { whitespaceBefore, item, whitespaceAfter }, {});
-  }
-);
-
-const arrayItemsParser = Combinator.manySepBy('ArrayItems', arrayItemParser, commaParser, true);
-
-const arrayParser = Combinator.apply(
-  Combinator.pipe(
-    'Array',
-    squareBracketOpenParser,
-    arrayItemsParser,
-    Combinator.maybe(commaParser),
-    squareBracketCloseParser
-  ),
-  ([_open, { items, trailing }, _close], start, end, ctx) => {
-    return ctx.createNode('Array', start, end, { items }, { trailingComma: trailing });
-  }
-);
-
-const lineCommentParser = Combinator.apply(
-  Combinator.pipe(
-    'LineComment',
-    doubleSlashParser,
-    Combinator.maybe(Combinator.regexp(/^[^\n]+/g)),
-    Combinator.oneOf('LineCommentEnd', eofParser, newLineParser)
-  ),
-  ([_start, content], start, end, ctx) => {
-    return ctx.createNode('LineComment', start, end, {}, { content: content || '' });
-  }
-);
-
-const blockCommentParser = Combinator.apply(
-  Combinator.pipe(
-    'BlockComment',
-    blockCommentStartParser,
-    Combinator.maybe(Combinator.whileNotMatch('BlockCommentContent', ['*/'])),
-    blockCommentEndParser
-  ),
-  ([_start, content], start, end, ctx) => {
-    return ctx.createNode('BlockComment', start, end, {}, { content: content || '' });
-  }
-);
-
-const propertyShorthandParser = Combinator.apply(identifierParser, (name, start, end, ctx) => {
-  return ctx.createNode('PropertyShorthand', start, end, { name }, {});
-});
-
-const propertyNameParser = Combinator.oneOf('PropertyName', identifierParser, stringParser);
-
-const propertyParser = Combinator.apply(
-  Combinator.pipe(
-    'Property',
-    propertyNameParser,
-    maybeWhitespaceParser,
-    colonParser,
-    maybeWhitespaceParser,
-    expressionParser
-  ),
-  ([name, whitespaceBeforeColon, _colon, whitespaceAfterColon, value], start, end, ctx) => {
-    return createNode(
-      ctx.ranges,
-      'Property',
-      start,
-      end,
-      { name, value, whitespaceAfterColon, whitespaceBeforeColon },
-      {}
-    );
-  }
-);
-
-const computedPropertyParser = Combinator.apply(
-  Combinator.pipe(
-    'ComputedProperty',
-    squareBracketOpenParser,
-    expressionParser,
-    squareBracketCloseParser,
-    maybeWhitespaceParser,
-    colonParser,
-    maybeWhitespaceParser,
-    expressionParser
-  ),
-  (
-    [_openBracket, expression, _closeBracket, whitespaceBeforeColon, _colon, whitespaceAfterColon, value],
-    start,
+ChainExpressionDotMemberParser.setParser(
+  c.apply(c.pipe(dotParser, nodeParser('Identifier')), ([_dot, indentifier], _start, end) => ({
+    type: 'ChainExpressionDotMember',
+    indentifier,
     end,
-    ctx
-  ) => {
-    return createNode(
-      ctx.ranges,
-      'ComputedProperty',
-      start,
+  }))
+);
+
+ChainExpressionBracketMemberParser.setParser(
+  c.apply(
+    c.pipe(squareBracketOpenParser, ExpressionParser, squareBracketCloseParser),
+    ([_bracket, value], _start, end) => ({ type: 'ChainExpressionBracketMember', value, end })
+  )
+);
+
+ChainExpressionFunctionCallParser.setParser(
+  c.apply(
+    c.pipe(parenthesisOpenParser, ArrayItemsParser, parenthesisCloseParser),
+    ([_parenthesis, { items, trailingComma }], _start, end) => ({
+      type: 'ChainExpressionFunctionCall',
+      args: items,
+      trailingComma,
       end,
-      { expression, whitespaceBeforeColon, value, whitespaceAfterColon },
-      {}
-    );
-  }
+    })
+  )
 );
 
-const objectItemParser = Combinator.apply(
-  Combinator.pipe(
-    'ObjectItem',
-    maybeWhitespaceParser,
-    Combinator.oneOf('ObjectItemInner', propertyParser, propertyShorthandParser, spreadParser, computedPropertyParser),
-    maybeWhitespaceParser
-  ),
-  ([whitespaceBefore, item, whitespaceAfter], start, end, ctx) => {
-    return ctx.createNode('ObjectItem', start, end, { whitespaceBefore, item, whitespaceAfter }, {});
-  }
+ChainExpressionItemParser.setParser(
+  c.oneOf(ChainExpressionDotMemberParser, ChainExpressionBracketMemberParser, ChainExpressionFunctionCallParser)
 );
 
-const objectParser = Combinator.apply(
-  Combinator.pipe(
-    'Object',
-    curlyBracketOpenParser,
-    Combinator.manySepBy('ObjectInner', objectItemParser, commaParser, true),
-    curlyBracketCloseParser
-  ),
-  ([_open, { items, trailing }, _close], start, end, ctx) => {
-    return ctx.createNode('Object', start, end, { items }, { trailingComma: trailing });
-  }
-);
+ChainExpressionBaseParser.setParser(c.oneOf(nodeParser('Identifier'), nodeParser('Parenthesis')));
 
-const elementTypeMemberParser: Parser<Node<'ElementTypeMember'>, Ctx> = Combinator.reduceRight(
-  'ElementTypeMember',
-  identifierParser,
-  Combinator.pipe('ElementTypeMemberInner', dotParser, identifierParser),
-  (left, right, ctx): ParseResult<Node<'ElementTypeMember'>> => {
-    const [, identifier] = right.value;
-    const start = left.start;
-    const end = right.end;
-
-    return ParseSuccess(
-      start,
-      right.rest,
-      ctx.createNode('ElementTypeMember', start, end, { target: left.value, property: identifier }, {})
-    );
-  }
-);
-
-const componentTypeParser = Combinator.oneOf('ComponentType', elementTypeMemberParser, identifierParser);
-
-const primitiveParser = Combinator.oneOf(
-  'Primitive',
-  numberParser,
-  booleanParser,
-  nullParser,
-  undefinedParser,
-  stringParser
-);
-
-const propNoValue = Combinator.apply(identifierParser, (name, start, end, ctx) => {
-  return ctx.createNode('PropNoValue', start, end, { name }, {});
-});
-
-const propValue = Combinator.apply(
-  Combinator.pipe('PropValue', identifierParser, equalParser, expressionParser),
-  ([name, _equal, value], start, end, ctx) => {
-    return ctx.createNode('PropValue', start, end, { name, value }, {});
-  }
-);
-
-const propBlockCommentParser = Combinator.apply(
-  Combinator.pipe(
-    'PropBlockComment',
-    blockCommentStartParser,
-    Combinator.maybe(Combinator.whileNotMatch('NotBlockCommentEnd', ['*/'])),
-    blockCommentEndParser
-  ),
-  ([_start, content], start, end, ctx) => {
-    return ctx.createNode('PropBlockComment', start, end, {}, { content: content || '' });
-  }
-);
-
-const propLineCommentParser = Combinator.apply(
-  Combinator.pipe(
-    'PropLineComment',
-    doubleSlashParser,
-    Combinator.maybe(Combinator.regexp(/^[^\n]+/g)),
-    Combinator.oneOf('PropLineCommentEnd', eofParser, newLineParser)
-  ),
-  ([_start, content], start, end, ctx) => {
-    return ctx.createNode('PropLineComment', start, end, {}, { content: content || '' });
-  }
-);
-
-const propParser = Combinator.oneOf('Prop', propValue, propNoValue, propBlockCommentParser, propLineCommentParser);
-
-const propItemParser = Combinator.apply(
-  Combinator.pipe('PropItem', whitespaceParser, propParser),
-  ([whitespace, item], start, end, ctx) => {
-    return ctx.createNode('PropItem', start, end, { item, whitespaceBefore: whitespace }, {});
-  }
-);
-
-const propsParser = Combinator.apply(
-  Combinator.pipe('Props', Combinator.many('PropsInner', propItemParser), Combinator.maybe(whitespaceParser)),
-  ([items, whitespaceAfter], start, end, ctx) => {
-    return ctx.createNode('Props', start, end, { items, whitespaceAfter }, {});
-  }
-);
-
-const elementSelfClosingParser = Combinator.apply(
-  Combinator.pipe(
-    'SelfClosingElement',
-    elementTokenOpenParser,
-    componentTypeParser,
-    propsParser,
-    elementTokenCloseParser
-  ),
-  ([_tagOpen, component, props], start, end, ctx) => {
-    return ctx.createNode('SelfClosingElement', start, end, { component, props }, { namedCloseTag: false });
-  }
-);
-
-const textParser = Combinator.apply(
-  Combinator.whileNotMatch<Ctx>('Text', [' ', '\n', '\t', '\r', '|>', '<', '//']),
-  (content, start, end, ctx) => ctx.createNode('Text', start, end, {}, { content })
-);
-
-const rawTextParser = Combinator.apply(
-  Combinator.oneOf(
-    'RawText',
-    Combinator.whileNotMatch<Ctx>('RawTextInner', ['#>', '<']),
-    Combinator.singleChar<Ctx>('RawTextInner')
-  ),
-  (content, start, end, ctx) => {
-    return ctx.createNode('Text', start, end, {}, { content });
-  }
-);
-
-const elementOpeningTagParser = Combinator.pipe(
-  'ElementOpeningTag',
-  elementTokenOpenParser,
-  componentTypeParser,
-  propsParser,
-  greaterThanParser
-);
-
-const elementClosingTagParser = Combinator.pipe(
-  'ElementClosingTag',
-  lessThanParser,
-  componentTypeParser,
-  elementTokenCloseParser
-);
-
-const elementClosingParser = Combinator.oneOf('ElementClosing', elementTokenCloseParser, elementClosingTagParser);
-
-const elementParser = Combinator.transform(
-  Combinator.manyBetween('Element', elementOpeningTagParser, childParser, elementClosingParser),
-  (result, ctx) => {
-    if (result.type === 'Failure') {
-      return result;
-    }
-
-    const [open, children, close] = result.value;
-    const [, componentType, props] = open;
-    const closeComponentType = typeof close === 'string' ? componentType : close[1];
-    if (!sameComponent(componentType, closeComponentType)) {
-      const closeRange = ctx.ranges.get(closeComponentType);
-      return ParseFailure(closeRange?.end ?? 0, 'Element', `Invalid close tag: wrong component`);
-    }
-    const node = createNode(
-      ctx.ranges,
-      'Element',
-      result.start,
-      result.end,
-      {
-        children: normalizeChildren(children, true, ctx.ranges),
-        component: componentType,
-        props,
-      },
-      {
-        namedCloseTag: typeof close !== 'string',
-      }
-    );
-    return {
-      ...result,
-      value: node,
-    };
-  }
-);
-
-const rawElementOpeningTagParser = Combinator.pipe(
-  'RawElementOpeningTag',
-  rawElementTokenOpenParser,
-  componentTypeParser,
-  propsParser,
-  greaterThanParser
-);
-
-const rawElementClosingTagParser = Combinator.pipe(
-  'RawElementClosingTag',
-  lessThanParser,
-  componentTypeParser,
-  rawElementTokenCloseParser
-);
-
-const rawElementClosingParser = Combinator.oneOf(
-  'RawElementClosing',
-  rawElementTokenCloseParser,
-  rawElementClosingTagParser
-);
-
-const rawElementParser = Combinator.transform(
-  Combinator.manyBetween('RawElement', rawElementOpeningTagParser, rawChildParser, rawElementClosingParser),
-  (result, ctx) => {
-    if (result.type === 'Failure') {
-      return result;
-    }
-
-    const [open, children, close] = result.value;
-    const [, componentType, props] = open;
-    const closeComponentType = typeof close === 'string' ? componentType : close[1];
-
-    if (!sameComponent(componentType, closeComponentType)) {
-      const closeRange = ctx.ranges.get(closeComponentType);
-      return ParseFailure(closeRange?.end ?? 0, 'Element', `Invalid close tag: wrong component`);
-    }
-
-    const childrenFlat: Array<Child> = [];
-    children.forEach((child) => {
-      if (Array.isArray(child)) {
-        childrenFlat.push(...child);
-      } else {
-        childrenFlat.push(child);
-      }
-    });
-
-    const node = createNode(
-      ctx.ranges,
-      'RawElement',
-      result.start,
-      result.end,
-      {
-        children: normalizeChildren(childrenFlat, false, ctx.ranges),
-        component: componentType,
-        props,
-      },
-      {
-        namedCloseTag: typeof close !== 'string',
-      }
-    );
-    return {
-      ...result,
-      value: node,
-    };
-  }
-);
-
-const fragmentParser = Combinator.apply(
-  Combinator.manyBetween('Fragment', fragmentTokenParser, childParser, fragmentTokenParser),
-  ([_open, children], start, end, ctx) => {
-    return createNode(ctx.ranges, 'Fragment', start, end, normalizeChildren(children, true, ctx.ranges), {});
-  }
-);
-
-const rawFragmentParser = Combinator.apply(
-  Combinator.manyBetween('RawFragment', rawFragmentTokenParser, rawTextParser, rawFragmentTokenParser),
-  ([_open, children], start, end, ctx) => {
-    return createNode(ctx.ranges, 'RawFragment', start, end, normalizeChildren(children, true, ctx.ranges), {});
-  }
-);
-
-const unrawElementParser = Combinator.apply(
-  Combinator.manyBetween('UnrawElement', rawFragmentTokenParser, unrawChildParser, rawFragmentTokenParser),
-  ([_begin, items], _start, _end, ctx) => normalizeChildren(items, true, ctx.ranges)
-);
-
-const injectParser = Combinator.apply(
-  Combinator.pipe(
-    'Inject',
-    curlyBracketOpenParser,
-    maybeWhitespaceParser,
-    expressionParser,
-    maybeWhitespaceParser,
-    curlyBracketCloseParser
-  ),
-  ([_begin, whitespaceBefore, value, whitespaceAfter], start, end, ctx) => {
-    return ctx.createNode('Inject', start, end, { whitespaceBefore, value, whitespaceAfter }, {});
-  }
-);
-
-unrawChildParser.setParser(
-  Combinator.oneOf('UnrawChild', whitespaceParser, anyCommentParser, unrawElementAnyParser, textParser)
-);
-
-rawChildParser.setParser(Combinator.oneOf('RawChild', unrawElementParser, rawTextParser));
-
-const elementAnyParser: Parser<ElementAny, Ctx> = Combinator.oneOf(
-  'ElementAny',
-  fragmentParser,
-  rawFragmentParser,
-  elementSelfClosingParser,
-  elementParser,
-  rawElementParser
-);
-
-// All elements except rawFragment
-unrawElementAnyParser.setParser(
-  Combinator.oneOf('UnrawElementAny', fragmentParser, elementSelfClosingParser, elementParser, rawElementParser)
-);
-
-childParser.setParser(
-  Combinator.oneOf('Child', whitespaceParser, anyCommentParser, elementAnyParser, injectParser, textParser)
-);
-
-type AccessItem =
-  | { type: 'DotMember'; indentifier: Node<'Identifier'>; end: number }
-  | { type: 'BracketMember'; value: Expression; end: number }
-  | {
-      type: 'FunctionCall';
-      args: Array<Node<'ArrayItem'>>;
-      trailingComma: boolean;
-      end: number;
-    };
-
-const dotMemberParser = Combinator.apply(
-  Combinator.pipe('DotMember', dotParser, identifierParser),
-  ([_dot, indentifier], _start, end): AccessItem => ({ type: 'DotMember', indentifier, end })
-);
-
-const bracketMemberParser = Combinator.apply(
-  Combinator.pipe('BracketMember', squareBracketOpenParser, expressionParser, squareBracketCloseParser),
-  ([_bracket, value], _start, end): AccessItem => ({ type: 'BracketMember', value, end })
-);
-
-const functionCallParser = Combinator.apply(
-  Combinator.pipe('FunctionCall', parenthesisOpenParser, arrayItemsParser, parenthesisCloseParser),
-  ([_parenthesis, { items, trailing }], _start, end): AccessItem => ({
-    type: 'FunctionCall',
-    args: items,
-    trailingComma: trailing,
-    end,
-  })
-);
-
-const accessItemParser = Combinator.oneOf('AccessItem', dotMemberParser, bracketMemberParser, functionCallParser);
-
-const accessParser = Combinator.reduceRight(
-  'Access',
-  dottableExpressionParser,
-  accessItemParser,
-  (left: ParseResultSuccess<DottableExpression>, right, ctx): ParseResult<DottableExpression> => {
-    const start = left.start;
-    const end = right.end;
-    const item = right.value;
-    const target = left.value;
-    if (item.type === 'DotMember') {
-      return ParseSuccess(
-        start,
-        right.rest,
-        ctx.createNode('DotMember', start, end, { target, property: item.indentifier }, {})
-      );
-    }
-    if (item.type === 'BracketMember') {
-      return ParseSuccess(
-        start,
-        right.rest,
-        ctx.createNode('BracketMember', start, end, { target, property: item.value }, {})
-      );
-    }
-    if (item.type === 'FunctionCall') {
-      if (NodeIs.CallableExpression(target)) {
+ChainExpressionParser.setParser(
+  c.reduceRight(
+    ChainExpressionBaseParser,
+    ChainExpressionItemParser,
+    (left, right, _path, ctx): ParseResult<ChainExpression> => {
+      const start = left.start;
+      const end = right.end;
+      const item = right.value;
+      const target = left.value;
+      if (item.type === 'ChainExpressionDotMember') {
         return ParseSuccess(
           start,
           right.rest,
-          createNode(
-            ctx.ranges,
+          ctx.createNode('DotMember', start, end, { target, property: item.indentifier }, {})
+        );
+      }
+      if (item.type === 'ChainExpressionBracketMember') {
+        return ParseSuccess(
+          start,
+          right.rest,
+          ctx.createNode('BracketMember', start, end, { target, property: item.value }, {})
+        );
+      }
+      if (item.type === 'ChainExpressionFunctionCall') {
+        return ParseSuccess(
+          start,
+          right.rest,
+          ctx.createNode(
             'FunctionCall',
             start,
             end,
@@ -707,67 +313,361 @@ const accessParser = Combinator.reduceRight(
           )
         );
       }
-      return ParseFailure(item.end, 'Access', `FunctionCall target id not a callable`);
+      throw new DocsyError.UnexpectedError(`Access on invalid type`);
     }
-    throw new DocsyError.UnexpectedError(`Access on invalid type`);
-  }
+  )
 );
 
-const callableExpressionParser = Combinator.oneOf(
-  'CallableExpression',
-  accessParser,
-  identifierParser,
-  parenthesisParser
+ExpressionParser.setParser(
+  c.oneOf(PrimitiveParser, ObjectOrArrayParser, ChainExpressionBaseParser, ChainExpressionParser, ObjectOrArrayParser)
 );
 
-const arrayOrObjectParser = Combinator.oneOf(
-  'ArrayOrObject',
-  emptyArrayParser,
-  arrayParser,
-  emptyObjectParser,
-  objectParser
+AnyCommentParser.setParser(c.oneOf(nodeParser('LineComment'), nodeParser('BlockComment')));
+
+nodeParser('ExpressionDocument').setParser(
+  c.apply(
+    c.pipe(c.many(WhitespaceOrCommentParser), ExpressionParser, c.many(WhitespaceOrCommentParser)),
+    ([before, value, after]) => nodeData({ before, value, after }, {})
+  )
 );
 
-expressionParser.setParser(
-  Combinator.oneOf('Expression', primitiveParser, callableExpressionParser, arrayOrObjectParser, elementAnyParser)
+nodeParser('Document').setParser(
+  c.apply(c.pipe(c.many(ChildParser), eofParser), ([children], _start, _end, ctx) => {
+    return nodeData(normalizeChildren(children, ctx.ranges), {});
+  })
 );
 
-dottableExpressionParser.setParser(
-  Combinator.oneOf('DottableExpression', arrayOrObjectParser, elementAnyParser, callableExpressionParser, stringParser)
+nodeParser('Whitespace').setParser(
+  c.apply(whitespaceParser, (content) => {
+    const hasNewLine = content.indexOf('\n') >= 0;
+    return nodeData({}, { content, hasNewLine });
+  })
 );
 
-anyCommentParser.setParser(Combinator.oneOf('AnyComment', lineCommentParser, blockCommentParser));
+nodeParser('Identifier').setParser(c.apply(identifierParser, (name) => nodeData({}, { name })));
 
-const documentParser = Combinator.apply(
-  Combinator.pipe('Document', Combinator.many('DocumentChildren', childParser), eofParser),
-  ([children], start, end, ctx) => {
-    return ctx.createNode('Document', start, end, normalizeChildren(children, true, ctx.ranges), {});
-  }
+nodeParser('Num').setParser(
+  c.apply(numberParser, (rawValue) => nodeData({}, { value: parseFloat(rawValue), rawValue }))
 );
 
-const whitespaceOrCommentParser = Combinator.oneOf('WhitespaceOrComment', whitespaceParser, anyCommentParser);
-
-const expressionDocumentParser = Combinator.apply(
-  Combinator.pipe(
-    'ExpressionDocument',
-    Combinator.many('WhitespaceOrComments', whitespaceOrCommentParser),
-    expressionParser,
-    Combinator.many('WhitespaceOrComments', whitespaceOrCommentParser)
-  ),
-  ([before, value, after], start, end, ctx) =>
-    createNode(
-      ctx.ranges,
-      'ExpressionDocument',
-      start,
-      end,
-      {
-        before,
-        value,
-        after,
-      },
-      {}
-    )
+nodeParser('Bool').setParser(
+  c.apply(c.oneOf(createExact('true'), createExact('false')), (val) =>
+    nodeData({}, { value: val === 'true' ? true : false })
+  )
 );
+
+nodeParser('Null').setParser(c.apply(createExact('null'), () => nodeData({}, {})));
+
+nodeParser('Undefined').setParser(c.apply(createExact('undefined'), () => nodeData({}, {})));
+
+nodeParser('Str').setParser(
+  c.apply(
+    c.oneOf(
+      c.pipe(singleQuoteParser, c.maybe(singleQuoteStringContentParser), singleQuoteParser),
+      c.pipe(doubleQuoteParser, c.maybe(doubleQuoteStringContentParser), doubleQuoteParser),
+      c.pipe(backtickParser, c.maybe(backtickStringContentParser), backtickParser)
+    ),
+    ([rawQuote, content]) => {
+      const quote: QuoteType = rawQuote === SINGLE_QUOTE ? 'Single' : rawQuote === DOUBLE_QUOTE ? 'Double' : 'Backtick';
+      return nodeData({}, { value: content ?? '', quote });
+    }
+  )
+);
+
+nodeParser('EmptyArray').setParser(
+  c.apply(
+    c.pipe(squareBracketOpenParser, MaybeWhitespaceParser, squareBracketCloseParser),
+    ([_open, whitespace, _close]) => nodeData({ whitespace }, {})
+  )
+);
+
+nodeParser('EmptyObject').setParser(
+  c.apply(
+    c.pipe(curlyBracketOpenParser, MaybeWhitespaceParser, curlyBracketCloseParser),
+    ([_open, whitespace, _close]) => nodeData({ whitespace }, {})
+  )
+);
+
+nodeParser('Parenthesis').setParser(
+  c.apply(c.pipe(parenthesisOpenParser, ExpressionParser, parenthesisCloseParser), ([_open, value, _close]) =>
+    nodeData({ value }, {})
+  )
+);
+
+nodeParser('Spread').setParser(
+  c.apply(c.pipe(spreadOperatorParser, ExpressionParser), ([_op, target]) => nodeData({ target }, {}))
+);
+
+nodeParser('ArrayItem').setParser(
+  c.apply(
+    c.pipe(MaybeWhitespaceParser, c.oneOf(nodeParser('Spread'), ExpressionParser), MaybeWhitespaceParser),
+    ([whitespaceBefore, item, whitespaceAfter]) => nodeData({ whitespaceBefore, item, whitespaceAfter }, {})
+  )
+);
+
+nodeParser('Array').setParser(
+  c.apply(
+    c.pipe(squareBracketOpenParser, ArrayItemsParser, c.maybe(commaParser), squareBracketCloseParser),
+    ([_open, { items, trailingComma }, _close]) => nodeData({ items }, { trailingComma })
+  )
+);
+
+nodeParser('LineComment').setParser(
+  c.apply(
+    c.pipe(doubleSlashParser, c.maybe(lineCommentContentParser), c.oneOf(eofParser, newLineParser)),
+    ([_start, content]) => nodeData({}, { content: content || '' })
+  )
+);
+
+nodeParser('BlockComment').setParser(
+  c.apply(
+    c.pipe(blockCommentStartParser, c.maybe(blockCommentContentParser), blockCommentEndParser),
+    ([_start, content]) => nodeData({}, { content: content || '' })
+  )
+);
+
+nodeParser('PropertyShorthand').setParser(c.apply(nodeParser('Identifier'), (name) => nodeData({ name }, {})));
+
+nodeParser('Property').setParser(
+  c.apply(
+    c.pipe(
+      c.oneOf(nodeParser('Identifier'), nodeParser('Str')),
+      MaybeWhitespaceParser,
+      colonParser,
+      MaybeWhitespaceParser,
+      ExpressionParser
+    ),
+    ([name, whitespaceBeforeColon, _colon, whitespaceAfterColon, value]) =>
+      nodeData({ name, value, whitespaceAfterColon, whitespaceBeforeColon }, {})
+  )
+);
+
+nodeParser('ComputedProperty').setParser(
+  c.apply(
+    c.pipe(
+      squareBracketOpenParser,
+      ExpressionParser,
+      squareBracketCloseParser,
+      MaybeWhitespaceParser,
+      colonParser,
+      MaybeWhitespaceParser,
+      ExpressionParser
+    ),
+    ([_openBracket, expression, _closeBracket, whitespaceBeforeColon, _colon, whitespaceAfterColon, value]) => {
+      return nodeData({ expression, whitespaceBeforeColon, value, whitespaceAfterColon }, {});
+    }
+  )
+);
+
+nodeParser('ObjectItem').setParser(
+  c.apply(
+    c.pipe(
+      MaybeWhitespaceParser,
+      c.oneOf(
+        nodeParser('Property'),
+        nodeParser('PropertyShorthand'),
+        nodeParser('Spread'),
+        nodeParser('ComputedProperty')
+      ),
+      MaybeWhitespaceParser
+    ),
+    ([whitespaceBefore, item, whitespaceAfter]) => nodeData({ whitespaceBefore, item, whitespaceAfter }, {})
+  )
+);
+
+nodeParser('Object').setParser(
+  c.apply(
+    c.pipe(
+      curlyBracketOpenParser,
+      c.manySepBy(nodeParser('ObjectItem'), commaParser, { allowTrailing: true }),
+      curlyBracketCloseParser
+    ),
+    ([_open, items, _close]) => {
+      return nodeData(
+        { items: flattenManySepBy(items) },
+        { trailingComma: items === null ? false : Boolean(items.trailing) }
+      );
+    }
+  )
+);
+
+nodeParser('ElementTypeMember').setNodeParser(
+  c.reduceRight(
+    nodeParser('Identifier'),
+    c.pipe(dotParser, nodeParser('Identifier')),
+    (left, right, _path, ctx): ParseResult<Node<'ElementTypeMember'>> => {
+      const [, identifier] = right.value;
+      const start = left.start;
+      const end = right.end;
+
+      return ParseSuccess(
+        start,
+        right.rest,
+        ctx.createNode('ElementTypeMember', start, end, { target: left.value, property: identifier }, {})
+      );
+    }
+  )
+);
+
+nodeParser('PropNoValue').setParser(c.apply(nodeParser('Identifier'), (name) => nodeData({ name }, {})));
+
+nodeParser('PropValue').setParser(
+  c.apply(c.pipe(nodeParser('Identifier'), equalParser, ExpressionParser), ([name, _equal, value]) =>
+    nodeData({ name, value }, {})
+  )
+);
+
+nodeParser('PropBlockComment').setParser(
+  c.apply(
+    c.pipe(blockCommentStartParser, c.maybe(blockCommentContentParser), blockCommentEndParser),
+    ([_start, content]) => nodeData({}, { content: content || '' })
+  )
+);
+
+nodeParser('PropLineComment').setParser(
+  c.apply(
+    c.pipe(doubleSlashParser, c.maybe(lineCommentContentParser), c.oneOf(eofParser, newLineParser)),
+    ([_start, content]) => nodeData({}, { content: content || '' })
+  )
+);
+
+nodeParser('PropItem').setParser(
+  c.apply(c.pipe(nodeParser('Whitespace'), PropParser), ([whitespace, item]) =>
+    nodeData({ item, whitespaceBefore: whitespace }, {})
+  )
+);
+
+nodeParser('Props').setParser(
+  c.apply(c.pipe(c.many(nodeParser('PropItem')), MaybeWhitespaceParser), ([items, whitespaceAfter]) =>
+    nodeData({ items, whitespaceAfter }, {})
+  )
+);
+
+nodeParser('SelfClosingElement').setParser(
+  c.apply(
+    c.pipe(elementTokenOpenParser, ComponentTypeParser, nodeParser('Props'), elementTokenCloseParser),
+    ([_tagOpen, component, props]) => {
+      return nodeData({ component, props }, { namedCloseTag: false });
+    }
+  )
+);
+
+nodeParser('Text').setParser(c.apply(textContentParser, (content) => nodeData({}, { content })));
+
+nodeParser('RawText').setParser(c.apply(rawTextContentParser, (content) => nodeData({}, { content })));
+
+nodeParser('Element').setNodeParser(
+  c.transform(
+    c.manyBetween(
+      c.pipe(elementTokenOpenParser, ComponentTypeParser, nodeParser('Props'), greaterThanParser),
+      ChildParser,
+      c.oneOf(elementTokenCloseParser, c.pipe(lessThanParser, ComponentTypeParser, elementTokenCloseParser))
+    ),
+    (result, path, ctx) => {
+      if (result.type === 'Failure') {
+        return result;
+      }
+      const [open, children, close] = result.value;
+      const [, componentType, props] = open;
+      const closeComponentType = typeof close === 'string' ? componentType : close[1];
+      if (!sameComponent(componentType, closeComponentType)) {
+        const closeRange = ctx.ranges.get(closeComponentType);
+        return ParseFailure(closeRange?.end ?? 0, path, `Invalid close tag: wrong component`);
+      }
+      const node = createNode(
+        ctx.ranges,
+        'Element',
+        result.start,
+        result.end,
+        { children: normalizeChildren(children, ctx.ranges), component: componentType, props },
+        { namedCloseTag: typeof close !== 'string' }
+      );
+      return {
+        ...result,
+        value: node,
+      };
+    }
+  )
+);
+
+nodeParser('RawElement').setNodeParser(
+  c.transform(
+    c.manyBetween(
+      c.pipe(rawElementTokenOpenParser, ComponentTypeParser, nodeParser('Props'), greaterThanParser),
+      RawChildParser,
+      c.oneOf(rawElementTokenCloseParser, c.pipe(lessThanParser, ComponentTypeParser, rawElementTokenCloseParser))
+    ),
+    (result, path, ctx) => {
+      if (result.type === 'Failure') {
+        return result;
+      }
+
+      const [open, children, close] = result.value;
+      const [, componentType, props] = open;
+      const closeComponentType = typeof close === 'string' ? componentType : close[1];
+
+      if (!sameComponent(componentType, closeComponentType)) {
+        const closeRange = ctx.ranges.get(closeComponentType);
+        return ParseFailure(closeRange?.end ?? 0, path, `Invalid close tag: wrong component`);
+      }
+
+      const node = createNode(
+        ctx.ranges,
+        'RawElement',
+        result.start,
+        result.end,
+        { children: normalizeRawChildren(children.flat(), ctx.ranges), component: componentType, props },
+        { namedCloseTag: typeof close !== 'string' }
+      );
+      return {
+        ...result,
+        value: node,
+      };
+    }
+  )
+);
+
+nodeParser('Fragment').setParser(
+  c.apply(
+    c.manyBetween(fragmentTokenParser, ChildParser, fragmentTokenParser),
+    ([_open, children], _start, _end, ctx) => {
+      return nodeData(normalizeChildren(children, ctx.ranges), {});
+    }
+  )
+);
+
+nodeParser('RawFragment').setParser(
+  c.apply(
+    c.manyBetween(rawFragmentTokenParser, RawChildParser, rawFragmentTokenParser),
+    ([_open, children], _start, _end, ctx) => {
+      return nodeData(normalizeRawChildren(children.flat(), ctx.ranges), {});
+    }
+  )
+);
+
+nodeParser('UnrawFragment').setParser(
+  c.apply(
+    c.manyBetween(rawFragmentTokenParser, UnrawChildParser, rawFragmentTokenParser),
+    ([_begin, items], _start, _end, ctx) => nodeData(normalizeChildren(items, ctx.ranges), {})
+  )
+);
+
+nodeParser('Inject').setParser(
+  c.apply(
+    c.pipe(
+      curlyBracketOpenParser,
+      MaybeWhitespaceParser,
+      ExpressionParser,
+      MaybeWhitespaceParser,
+      curlyBracketCloseParser
+    ),
+    ([_begin, whitespaceBefore, value, whitespaceAfter]) => {
+      return nodeData({ whitespaceBefore, value, whitespaceAfter }, {});
+    }
+  )
+);
+
+// Utils
 
 function sameComponent(left: ComponentType, right: ComponentType): boolean {
   if (left.kind !== right.kind) {
@@ -785,7 +685,40 @@ function sameComponent(left: ComponentType, right: ComponentType): boolean {
   return false;
 }
 
-function normalizeChildren(nodes: Array<Child>, mergeWhitespaces: boolean, ranges: Ranges): Array<Child> {
+function normalizeRawChildren(nodes: Array<RawChild>, ranges: Ranges): Array<RawChild> {
+  const result: Array<RawChild> = [];
+  nodes.forEach((child, i) => {
+    if (i === 0) {
+      result.push(child);
+      return;
+    }
+    const last = result[result.length - 1];
+    const lastRange = notNil(ranges.get(last));
+    const childRange = notNil(ranges.get(child));
+    // text + text => text
+    if (NodeIs.RawText(last) && NodeIs.RawText(child)) {
+      // Collapse text
+      result.pop();
+      ranges.delete(child);
+      ranges.delete(last);
+      result.push(
+        createNode(
+          ranges,
+          'RawText',
+          lastRange.start,
+          childRange.end,
+          {},
+          { content: last.meta.content + child.meta.content }
+        )
+      );
+      return;
+    }
+    result.push(child);
+  });
+  return result;
+}
+
+function normalizeChildren(nodes: Array<Child>, ranges: Ranges): Array<Child> {
   const result: Array<Child> = [];
   nodes.forEach((child, i) => {
     if (i === 0) {
@@ -804,9 +737,9 @@ function normalizeChildren(nodes: Array<Child>, mergeWhitespaces: boolean, range
       // text + text => text
       (NodeIs.Text(last) && NodeIs.Text(child)) ||
       // whitespace + text => text
-      (mergeWhitespaces && NodeIs.Whitespace(last) && NodeIs.Text(child)) ||
+      (NodeIs.Whitespace(last) && NodeIs.Text(child)) ||
       // text + whitespace => text
-      (mergeWhitespaces && NodeIs.Text(last) && NodeIs.Whitespace(child))
+      (NodeIs.Text(last) && NodeIs.Whitespace(child))
     ) {
       // Collapse textNode
       result.pop();
@@ -846,4 +779,40 @@ function notNil<T>(val: T | null | undefined, errorMessage?: string): T {
     throw new DocsyError.UnexpectedError(errorMessage || `Unexpected nil value`);
   }
   return val;
+}
+
+function flattenManySepBy<T, Sep>(result: ManySepByResult<T, Sep>): Array<T> {
+  if (result === null) {
+    return [];
+  }
+  const { head, tail } = result;
+  return [head, ...tail.map((v) => v.item)];
+}
+
+function nodeData<Children extends NodeChildrenBase, Meta extends NodeMetaBase>(
+  children: Children,
+  meta: Meta
+): CreateNodeData<Children, Meta> {
+  return { children, meta };
+}
+
+function nodeParser<K extends NodeKind>(kind: K): NodeRule<K> {
+  if (NodeParserInternal[kind] === undefined) {
+    const innerRule = c.rule<NodeData<K>, Ctx>(kind);
+    const rule = {
+      ...innerRule,
+      setParser: (parser: any) => {
+        return innerRule.setParser(
+          c.apply(parser, (data: NodeBase, start, end, ctx) =>
+            ctx.createNode(kind as any, start, end, data.children, data.meta)
+          )
+        );
+      },
+      setNodeParser: (parser: any) => {
+        return innerRule.setParser(parser);
+      },
+    } as NodeRule<K>;
+    NodeParserInternal[kind] = rule as any;
+  }
+  return NodeParserInternal[kind] as any;
 }

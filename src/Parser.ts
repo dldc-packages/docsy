@@ -4,13 +4,13 @@ import { DocsyError } from './DocsyError';
 
 export function ParseFailure(
   pos: number,
-  name: string,
+  path: Array<String>,
   message: string,
   child: ParseResultFailure | null = null
 ): ParseResultFailure {
   return {
     type: 'Failure',
-    name,
+    name: path.join('.'),
     message,
     pos,
     child,
@@ -33,6 +33,9 @@ export function ParseSuccess<T>(
   };
 }
 
+/**
+ * Keep track of which was the longest result
+ */
 class ResultTrackerImpl<T> implements ResultTracker<T> {
   private selectedError: { error: ParseResultFailure; pos: number } | null = null;
   private selectedResult: ParseResultSuccess<T> | null = null;
@@ -74,7 +77,7 @@ class ResultTrackerImpl<T> implements ResultTracker<T> {
 }
 
 export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
-  return parser.parse(input, [], ctx);
+  return parser.parse([], input, [], ctx);
 }
 
 export function expectEOF<T>(result: ParseResult<T>): ParseResult<T> {

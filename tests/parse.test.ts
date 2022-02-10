@@ -1,8 +1,59 @@
 import { DocsyParser, DocsyError } from '../src/mod';
 import { readFile } from './utils';
-// @ts-expect-error unused but fine
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore unused but fine
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { logNode } from './utils';
+import { debugNode } from './utils';
+
+test(`Parse ExpressionDocument`, () => {
+  const file = '42';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.kind).toBe('ExpressionDocument');
+  expect(result.children.value.kind).toBe('Num');
+  expect(result.children.value.meta.value).toBe(42);
+});
+
+test(`Parse ExpressionDocument with whitespace`, () => {
+  const file = '   42   ';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.kind).toBe('ExpressionDocument');
+  expect(result.children.value.kind).toBe('Num');
+  expect(result.children.value.meta.value).toBe(42);
+  expect(result.children.before.length).toBe(1);
+  expect(result.children.after.length).toBe(1);
+});
+
+test(`Parse ExpressionDocument with comment`, () => {
+  const file = '// some comment\n42';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.kind).toBe('ExpressionDocument');
+  expect(result.children.value.kind).toBe('Num');
+  expect(result.children.value.meta.value).toBe(42);
+  expect(result.children.before.length).toBe(1);
+  expect(result.children.after.length).toBe(0);
+});
+
+test(`Parse ExpressionDocument object`, () => {
+  const file = '{ foo: true, bar: 34 }';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.kind).toBe('ExpressionDocument');
+  expect(result.children.value.kind).toBe('Object');
+});
+
+test(`Parse ExpressionDocument with many before and after`, () => {
+  const file = '// some comment\n/* Block comment */42  \n  ';
+  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
+  const result = DocsyParser.parseExpression(file).expression as any;
+  expect(result.kind).toBe('ExpressionDocument');
+  expect(result.children.value.kind).toBe('Num');
+  expect(result.children.value.meta.value).toBe(42);
+  expect(result.children.before.length).toBe(2);
+  expect(result.children.after.length).toBe(1);
+});
 
 test(`Parse a document with text`, () => {
   const file = `Hello`;
@@ -273,7 +324,7 @@ test(`Throw when you close the wrong tag`, () => {
 test(`Throw when you invalid tag`, () => {
   const file = `<|Demo>Something<Demo`;
   expect(() => DocsyParser.parseDocument(file)).toThrow(DocsyError.ParsingError);
-  expect(() => DocsyParser.parseDocument(file)).toThrow('"|>" did not match');
+  expect(() => DocsyParser.parseDocument(file)).toThrow('21 EOF reached');
 });
 
 test(`Parse function call`, () => {
@@ -383,9 +434,12 @@ test(`Parse single slash`, () => {
   expect(result.children[0].kind).toBe('Text');
 });
 
-test(`Ending < throw error`, () => {
+test(`Ending < does not throw error`, () => {
   const file = `<|Foo|><`;
-  expect(() => DocsyParser.parseDocument(file)).toThrow();
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.children[0].kind).toBe('SelfClosingElement');
+  expect(result.children[1].kind).toBe('Text');
 });
 
 test(`Parse ending /`, () => {
@@ -418,6 +472,17 @@ test(`Does not parse element in comment`, () => {
   const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children[0].kind).toBe('LineComment');
   expect(result.children[0].meta.content).toBe(' <|Foo|>');
+});
+
+test(`Parse block comment`, () => {
+  const file = [`/*`, `More comments !`, `<|Title bold>Hello world !|>`, '', '*', `*/`].join('\n');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+  const result = DocsyParser.parseDocument(file).document as any;
+  expect(result.children.length).toBe(1);
+  expect(result.children[0].kind).toBe('BlockComment');
+  expect(result.children[0].meta.content).toBe(
+    ['', 'More comments !', '<|Title bold>Hello world !|>', '', '*', ''].join('\n')
+  );
 });
 
 test('Parse more comments', () => {
@@ -484,7 +549,7 @@ test('RawFragment <#>', () => {
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('RawFragment');
   expect(result.children[0].children.length).toEqual(1);
-  expect(result.children[0].children[0].kind).toEqual('Text');
+  expect(result.children[0].children[0].kind).toEqual('RawText');
   expect(result.children[0].children[0].meta.content).toEqual('Foo');
 });
 
@@ -495,7 +560,7 @@ test('Element in Raw Fragment is text', () => {
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('RawFragment');
   expect(result.children[0].children.length).toEqual(1);
-  expect(result.children[0].children[0].kind).toEqual('Text');
+  expect(result.children[0].children[0].kind).toEqual('RawText');
   expect(result.children[0].children[0].meta.content).toEqual(' <|Demo|> ');
 });
 
@@ -506,7 +571,7 @@ test('RawElement', () => {
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('RawElement');
   expect(result.children[0].children.children.length).toEqual(1);
-  expect(result.children[0].children.children[0].kind).toEqual('Text');
+  expect(result.children[0].children.children[0].kind).toEqual('RawText');
   expect(result.children[0].children.children[0].meta.content).toEqual(' Hello ');
 });
 
@@ -517,7 +582,7 @@ test('RawElement name close', () => {
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('RawElement');
   expect(result.children[0].children.children.length).toEqual(1);
-  expect(result.children[0].children.children[0].kind).toEqual('Text');
+  expect(result.children[0].children.children[0].kind).toEqual('RawText');
   expect(result.children[0].children.children[0].meta.content).toEqual(' Hello ');
 });
 
@@ -528,7 +593,7 @@ test('Element in RawElement is text', () => {
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('RawElement');
   expect(result.children[0].children.children.length).toEqual(1);
-  expect(result.children[0].children.children[0].kind).toEqual('Text');
+  expect(result.children[0].children.children[0].kind).toEqual('RawText');
   expect(result.children[0].children.children[0].meta.content).toEqual(' <|Hello|> ');
 });
 
@@ -538,7 +603,7 @@ test(`Parse raw.docsy file`, () => {
   const result = DocsyParser.parseDocument(file).document as any;
   expect(result.children.map((c: any) => c.kind)).toEqual(['RawElement', 'Whitespace']);
   expect(result.children[0].children.children.length).toBe(1);
-  expect(result.children[0].children.children[0].kind).toBe('Text');
+  expect(result.children[0].children.children[0].kind).toBe('RawText');
 });
 
 test(`Whitespace in unraw`, () => {
@@ -549,26 +614,25 @@ test(`Whitespace in unraw`, () => {
 });
 
 test(`Parse raw.docsy file`, () => {
-  const file = readFile('complex-raw');
+  const file = readFile('raw');
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
   const result = DocsyParser.parseDocument(file).document as any;
-  expect(result.children[0].children.children.map((c: any) => c.kind)).toEqual([
-    'Text',
-    'SelfClosingElement',
-    'Text',
+  expect(result.children.map((c: any) => c.kind)).toEqual([
+    'RawFragment',
     'Whitespace',
-    'LineComment',
-    'SelfClosingElement',
+    'RawFragment',
     'Whitespace',
-    'BlockComment',
-    'SelfClosingElement',
+    'RawElement',
     'Whitespace',
-    'Text',
+    'RawElement',
+    'Whitespace',
+    'RawElement',
+    'Whitespace',
   ]);
 });
 
-test(`Parse raw.docsy file`, () => {
-  const file = readFile('raw');
+test(`Parse complex-raw.docsy file`, () => {
+  const file = readFile('complex-raw');
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
   // const result = DocsyParser.parseDocument(file).document as any;
   // logNode(result.children.map((c: any) => c.kind));
@@ -616,57 +680,7 @@ test(`Parse all.docsy file`, () => {
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
 });
 
-test(`Parse ExpressionDocument`, () => {
-  const file = '42';
-  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
-  const result = DocsyParser.parseExpression(file).expression as any;
-  expect(result.kind).toBe('ExpressionDocument');
-  expect(result.children.value.kind).toBe('Num');
-  expect(result.children.value.meta.value).toBe(42);
-});
-
-test(`Parse ExpressionDocument with whitespace`, () => {
-  const file = '   42   ';
-  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
-  const result = DocsyParser.parseExpression(file).expression as any;
-  expect(result.kind).toBe('ExpressionDocument');
-  expect(result.children.value.kind).toBe('Num');
-  expect(result.children.value.meta.value).toBe(42);
-  expect(result.children.before.length).toBe(1);
-  expect(result.children.after.length).toBe(1);
-});
-
-test(`Parse ExpressionDocument with comment`, () => {
-  const file = '// some comment\n42';
-  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
-  const result = DocsyParser.parseExpression(file).expression as any;
-  expect(result.kind).toBe('ExpressionDocument');
-  expect(result.children.value.kind).toBe('Num');
-  expect(result.children.value.meta.value).toBe(42);
-  expect(result.children.before.length).toBe(1);
-  expect(result.children.after.length).toBe(0);
-});
-
-test(`Parse ExpressionDocument with many before and after`, () => {
-  const file = '// some comment\n/* Block comment */42  \n  ';
-  expect(() => DocsyParser.parseExpression(file)).not.toThrow();
-  const result = DocsyParser.parseExpression(file).expression as any;
-  expect(result.kind).toBe('ExpressionDocument');
-  expect(result.children.value.kind).toBe('Num');
-  expect(result.children.value.meta.value).toBe(42);
-  expect(result.children.before.length).toBe(2);
-  expect(result.children.after.length).toBe(1);
-});
-
 test(`Parse long.docsy file`, () => {
   const file = readFile('long');
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
 });
-
-// test(`Parse long.docsy file time`, async () => {
-//   const file = readFile('long');
-//   const start = Date.now();
-//   DocsyParser.parseDocument(file);
-//   const time = Date.now() - start;
-//   expect(time).toBeLessThan(200);
-// });
