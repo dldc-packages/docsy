@@ -1,21 +1,9 @@
-import { Node, NodeIs, Child, ObjectPart, Prop } from './Ast.ts';
+import { Node, NodeIs, Child, ObjectPart, Prop, RawChild, AnyComment } from './Ast.ts';
 import { DocsyError } from './DocsyError.ts';
 
 const SINGLE_QUOTE = "'";
 const DOUBLE_QUOTE = '"';
 const BACKTICK = '`';
-
-const COMMONT_TYPE = ['LineComment', 'BlockComment'] as const;
-
-const CHILDREN_TYPE = [
-  ...COMMONT_TYPE,
-  'Text',
-  'Element',
-  'SelfClosingElement',
-  'Fragment',
-  'RawFragment',
-  'RawElement',
-] as const;
 
 export const DocsySerializer = {
   serialize,
@@ -29,7 +17,7 @@ function serialize(node: Node): string {
       return '';
     }
     if (NodeIs.Document(item)) {
-      return serializeChildren(item.children, false);
+      return serializeChildren(item.children);
     }
     if (NodeIs.ExpressionDocument(item)) {
       return (
@@ -81,14 +69,14 @@ function serialize(node: Node): string {
     if (NodeIs.ElementTypeMember(item)) {
       return serializeInternal(item.children.target) + '.' + serializeInternal(item.children.property);
     }
-    if (NodeIs.oneOf(item, CHILDREN_TYPE)) {
-      return serializeChild(item, false);
+    if (NodeIs.AnyComment(item)) {
+      return serializeChild(item);
     }
     throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
   }
 
   function serializeElement(elem: Node<'Element'>): string {
-    const childrenStr = serializeChildren(elem.children.children, false);
+    const childrenStr = serializeChildren(elem.children.children);
     return [
       `<|`,
       serializeInternal(elem.children.component),
@@ -100,7 +88,7 @@ function serialize(node: Node): string {
   }
 
   function serializeRawElement(elem: Node<'RawElement'>): string {
-    const childrenStr = serializeChildren(elem.children.children, true);
+    const childrenStr = serializeRawChildren(elem.children.children);
     return [
       `<#`,
       serializeInternal(elem.children.component),
@@ -168,45 +156,31 @@ function serialize(node: Node): string {
     throw new DocsyError.UnexpectedError(`Invalid Qutote type on Str`);
   }
 
-  function serializeChildren(items: null | Array<Child>, isInRaw: boolean): string {
+  function serializeRawChildren(items: null | Array<RawChild>): string {
     if (!items || items.length === 0) {
       return '';
     }
-    if (isInRaw) {
-      return serializeChildrenInRaw(items);
+    return items.map((item) => serializeRawChild(item)).join('');
+  }
+
+  function serializeChildren(items: null | Array<Child>): string {
+    if (!items || items.length === 0) {
+      return '';
     }
-    return items.map((sub) => serializeChild(sub, isInRaw)).join('');
+    return items.map((sub) => serializeChild(sub)).join('');
   }
 
-  function serializeChildrenInRaw(items: Array<Child>): string {
-    const groups: Array<Array<Child>> = [];
-    items.forEach((item) => {
-      if (groups.length === 0) {
-        groups.push([item]);
-        return;
-      }
-      const lastGroup = groups[groups.length - 1];
-      const lastItem = lastGroup[lastGroup.length - 1];
-      const isText = NodeIs.Text(item);
-      const lastIsText = NodeIs.Text(lastItem);
-      if (isText === lastIsText) {
-        lastGroup.push(item);
-      } else {
-        groups.push([item]);
-      }
-    });
-    return groups
-      .map((group) => {
-        const isText = NodeIs.Text(group[0]);
-        if (isText) {
-          return group.map((item) => serializeChild(item, true)).join('');
-        }
-        return `<#>${group.map((item) => serializeChild(item, true)).join('')}<#>`;
-      })
-      .join('');
+  function serializeRawChild(item: RawChild): string {
+    if (NodeIs.RawText(item)) {
+      return item.meta.content;
+    }
+    if (NodeIs.UnrawFragment(item)) {
+      return `<#>${serializeChildren(item.children)}<#>`;
+    }
+    throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
   }
 
-  function serializeChild(item: Child, isInRaw: boolean): string {
+  function serializeChild(item: Child): string {
     if (NodeIs.Whitespace(item)) {
       return item.meta.content;
     }
@@ -229,24 +203,21 @@ function serialize(node: Node): string {
       return serializeRawElement(item);
     }
     if (NodeIs.Fragment(item)) {
-      if (isInRaw) {
-        return `<#>${serializeChildren(item.children, false)}<#>`;
-      }
-      return `<|>${serializeChildren(item.children, false)}<|>`;
+      return `<|>${serializeChildren(item.children)}<|>`;
     }
     if (NodeIs.RawFragment(item)) {
-      return `<#>${serializeChildren(item.children, false)}<#>`;
+      return `<#>${serializeRawChildren(item.children)}<#>`;
     }
     if (NodeIs.SelfClosingElement(item)) {
       return serializeSelfClosingElement(item);
     }
-    if (NodeIs.oneOf(item, COMMONT_TYPE)) {
+    if (NodeIs.AnyComment(item)) {
       return serializeComment(item);
     }
     throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
   }
 
-  function serializeComment(item: Node<'BlockComment' | 'LineComment'>): string {
+  function serializeComment(item: AnyComment): string {
     if (NodeIs.LineComment(item)) {
       // TODO: should not add \n if eof
       return `//${item.meta.content}\n`;

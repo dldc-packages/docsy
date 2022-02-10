@@ -19,6 +19,7 @@ export class DocsyError extends Error {
   public static CannotResolveNodeError: typeof DocsyCannotResolveNodeError;
   public static MissingJsxFunctionError: typeof DocsyMissingJsxFunctionError;
   public static CannotSerializeNodeError: typeof DocsyCannotSerializeNodeError;
+  public static ParserNotImplemented: typeof ParserNotImplemented;
 }
 
 class DocsyParsingError extends DocsyError {
@@ -89,6 +90,12 @@ class DocsyCannotResolveInjectError extends DocsyError {
   }
 }
 
+class ParserNotImplemented extends DocsyError {
+  constructor(public parserName: string) {
+    super(`Cannot get parser rule "${parserName}": no parser defined !`);
+  }
+}
+
 DocsyError.ParsingError = DocsyParsingError;
 DocsyError.NotEOF = DocsyNotEOF;
 DocsyError.NotImplementedError = DocsyNotImplementedError;
@@ -99,3 +106,4 @@ DocsyError.CannotResolveInjectError = DocsyCannotResolveInjectError;
 DocsyError.CannotResolveNodeError = DocsyCannotResolveNodeError;
 DocsyError.MissingJsxFunctionError = DocsyMissingJsxFunctionError;
 DocsyError.CannotSerializeNodeError = DocsyCannotSerializeNodeError;
+DocsyError.ParserNotImplemented = ParserNotImplemented;

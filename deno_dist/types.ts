@@ -31,8 +31,7 @@ export interface ParseResultSuccess<T> {
 export type ParseResult<T> = ParseResultSuccess<T> | ParseResultFailure;
 
 export type Parser<T, Ctx> = {
-  name: string;
-  parse(input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx): ParseResult<T>;
+  parse(path: Array<string>, input: StringReader, skip: Array<Parser<any, Ctx>>, ctx: Ctx): ParseResult<T>;
 };
 
 export interface Rule<T, Ctx> extends Parser<T, Ctx> {
@@ -49,3 +48,7 @@ export type ResultTracker<T> = {
 };
 
 export type TraversePath = Array<number | string>;
+
+export type Complete<T> = {
+  [P in keyof Required<T>]: Pick<T, P> extends Required<Pick<T, P>> ? T[P] : T[P] | undefined;
+};

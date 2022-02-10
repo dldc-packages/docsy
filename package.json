@@ -27,7 +27,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && tsup src/mod.ts --format esm,cjs --dts && denoify",
+    "build": "rimraf dist deno_dist && tsup src/mod.ts --format esm,cjs --dts && denoify",
     "dev": "tsup src/mod.ts --format esm,cjs --watch",
     "lint": "prettier src --check && eslint src && tsc --noEmit",
     "lint:fix": "prettier src --write && eslint src --fix",
