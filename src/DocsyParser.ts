@@ -146,6 +146,7 @@ const lineCommentContentParser = c.regexp<Ctx>(/^[^\n]+/g);
 const blockCommentContentParser = c.regexp<Ctx>(/^(((?!\*\/))(.|\n))+/g);
 const textContentParser = c.regexp<Ctx>(/^((?!(\|>)|(<[A-Z])|(<\|)|(\/\/)|(\/\*)|\s)(.|\n))+/g); // Not |> | <[A-Z] | <|[A-Z] | // | /* | Whitespace
 const rawTextContentParser = c.regexp<Ctx>(/^((?!((#>)|(<#)|(<[A-Z])))(.|\n))+/g); // Not <[A-Z] | <#>
+const anySingleCharParser = c.regexp<Ctx>(/^./g);
 
 type ArrayItems = { items: Array<Node<'ArrayItem'>>; trailingComma: boolean };
 type ComponentType = Node<'ElementTypeMember' | 'Identifier'>;
@@ -552,9 +553,12 @@ nodeParser('SelfClosingElement').setParser(
   )
 );
 
-nodeParser('Text').setParser(c.apply(textContentParser, (content) => nodeData({}, { content })));
+nodeParser('Text').setParser(c.apply(c.oneOf(textContentParser), (content) => nodeData({}, { content })));
 
-nodeParser('RawText').setParser(c.apply(rawTextContentParser, (content) => nodeData({}, { content })));
+nodeParser('RawText').setParser(
+  // Accept single any char because if nothing nothing else matches we read as text
+  c.apply(c.oneOf(rawTextContentParser, anySingleCharParser), (content) => nodeData({}, { content }))
+);
 
 nodeParser('Element').setNodeParser(
   c.transform(

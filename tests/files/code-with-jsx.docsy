@@ -1,0 +1,17 @@
+<#Code lang="jsx">
+const data = {
+  label: "Secrets de tournage",
+  content: {
+    text: "4 anecdotes",
+    link: "http://www.allocine.fr/...",
+  },
+};
+
+const elem = <InfoItem {...data} />;
+
+// est le même que
+const elem = (
+  <InfoItem label={data.label} content={data.content} />
+);
+<Code#>
+

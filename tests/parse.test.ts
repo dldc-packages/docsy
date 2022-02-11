@@ -684,3 +684,8 @@ test(`Parse long.docsy file`, () => {
   const file = readFile('long');
   expect(() => DocsyParser.parseDocument(file)).not.toThrow();
 });
+
+test(`Parse code with JSX inside`, () => {
+  const file = readFile('code-with-jsx');
+  expect(() => DocsyParser.parseDocument(file)).not.toThrow();
+});
