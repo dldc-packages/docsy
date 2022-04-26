@@ -13,7 +13,7 @@ export interface Range {
 
 export interface ParseResultFailure {
   type: 'Failure';
-  name: string;
+  path: Array<String>;
   message: string;
   pos: number;
   child: ParseResultFailure | null;

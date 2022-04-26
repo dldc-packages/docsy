@@ -10,7 +10,7 @@ export function ParseFailure(
 ): ParseResultFailure {
   return {
     type: 'Failure',
-    name: path.join('.'),
+    path,
     message,
     pos,
     child,
@@ -103,10 +103,10 @@ export function failureToStack(failure: ParseResultFailure): Stack {
   const stack: Stack = [];
   let current = failure;
   while (current.child !== null) {
-    stack.unshift({ position: current.pos, name: current.name, message: current.message });
+    stack.unshift({ position: current.pos, name: current.path.join('.'), message: current.message });
     current = current.child;
   }
-  stack.unshift({ position: current.pos, name: current.name, message: current.message });
+  stack.unshift({ position: current.pos, name: current.path.join('.'), message: current.message });
   return stack;
 }
 
