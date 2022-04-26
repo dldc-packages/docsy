@@ -1,6 +1,6 @@
 import { StringReader } from './StringReader.ts';
 import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types.ts';
-import { DocsyError } from './DocsyError.ts';
+import { DocsyError } from '../DocsyError.ts';
 
 export function ParseFailure(
   pos: number,

@@ -1,11 +1,11 @@
-export * from './Ast.ts';
-export * from './DocsyParser.ts';
-export * from './DocsySerializer.ts';
-export * from './DocsyResolver.ts';
-export * from './DocsyFomatter.ts';
+export * from './parse.ts';
+export * from './serialize.ts';
+export * from './resolve.ts';
+export * from './format.ts';
+export * as Ast from './Ast.ts';
 export * from './DocsyError.ts';
-export type { NodePath, NodeWithPath } from './DocsyUtils.ts';
-export { DocsyUtils } from './DocsyUtils.ts';
+export type { NodePath, NodeWithPath } from './Utils.ts';
+export { Utils } from './Utils.ts';
 export type {
   Position,
   Range,
@@ -17,4 +17,4 @@ export type {
   Stack,
   StackItem,
   TraversePath,
-} from './types.ts';
+} from './internal/types.ts';

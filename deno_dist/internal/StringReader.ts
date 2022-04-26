@@ -1,4 +1,4 @@
-import { DocsyError } from './DocsyError.ts';
+import { DocsyError } from '../DocsyError.ts';
 
 export interface StringReader {
   peek(size?: number): string;

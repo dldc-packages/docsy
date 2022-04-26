@@ -16,78 +16,125 @@ export interface NodeBase {
 
 type CreateNodes<Nodes extends { [key: string]: NodeBase }> = Nodes;
 
-type Nodes = CreateNodes<{
+// Is this anoying ?
+export type NonEmptyArray<T> = [T, ...T[]];
+
+export type Nodes = CreateNodes<{
   Document: { children: Array<Child>; meta: {} };
-  Fragment: { children: Array<Child>; meta: {} };
-  SelfClosingElement: CreateNodeData<{ component: ComponentType; props: Node<'Props'> }>;
-  UnrawFragment: { children: Array<Child>; meta: {} };
-  RawFragment: { children: Array<RawChild>; meta: {} };
+  ExpressionDocument: CreateNodeData<{ before?: WhitespaceLike; value?: Expression; after?: WhitespaceLike }>;
   Whitespace: CreateNodeData<{}, { content: string; hasNewLine: boolean }>;
-  Props: CreateNodeData<{ items: Array<Node<'PropItem'>>; whitespaceAfter: MaybeWhitespace }, {}>;
-  PropItem: CreateNodeData<{ whitespaceBefore: Node<'Whitespace'>; item: Prop }, {}>;
-  PropValue: CreateNodeData<{ name: Node<'Identifier'>; value: Expression }, {}>;
-  PropNoValue: CreateNodeData<{ name: Node<'Identifier'> }, {}>;
-  PropLineComment: CreateNodeData<{}, { content: string }>;
-  PropBlockComment: CreateNodeData<{}, { content: string }>;
-  LineComment: CreateNodeData<{}, { content: string }>;
-  BlockComment: CreateNodeData<{}, { content: string }>;
-  Null: CreateNodeData<{}>;
-  Undefined: CreateNodeData<{}>;
-  Text: CreateNodeData<{}, { content: string }>;
-  RawText: CreateNodeData<{}, { content: string }>;
+  // Expression
+  // -- Identifier
+  Identifier: CreateNodeData<{}, { name: string }>;
+  // -- Literal values
   Str: CreateNodeData<{}, { value: string; quote: QuoteType }>;
   Bool: CreateNodeData<{}, { value: boolean }>;
   Num: CreateNodeData<{}, { value: number; rawValue: string }>;
-  Object: CreateNodeData<{ items: Array<Node<'ObjectItem'>> }, { trailingComma: boolean }>;
-  EmptyObject: CreateNodeData<{ whitespace: MaybeWhitespace }>;
-  ObjectItem: CreateNodeData<{ whitespaceBefore: MaybeWhitespace; item: ObjectPart; whitespaceAfter: MaybeWhitespace }>;
-  PropertyShorthand: CreateNodeData<{ name: Node<'Identifier'> }>;
-  Identifier: CreateNodeData<{}, { name: string }>;
-  DotMember: CreateNodeData<{ target: ChainExpression; property: Node<'Identifier'> }>;
-  Parenthesis: CreateNodeData<{ value: Expression }>;
-  Array: CreateNodeData<{ items: Array<Node<'ArrayItem'>> }, { trailingComma: boolean }>;
-  EmptyArray: CreateNodeData<{ whitespace: MaybeWhitespace }>;
-  ElementTypeMember: CreateNodeData<{ target: Node<'Identifier' | 'ElementTypeMember'>; property: Node<'Identifier'> }>;
+  Null: CreateNodeData<{}>;
+  Undefined: CreateNodeData<{}>;
+
+  Arr: CreateNodeData<{ items?: ListItems | WhitespaceLike }, {}>;
+
+  // Used for array and arguments
+  ListItems: CreateNodeData<{ items: NonEmptyArray<ListItem>; trailingComma?: TrailingComma }, {}>;
+  TrailingComma: CreateNodeData<{ whitespaceAfter?: WhitespaceLike }, {}>;
+  ListItem: CreateNodeData<{
+    whitespaceBefore?: WhitespaceLike;
+    item: Expression | Spread;
+    whitespaceAfter?: WhitespaceLike;
+  }>;
+
   Spread: CreateNodeData<{ target: Expression }>;
-  Inject: CreateNodeData<{ whitespaceBefore: MaybeWhitespace; value: Expression; whitespaceAfter: MaybeWhitespace }>;
-  ExpressionDocument: CreateNodeData<{
-    before: Array<WhitespaceOrComment>;
-    value: Expression;
-    after: Array<WhitespaceOrComment>;
+
+  Obj: CreateNodeData<{ items?: ObjItems | WhitespaceLike }, {}>;
+  ObjItems: CreateNodeData<{ properties: NonEmptyArray<ObjItem>; trailingComma?: TrailingComma }, {}>;
+  ObjItem: CreateNodeData<{
+    whitespaceBefore?: WhitespaceLike;
+    property: AnyObjProperty;
+    whitespaceAfter?: WhitespaceLike;
   }>;
-  RawElement: CreateNodeData<
-    { component: ComponentType; props: Node<'Props'>; children: Array<RawChild> },
-    { namedCloseTag: boolean }
-  >;
-  Element: CreateNodeData<
-    { component: ComponentType; props: Node<'Props'>; children: Array<Child> },
-    { namedCloseTag: boolean }
-  >;
-  Property: CreateNodeData<{
-    name: Node<'Str' | 'Identifier'>;
-    whitespaceBeforeColon: MaybeWhitespace;
-    whitespaceAfterColon: MaybeWhitespace;
+  ObjProperty: CreateNodeData<{
+    name: Str | Identifier;
+    whitespaceBeforeColon?: WhitespaceLike;
+    whitespaceAfterColon?: WhitespaceLike;
     value: Expression;
   }>;
-  ComputedProperty: CreateNodeData<{
+  ObjComputedProperty: CreateNodeData<{
+    whitespaceBeforeExpression?: WhitespaceLike;
     expression: Expression;
-    whitespaceBeforeColon: MaybeWhitespace;
-    whitespaceAfterColon: MaybeWhitespace;
+    whitespaceAfterExpression?: WhitespaceLike;
+    whitespaceBeforeColon?: WhitespaceLike;
+    whitespaceAfterColon?: WhitespaceLike;
     value: Expression;
   }>;
-  FunctionCall: CreateNodeData<
-    { target: ChainExpression; arguments: Array<Node<'ArrayItem'>> },
-    { trailingComma: boolean }
-  >;
-  BracketMember: CreateNodeData<{
-    target: ChainExpression;
+  ObjPropertyShorthand: CreateNodeData<{
+    whitespaceBefore?: WhitespaceLike;
+    name: Identifier;
+    whitespaceAfter?: WhitespaceLike;
+  }>;
+
+  // -- Function call
+  CallExpression: CreateNodeData<{ target: ChainableExpression; arguments?: ListItems | WhitespaceLike }, {}>;
+  // -- Member & Parenthesis
+  MemberExpression: CreateNodeData<{ target: ChainableExpression; property: Identifier }>;
+  ComputedMemberExpression: CreateNodeData<{
+    target: ChainableExpression;
+    whitespaceBefore?: WhitespaceLike;
     property: Expression;
+    whitespaceAfter?: WhitespaceLike;
   }>;
-  ArrayItem: CreateNodeData<{
-    whitespaceBefore: MaybeWhitespace;
-    item: Expression | Node<'Spread'>;
-    whitespaceAfter: MaybeWhitespace;
+  Parenthesis: CreateNodeData<{
+    whitespaceBefore?: WhitespaceLike;
+    value: Expression;
+    whitespaceAfter?: WhitespaceLike;
   }>;
+
+  // Comments
+  LineComment: CreateNodeData<{}, { content: string }>;
+  BlockComment: CreateNodeData<{}, { content: string }>;
+
+  // Element
+  Element: CreateNodeData<
+    {
+      name: ElementName;
+      attributes: Array<Attribute>;
+      whitespaceAfterAttributes?: WhitespaceLike;
+      children: Array<Child>;
+    },
+    { namedCloseTag: boolean }
+  >;
+  RawElement: CreateNodeData<
+    { name: ElementName; attributes: Array<Attribute>; whitespaceAfterAttributes?: WhitespaceLike },
+    { namedCloseTag: boolean; content: string }
+  >;
+  SelfClosingElement: CreateNodeData<{
+    name: ElementName;
+    attributes: Array<Attribute>;
+    whitespaceAfterAttributes?: WhitespaceLike;
+  }>;
+  LineElement: CreateNodeData<
+    {
+      name: ElementName;
+      attributes: Array<Attribute>;
+      whitespaceAfterAttributes?: WhitespaceLike;
+      children: Array<Child>;
+    },
+    {}
+  >;
+
+  // Fragments
+  Fragment: { children: Array<Child>; meta: {} };
+  RawFragment: CreateNodeData<{}, { content: string }>;
+
+  Text: CreateNodeData<{}, { content: string }>;
+
+  Inject: CreateNodeData<{ whitespaceBefore?: WhitespaceLike; value: Expression; whitespaceAfter?: WhitespaceLike }>;
+
+  // Attributes
+  Attribute: CreateNodeData<{ whitespaceBefore: WhitespaceLike; name: Identifier; value?: Expression }, {}>;
+
+  // Tag name member </foo.bar/>
+  ElementNameMember: CreateNodeData<{ target: ElementName; property: Identifier }>;
 }>;
 
 export type NodeKind = keyof Nodes;
@@ -97,102 +144,122 @@ export type Node<K extends NodeKind = NodeKind> = Nodes[K] & { kind: K };
 export type NodeData<K extends NodeKind = NodeKind> = Nodes[K];
 
 const NODES_OBJ: { [K in NodeKind]: null } = {
-  Array: null,
-  ArrayItem: null,
+  Arr: null,
+  Attribute: null,
   BlockComment: null,
   Bool: null,
-  BracketMember: null,
-  ComputedProperty: null,
+  CallExpression: null,
+  ComputedMemberExpression: null,
   Document: null,
-  DotMember: null,
   Element: null,
-  ElementTypeMember: null,
-  EmptyArray: null,
-  EmptyObject: null,
+  ElementNameMember: null,
   ExpressionDocument: null,
   Fragment: null,
-  FunctionCall: null,
   Identifier: null,
   Inject: null,
   LineComment: null,
+  LineElement: null,
+  ListItem: null,
+  ListItems: null,
+  MemberExpression: null,
   Null: null,
   Num: null,
-  Object: null,
-  ObjectItem: null,
+  Obj: null,
+  ObjComputedProperty: null,
+  ObjItem: null,
+  ObjItems: null,
+  ObjProperty: null,
+  ObjPropertyShorthand: null,
   Parenthesis: null,
-  PropBlockComment: null,
-  Property: null,
-  PropertyShorthand: null,
-  PropItem: null,
-  PropLineComment: null,
-  PropNoValue: null,
-  Props: null,
-  PropValue: null,
   RawElement: null,
   RawFragment: null,
-  RawText: null,
   SelfClosingElement: null,
   Spread: null,
   Str: null,
   Text: null,
+  TrailingComma: null,
   Undefined: null,
-  UnrawFragment: null,
   Whitespace: null,
 };
 
 const NODES = Object.keys(NODES_OBJ) as Array<NodeKind>;
 
 // Alias
+export type Arr = Node<'Arr'>;
+export type Attribute = Node<'Attribute'>;
+export type BlockComment = Node<'BlockComment'>;
+export type Bool = Node<'Bool'>;
+export type CallExpression = Node<'CallExpression'>;
+export type ComputedMemberExpression = Node<'ComputedMemberExpression'>;
 export type Document = Node<'Document'>;
+export type Element = Node<'Element'>;
+export type ElementNameMember = Node<'ElementNameMember'>;
 export type ExpressionDocument = Node<'ExpressionDocument'>;
+export type Fragment = Node<'Fragment'>;
+export type Identifier = Node<'Identifier'>;
+export type Inject = Node<'Inject'>;
+export type LineComment = Node<'LineComment'>;
+export type LineElement = Node<'LineElement'>;
+export type ListItem = Node<'ListItem'>;
+export type ListItems = Node<'ListItems'>;
+export type MemberExpression = Node<'MemberExpression'>;
+export type Null = Node<'Null'>;
+export type Num = Node<'Num'>;
+export type Obj = Node<'Obj'>;
+export type ObjComputedProperty = Node<'ObjComputedProperty'>;
+export type ObjItem = Node<'ObjItem'>;
+export type ObjItems = Node<'ObjItems'>;
+export type ObjProperty = Node<'ObjProperty'>;
+export type ObjPropertyShorthand = Node<'ObjPropertyShorthand'>;
+export type Parenthesis = Node<'Parenthesis'>;
+export type RawElement = Node<'RawElement'>;
+export type RawFragment = Node<'RawFragment'>;
+export type SelfClosingElement = Node<'SelfClosingElement'>;
+export type Spread = Node<'Spread'>;
+export type Str = Node<'Str'>;
+export type Text = Node<'Text'>;
+export type TrailingComma = Node<'TrailingComma'>;
+export type Undefined = Node<'Undefined'>;
+export type Whitespace = Node<'Whitespace'>;
 
-const ComponentType = combine('ElementTypeMember', 'Identifier');
-export type ComponentType = typeof ComponentType['__type'];
+export type WhitespaceLike = Whitespace | AnyComment | NonEmptyArray<Whitespace | AnyComment>;
 
-const Prop = combine('PropNoValue', 'PropValue', 'PropLineComment', 'PropBlockComment');
-export type Prop = typeof Prop['__type'];
+// Groups
+const ElementName = combine('ElementNameMember', 'Identifier');
+export type ElementName = typeof ElementName['__type'];
 
-export type MaybeWhitespace = Node<'Whitespace'> | null;
+const AnyElement = combine('Element', 'RawElement', 'SelfClosingElement', 'LineElement', 'Fragment', 'RawFragment');
+export type AnyElement = typeof AnyElement['__type'];
 
-const ChildElement = combine('Element', 'SelfClosingElement', 'Fragment', 'RawFragment', 'RawElement');
-export type ChildElement = typeof ChildElement['__type'];
-
-const Child = combine('Whitespace', 'Inject', 'Text', 'BlockComment', 'LineComment', ...ChildElement.kinds);
-export type Child = typeof Child['__type'];
-
-const RawChild = combine('RawText', 'UnrawFragment');
-export type RawChild = typeof RawChild['__type'];
-
-const ObjectOrArray = combine('Array', 'EmptyArray', 'Object', 'EmptyObject');
-export type ObjectOrArray = typeof ObjectOrArray['__type'];
-
-const ChainExpression = combine('FunctionCall', 'BracketMember', 'Identifier', 'DotMember', 'Parenthesis');
-export type ChainExpression = typeof ChainExpression['__type'];
+const ObjOrArr = combine('Arr', 'Obj');
+export type ObjOrArr = typeof ObjOrArr['__type'];
 
 const Primitive = combine('Null', 'Undefined', 'Bool', 'Num', 'Str');
 export type Primitive = typeof Primitive['__type'];
 
-const ObjectPart = combine('PropertyShorthand', 'Property', 'ComputedProperty', 'Spread');
-export type ObjectPart = typeof ObjectPart['__type'];
+const AnyObjProperty = combine('ObjProperty', 'ObjComputedProperty', 'ObjPropertyShorthand', 'Spread');
+export type AnyObjProperty = typeof AnyObjProperty['__type'];
 
 const AnyComment = combine('LineComment', 'BlockComment');
 export type AnyComment = typeof AnyComment['__type'];
 
-const WhitespaceOrComment = combine('Whitespace', ...AnyComment.kinds);
-export type WhitespaceOrComment = typeof WhitespaceOrComment['__type'];
+const Child = combine('Whitespace', 'Inject', 'Text', ...AnyComment.kinds, ...AnyElement.kinds);
+export type Child = typeof Child['__type'];
 
-const Expression = combine(...Primitive.kinds, ...ObjectOrArray.kinds, ...ChainExpression.kinds);
+// Expression you can access properties / call functions on
+const ChainableExpression = combine(
+  'CallExpression',
+  'ComputedMemberExpression',
+  'MemberExpression',
+  'Parenthesis',
+  'Identifier'
+);
+export type ChainableExpression = typeof ChainableExpression['__type'];
+
+const Expression = combine(...Primitive.kinds, ...ObjOrArr.kinds, ...ChainableExpression.kinds);
 export type Expression = typeof Expression['__type'];
 
-// Internal
-
-function nodeIsOneOf<T extends NodeKind>(node: Node, kinds: ReadonlyArray<T>): node is Node<T> {
-  return kinds.includes(node.kind as any);
-}
-
-export function isValidNodeKind(kind: unknown): boolean {
-  return Boolean(kind && typeof kind === 'string' && NODES.includes(kind as any));
-}
+// NodeIs
 
 const NodeIsInternal: { oneOf: typeof nodeIsOneOf } & {
   [K in NodeKind]: (node: Node) => node is Node<K>;
@@ -206,17 +273,18 @@ const NodeIsInternal: { oneOf: typeof nodeIsOneOf } & {
 
 export const NodeIs = {
   ...NodeIsInternal,
-  ComponentType,
-  Prop,
+  ElementName,
   Child,
   Primitive,
-  ObjectOrArray,
-  ObjectPart,
-  ChainExpression,
+  ObjOrArr,
+  AnyObjProperty,
+  ChainableExpression,
   Expression,
-  ChildElement,
+  AnyElement,
   AnyComment,
 };
+
+// CreateNode
 
 export const CreateNode: {
   [K in NodeKind]: (children: Nodes[K]['children'], meta: Nodes[K]['meta']) => Node<K>;
@@ -228,6 +296,16 @@ export const CreateNode: {
   });
   return acc;
 }, {});
+
+// Internal
+
+function nodeIsOneOf<T extends NodeKind>(node: Node, kinds: ReadonlyArray<T>): node is Node<T> {
+  return kinds.includes(node.kind as any);
+}
+
+export function isValidNodeKind(kind: unknown): boolean {
+  return Boolean(kind && typeof kind === 'string' && NODES.includes(kind as any));
+}
 
 type NodeTypeFromArray<T extends ReadonlyArray<NodeKind>> = Node<T[number]>;
 
