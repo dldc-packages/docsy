@@ -1,7 +1,7 @@
 import { Node } from './Ast';
-import { stackToString } from './Parser';
-import { StringReader } from './StringReader';
-import { Stack } from './types';
+import { stackToString } from './internal/Parser';
+import { StringReader } from './internal/StringReader';
+import { Stack } from './internal/types';
 
 export class DocsyError extends Error {
   constructor(message: string) {

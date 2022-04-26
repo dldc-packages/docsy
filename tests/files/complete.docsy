@@ -1,25 +1,25 @@
 
-<|Title>{Foo.bar()} <|B>world|> !|>
+<|Title>{Foo.bar()} <|B>world</> !</>
 
-<|Title color="red">Hello world !|>
+<|Title color="red">Hello world !</>
 
-<|Title color="red">Hello world !<Title|>
+<|Title color="red">Hello world !<Title/>
 
-<|Title bold>Hello world !|>
+<|Title bold>Hello world !</>
 
-<|Title bold|>
+</Title bold />
 
-<|Title
+</Title
 
-|>
+/>
 
 <|Title mainColor="red">
-Hello <|B>world|> !
-<Title|>
+Hello <|B>world</> !
+<Title/>
 
-<|Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null |>
+</Title config={ color: "green", 'other': 'blue', [property]: true } hey="yoo" num=34 bool=true noop=null />
 
-<|Title config=[34, `foo`, Theme.bar]>Hello <|B>world|> !|>
+<Title config=[34, `foo`, Theme.bar]>Hello <|B>world</> !
 
 <|Title
   config={ color: "green", ...Theme.spread }
@@ -31,11 +31,11 @@ Hello <|B>world|> !
   // comment in props
   //
 >
-Hello <|B>world|> !
-|>
+Hello <|B>world</> !
+</>
 
-<|>Foo <|Bar|> <|>
-<#>Foo <|Bar|> <#>
+<|>Foo </Bar/> </>
+<#>Foo <|Bar|> </>
 
 // Foo
 
@@ -43,32 +43,27 @@ Hello <|B>world|> !
 
 // More comment !
 
-<|>A1<|Demo>B1<|>C1<|>B2|>A2<|>
+<|>A1<|Demo>B1<|>C1</>B2</>A2</>
 
 <#>
 Some raw code
 // No comments in this !
 <|Block color="red">
 <|Footer color="red">
-<#>
+</>
 
 <#Code language="javascript">
 Some raw code
 // No comments in this !
-<#><|Block color="red"|><#>
-<|Block color="red">
-<#>
-// comment here
-<|Block color="red"|>
-/* More comment */<|Block color="red"|>
-<#>
+// No tag
+<|Block color="red"|><#>
 <|Footer color="red">
-<Code#>
+<Code/>
 
 <|Block color="red">
 <|Footer color="red">
 bla bla bla
-<Footer|>
-<Block|>
+<Footer/>
+<Block/>
 
-<|Block theme=Theme.dark() /* foo=43 */ |>
+</Block theme=Theme.dark() /* foo=43 */ />

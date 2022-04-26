@@ -1,6 +1,6 @@
 import fse from 'fs-extra';
 import path from 'path';
-import { Node, NodeChildrenBase } from '../../src/Ast';
+import * as Ast from '../../src/Ast';
 
 export function readFile(name: string): string {
   const testFileFolder = path.resolve(process.cwd(), 'tests/files');
@@ -16,7 +16,7 @@ function indent(content: string): string {
     .join('\n');
 }
 
-function debugNodeChildren(children: NodeChildrenBase): string {
+function debugNodeChildren(children: Ast.NodeChildrenBase): string {
   if (children === null) {
     return 'null';
   }
@@ -36,7 +36,10 @@ function debugNodeChildren(children: NodeChildrenBase): string {
   return entries.map(([name, child]) => `${name}: ${debugNodeChildren(child)}`).join('\n');
 }
 
-export function debugNode(node: Node): string {
+export function debugNode(node: Ast.Node | Array<Ast.Node>): string {
+  if (Array.isArray(node)) {
+    return node.map((child) => debugNode(child)).join('\n\n');
+  }
   let nodeHeader = `${node.kind}`;
   if (node.meta) {
     const metas = Object.entries(node.meta);

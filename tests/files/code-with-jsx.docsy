@@ -13,5 +13,5 @@ const elem = <InfoItem {...data} />;
 const elem = (
   <InfoItem label={data.label} content={data.content} />
 );
-<Code#>
+<Code/>
 

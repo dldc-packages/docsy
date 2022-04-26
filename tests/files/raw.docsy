@@ -1,11 +1,11 @@
-<#>Foo <|Bar|> <#>
+<#>Foo </Bar/> </>
 
 <#>
 Some raw code
 // No comments in this !
 <|Block color="red">
 <|Footer color="red">
-<#>
+</>
 
 <#Code language="javascript">
 Some raw code
@@ -15,9 +15,9 @@ Some raw code
 <|Block color="red"|>
 /* More comment */<|Block color="red"|>
 <|Footer color="red">
-<Code#>
+<Code/>
 
-<#Code language="javascript"><|Block color="red">#>
+<#Code language="javascript"><|Block color="red"></>
 
 <#Code language="javascript">
 Some raw code
@@ -30,4 +30,4 @@ Some raw code
 /* More comment */<|Block color="red"|>
 <#>
 <|Footer color="red">
-<Code#>
+<Code/>

@@ -1,4 +1,4 @@
-import { DocsyError } from './DocsyError';
+import { DocsyError } from '../DocsyError';
 import { ParseFailure, ParseSuccess, resultTracker } from './Parser';
 import { Parser, ParseResult, ParseResultSuccess, Rule } from './types';
 
@@ -310,33 +310,51 @@ export function transformSuccess<T, U, Ctx>(
   };
 }
 
-export function regexp<Ctx>(reg: RegExp): Parser<string, Ctx> {
+export interface RegexpParser<Ctx> extends Parser<RegExpExecArray, Ctx> {
+  regexp: RegExp;
+}
+
+export function regexp<Ctx>(reg: RegExp, name?: string): RegexpParser<Ctx> {
+  const nameResolved = name || `Regexp(${reg})`;
   if (reg.source[0] !== '^') {
-    throw new DocsyError.UnexpectedError(
-      `Regular expression patterns for a tokenizer should start with '^': ${reg.source}`
-    );
+    throw new DocsyError.UnexpectedError(`Regular expression should start with '^': ${nameResolved}`);
   }
   if (!reg.global) {
-    throw new DocsyError.UnexpectedError(`Regular expression patterns for a tokenizer should be global: ${reg.source}`);
+    throw new DocsyError.UnexpectedError(`Regular expression should be global: ${nameResolved}`);
   }
   return {
+    regexp: reg,
     parse(parentPath, input) {
-      const path = [...parentPath, `Regexp(${reg})`];
+      const path = [...parentPath, nameResolved];
       if (input.empty) {
         return ParseFailure(input.position, path, `EOF reached`);
       }
       const subString = input.peek(Infinity);
       reg.lastIndex = 0;
-      if (reg.test(subString)) {
-        const text = subString.slice(0, reg.lastIndex);
-        if (text.length === 0) {
-          throw new DocsyError.UnexpectedError(`Regexp ${reg.source} matched empty string`);
+      const result: RegExpExecArray | null = reg.exec(subString);
+      if (result !== null) {
+        const match = result[0];
+        if (match.length === 0) {
+          return ParseFailure(input.position, path, `Regexp matched empty string.`);
+          // throw new DocsyError.UnexpectedError(`Regexp ${reg.source} matched empty string`);
         }
-        const next = input.skip(text.length);
-        return ParseSuccess(input.position, next, text);
+        const next = input.skip(match.length);
+        return ParseSuccess(input.position, next, result);
       }
       return ParseFailure(input.position, path, `Regexp did not match.`);
     },
+  };
+}
+
+export interface SimpleRegexpParser<Ctx> extends Parser<string, Ctx> {
+  regexp: RegExp;
+}
+
+export function simpleRegexp<Ctx>(reg: RegExp, name?: string): SimpleRegexpParser<Ctx> {
+  const sub = apply(regexp(reg, name), (res) => res[0]);
+  return {
+    regexp: reg,
+    parse: sub.parse,
   };
 }
 
@@ -366,7 +384,7 @@ export function exact<T extends string, Ctx>(str: T): Parser<T, Ctx> {
 
 // like exact but case incensitive
 export function keyword<Ctx>(regex: RegExp, str: string): Parser<string, Ctx> {
-  return transform(regexp(regex), (result, parentPath) => {
+  return transform(simpleRegexp(regex), (result, parentPath) => {
     const path = [...parentPath, `Keyword(${printString(str)})`];
     if (result.type === 'Failure') {
       return ParseFailure(result.pos, path, `Keyword Regexp did not match.`);

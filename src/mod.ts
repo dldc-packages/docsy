@@ -1,11 +1,11 @@
-export * from './Ast';
-export * from './DocsyParser';
-export * from './DocsySerializer';
-export * from './DocsyResolver';
-export * from './DocsyFomatter';
+export * from './parse';
+export * from './serialize';
+export * from './resolve';
+export * from './format';
+export * as Ast from './Ast';
 export * from './DocsyError';
-export type { NodePath, NodeWithPath } from './DocsyUtils';
-export { DocsyUtils } from './DocsyUtils';
+export type { NodePath, NodeWithPath } from './Utils';
+export { Utils } from './Utils';
 export type {
   Position,
   Range,
@@ -17,4 +17,4 @@ export type {
   Stack,
   StackItem,
   TraversePath,
-} from './types';
+} from './internal/types';

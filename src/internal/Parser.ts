@@ -1,6 +1,6 @@
 import { StringReader } from './StringReader';
 import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types';
-import { DocsyError } from './DocsyError';
+import { DocsyError } from '../DocsyError';
 
 export function ParseFailure(
   pos: number,

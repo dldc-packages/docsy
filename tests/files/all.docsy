@@ -1,9 +1,3 @@
-<|Title color="john's">Hello <|B>world|> !|>
-
-<|Title color='red'>Hello world !|>
-
-<|Title bold>Hello world !|>
-
 // some comment
 
 //
@@ -14,34 +8,41 @@
 More comments !
 */
 
-<|Title bold|>
+<Line color="john's">Hello <|B>world</> !
 
-<|Title|>
+<Line color='red'>Hello world !
 
-<|UI.Title color='green'|>
+<Line bold>Hello world !
+
+</SelfClosing bold />
+
+</SelfClosing/>
+</SelfClosing   />
+
+</UI.Title color='green' />
 
 <|Title mainColor='red'>
-Hello /* Inline comments */ <|B>world|> !
-<Title|>
+Hello /* Inline comments */ <|B>world</> !
+<Title/>
 
 <|Title mainColor='red'>
-Hello <|B>world|> !
-<Title|>
+Hello <|B>world</> !
+<Title/>
 
-<|Title config={ color: 'green', 'other': 'blue', [property]: true } /**/ hey='yoo' num=34 bool=true otherBool=false noop=null|>
+</Title config={ color: 'green', 'other': 'blue', [property]: true } /**/ hey='yoo' num=34 bool=true otherBool=false noop=null />
 
-<|Title config=[34, 'foo', Theme.bar]>Hello <|B>world|> !|>
+<Title config=[34, 'foo', Theme.bar]>Hello <|B>world</> !
 
 <|Title config={ color: 'green', ...Theme.spread } hey='yoo' num=-34.9 bool=true noop=null>
-Hello <|B>world|> !
-<Title|>
+Hello <|B>world</> !
+<Title/>
 
-<|Block template=`Some template string with inject value`|>
+</Block template=`Some template string with inject value` />
 
 <|Block color='red'>
 <|Footer color='red'>
 bla bla bla
-<Footer|>
-<Block|>
+<Footer/>
+<Block/>
 
-<|Block theme=Theme.dark() foo=43|>
+</Block theme=Theme.dark() foo=43 />

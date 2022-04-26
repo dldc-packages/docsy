@@ -1,8 +1,8 @@
 import { DocsyError } from './DocsyError';
 import { Node, CreateNode, Expression, NodeChildrenBase, isValidNodeKind } from './Ast';
-import { TraversePath } from './types';
+import { TraversePath } from './internal/types';
 
-export const DocsyUtils = {
+export const Utils = {
   filter,
   traverse,
   createNodeFromValue,
@@ -143,52 +143,33 @@ function createNodeFromValue(value: unknown): Expression {
     return CreateNode.Str({}, { value, quote: 'Single' });
   }
   if (Array.isArray(value)) {
-    return CreateNode.Array(
-      {
-        items: value.map((val) =>
-          CreateNode.ArrayItem(
-            {
-              item: createNodeFromValue(val),
-              whitespaceAfter: null,
-              whitespaceBefore: null,
-            },
-            {}
-          )
-        ),
-      },
-      { trailingComma: false }
-    );
+    throw new DocsyError('Not implemented');
+    // return CreateNode.Array(
+    //   { items: value.map((val) => CreateNode.ListItem({ item: createNodeFromValue(val) }, {})) },
+    //   { trailingComma: false }
+    // );
   }
   if (isPlainObject(value)) {
-    return CreateNode.Object(
-      {
-        items: Object.keys(value).map((key) => {
-          return CreateNode.ObjectItem(
-            {
-              item: CreateNode.Property(
-                {
-                  name: CreateNode.Str(
-                    {},
-                    {
-                      value: key,
-                      quote: 'Single',
-                    }
-                  ),
-                  value: createNodeFromValue((value as any)[key]),
-                  whitespaceAfterColon: null,
-                  whitespaceBeforeColon: null,
-                },
-                {}
-              ),
-              whitespaceAfter: null,
-              whitespaceBefore: null,
-            },
-            {}
-          );
-        }),
-      },
-      { trailingComma: false }
-    );
+    throw new DocsyError('Not implemented');
+    // return CreateNode.Obj(
+    //   {
+    //     items: Object.keys(value).map((key) => {
+    //       return CreateNode.ObjectItem(
+    //         {
+    //           item: CreateNode.ObjectProperty(
+    //             {
+    //               name: CreateNode.Str({}, { value: key, quote: 'Single' }),
+    //               value: createNodeFromValue((value as any)[key]),
+    //             },
+    //             {}
+    //           ),
+    //         },
+    //         {}
+    //       );
+    //     }),
+    //   },
+    //   { trailingComma: false }
+    // );
   }
   throw new DocsyError.CannotTransformValueError(value);
 }

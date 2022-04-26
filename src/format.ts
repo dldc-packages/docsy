@@ -1,14 +1,7 @@
 import { Node, NodeIs, NodeKind } from './Ast';
+import * as t from './internal/tokens';
 
-const SINGLE_QUOTE = "'";
-const DOUBLE_QUOTE = '"';
-const BACKTICK = '`';
-
-export const DocsyFomatter = {
-  format,
-};
-
-function format(node: Node): Node {
+export function format(node: Node): Node {
   return formatInternal(node);
 
   function formatInternal(item: Node): Node {
@@ -23,9 +16,9 @@ function format(node: Node): Node {
     if (item.meta.value.indexOf('\n') && item.meta.quote === 'Backtick') {
       return item;
     }
-    const hasSingle = item.meta.value.indexOf(SINGLE_QUOTE) >= 0;
-    const hasDouble = item.meta.value.indexOf(DOUBLE_QUOTE) >= 0;
-    const hasBacktick = item.meta.value.indexOf(BACKTICK) >= 0;
+    const hasSingle = item.meta.value.indexOf(t.SINGLE_QUOTE) >= 0;
+    const hasDouble = item.meta.value.indexOf(t.DOUBLE_QUOTE) >= 0;
+    const hasBacktick = item.meta.value.indexOf(t.BACKTICK) >= 0;
     // No single => use single
     if (hasSingle === false) {
       if (item.meta.quote !== 'Single') {

@@ -1,20 +1,20 @@
-import { DocsyResolver, DocsyParser } from '../src/mod';
+import { resolve, parseDocument } from '../src/mod';
 
 test('Resolve simple text', () => {
-  const node = DocsyParser.parseDocument('Hello');
-  const resolved = DocsyResolver.resolve(node.document, {});
+  const node = parseDocument('Hello');
+  const resolved = resolve(node.document, {});
   expect(resolved).toEqual('Hello');
 });
 
 test('Resolve Inject text', () => {
-  const node = DocsyParser.parseDocument(`Hello {'Paul'}`);
-  const resolved = DocsyResolver.resolve(node.document, {});
+  const node = parseDocument(`Hello {'Paul'}`);
+  const resolved = resolve(node.document, {});
   expect(resolved).toEqual('Hello Paul');
 });
 
 test('Resolve variable', () => {
-  const node = DocsyParser.parseDocument(`The sky is {color}`);
-  const resolved = DocsyResolver.resolve(node.document, {
+  const node = parseDocument(`The sky is {color}`);
+  const resolved = resolve(node.document, {
     globals: {
       color: 'Blue',
     },
@@ -23,9 +23,9 @@ test('Resolve variable', () => {
 });
 
 test('Resolve element', () => {
-  const node = DocsyParser.parseDocument(`<|Demo|>`);
+  const node = parseDocument(`</Demo/>`);
   const Demo = 'DemoType';
-  const resolved = DocsyResolver.resolve(node.document, {
+  const resolved = resolve(node.document, {
     jsx: (type, props, key) => ({ type, props, key }),
     globals: { Demo },
   });

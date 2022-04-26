@@ -1,9 +1,4 @@
 <#Code language="javascript">
 Some raw code
 // No comments in this !
-<|Block color="red">
-// comment here
-<|Block color="red"|>
-/* More comment */<|Block color="red"|>
-<|Footer color="red">
-<Code#>
+<Code/>
