@@ -210,7 +210,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
   },
 };
 
-export function resolveNode(item: Ast.Node, options: ResolveOptions): any {
+export function resolveNode(item: Ast.Node, options: ResolveOptions = {}): any {
   const resolver: Resolver<Ast.Node> = NODE_RESOLVERS[item.kind] as any;
   if (resolver === undefined) {
     throw new DocsyError.CannotResolveNodeError(item, `Invalid node kind: ${item.kind}`);
@@ -220,29 +220,11 @@ export function resolveNode(item: Ast.Node, options: ResolveOptions): any {
   throw new DocsyError.CannotResolveNodeError(item, `resolver not implemented`);
 }
 
-function resolveWhitespaceLikeToString(item: Ast.WhitespaceLike | undefined): string {
-  if (item === undefined) {
-    return '';
-  }
-  const items = Array.isArray(item) ? item : [item];
-  return items
-    .map((node) => {
-      if (Ast.NodeIs.Whitespace(node)) {
-        return node.meta.content;
-      }
-      if (Ast.NodeIs.AnyComment(node)) {
-        return '';
-      }
-      throw new DocsyError.CannotResolveNodeError(node, `resolver not implemented`);
-    })
-    .join('');
-}
-
 /**
  * Join consecutive whitespace / text
  * Return resolved array / single item / undefined
  */
-export function resolveChildren(items: Array<Ast.Child>, options: ResolveOptions): Array<any> | any | undefined {
+export function resolveChildren(items: Array<Ast.Child>, options: ResolveOptions = {}): Array<any> | any | undefined {
   const result: Array<any> = [];
   items.forEach((child) => {
     const next = resolveNode(child, options);
@@ -262,7 +244,7 @@ export function resolveChildren(items: Array<Ast.Child>, options: ResolveOptions
   return result;
 }
 
-export function resolveAttributes(attrs: Array<Ast.Attribute>, options: ResolveOptions): any {
+export function resolveAttributes(attrs: Array<Ast.Attribute>, options: ResolveOptions = {}): any {
   const obj: any = {};
   attrs.forEach((attr) => {
     const key: string = attr.children.name.meta.name;
@@ -276,52 +258,23 @@ export function resolveAttributes(attrs: Array<Ast.Attribute>, options: ResolveO
   return obj;
 }
 
-// function resolveObject(items: Ast.ObjItems | Ast.WhitespaceLike | undefined): any {
-
-//   // items.forEach((propItem) => {
-//   //   if (Ast.NodeIs.ObjItems(propItem)) {
-//   //     // ignore non object items
-//   //     return;
-//   //   }
-//   //   const prop = propItem.children.item;
-//   //   if (Ast.NodeIs.Spread(prop)) {
-//   //     const value = resolveNode(prop.children.target);
-//   //     obj = {
-//   //       ...obj,
-//   //       ...value,
-//   //     };
-//   //     return;
-//   //   }
-//   //   if (Ast.NodeIs.ObjProperty(prop)) {
-//   //     const value = resolveNode(prop.children.value);
-//   //     if (Ast.NodeIs.Identifier(prop.children.name)) {
-//   //       obj[prop.children.name.meta.name] = value;
-//   //       return;
-//   //     }
-//   //     if (Ast.NodeIs.Str(prop.children.name)) {
-//   //       obj[prop.children.name.meta.value] = value;
-//   //       return;
-//   //     }
-//   //     return;
-//   //   }
-//   //   if (Ast.NodeIs.ObjComputedProperty(prop)) {
-//   //     const key = resolveNode(prop.children.expression);
-//   //     const value = resolveNode(prop.children.value);
-//   //     obj[key] = value;
-//   //     return;
-//   //   }
-//   //   if (Ast.NodeIs.ObjPropertyShorthand(prop)) {
-//   //     const key = prop.children.name.meta.name;
-//   //     const value = resolveNode(prop.children.name);
-//   //     obj[key] = value;
-//   //     return;
-//   //   }
-//   //   throw new DocsyError.CannotResolveNodeError(prop, `resolver not implemented`);
-//   // });
-//   // return obj;
-// }
-
-// -- Utils
+function resolveWhitespaceLikeToString(item: Ast.WhitespaceLike | undefined): string {
+  if (item === undefined) {
+    return '';
+  }
+  const items = Array.isArray(item) ? item : [item];
+  return items
+    .map((node) => {
+      if (Ast.NodeIs.Whitespace(node)) {
+        return node.meta.content;
+      }
+      if (Ast.NodeIs.AnyComment(node)) {
+        return '';
+      }
+      throw new DocsyError.CannotResolveNodeError(node, `resolver not implemented`);
+    })
+    .join('');
+}
 
 function resolveJsx(options: ResolveOptions, type: string, props: any): any {
   const { jsx } = options;
