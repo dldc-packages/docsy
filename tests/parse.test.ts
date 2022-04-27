@@ -200,7 +200,6 @@ test(`Parse Line element with elem inside`, () => {
   const file = `<Demo> Hello </Demo \n /> End`;
   expect(() => parseDocument(file)).not.toThrow();
   const result = parseDocument(file).document as any;
-  console.log(debugNode(result.children));
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('LineElement');
   expect(result.children[0].children.children.length).toBe(3);
