@@ -33,8 +33,8 @@ function updateNodeChildren<T extends Node>(node: T, updater: (meta: T['children
   };
 }
 
-function getChildren(children: NodeChildrenBase, path: NodePath): Array<NodeWithPath> {
-  if (children === null) {
+function getChildren(children: NodeChildrenBase | null | undefined, path: NodePath): Array<NodeWithPath> {
+  if (children === null || children === undefined) {
     return [];
   }
   if (Array.isArray(children)) {
