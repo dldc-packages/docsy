@@ -114,12 +114,13 @@ const SelfClosingElementParser = rule<Ast.SelfClosingElement>('SelfClosingElemen
 const LineElementParser = rule<Ast.LineElement>('LineElement');
 const FragmentParser = rule<Ast.Fragment>('Fragment');
 const RawFragmentParser = rule<Ast.RawFragment>('RawFragment');
-const ElementOpenStartParser = rule<Ast.ElementName>('ElementOpenStart'); // <|ElementName
-const ElementRawOpenStartParser = rule<Ast.ElementName>('ElementRawOpenStart'); // <#ElementName
-const ElementCloseParser = rule<Ast.ElementName>('ElementClose'); // <ElementName/>
-const ElementCloseShortcutParser = rule<null>('ElementCloseShortcut'); // </>
-const ElementSelfClosingStartParser = rule<Ast.ElementName>('ElementSelfClosingStart'); // </ElementName
-const ElementLineStartParser = rule<Ast.ElementName>('ElementLineStart'); // <Identifier
+const ElementNameParser = rule<Ast.ElementName>('ElementName');
+// const ElementOpenStartParser = rule<Ast.ElementName>('ElementOpenStart'); // <|ElementName
+// const ElementRawOpenStartParser = rule<Ast.ElementName>('ElementRawOpenStart'); // <#ElementName
+// const ElementCloseParser = rule<Ast.ElementName>('ElementClose'); // <ElementName/>
+// const ElementCloseShortcutParser = rule<null>('ElementCloseShortcut'); // </>
+// const ElementSelfClosingStartParser = rule<Ast.ElementName>('ElementSelfClosingStart'); // </ElementName
+// const ElementLineStartParser = rule<Ast.ElementName>('ElementLineStart'); // <Identifier
 const AttributesParser = rule<Array<Ast.Attribute>>('Attributes');
 const AttributeParser = rule<Ast.Attribute>('Attribute');
 
@@ -141,7 +142,7 @@ ExpressionDocumentParser.setParser(
 DocumentParser.setParser(
   nodeParser(
     'Document',
-    p.apply(p.pipe(p.many(ChildParser), t.eof), ([children]) => nodeData(children, {}))
+    p.applyPipe([p.many(ChildParser), t.eof], ([children]) => nodeData(children, {}))
   )
 );
 
@@ -154,14 +155,14 @@ LineChildParser.setParser(
 InjectParser.setParser(
   nodeParser(
     'Inject',
-    p.apply(
-      p.pipe(
+    p.applyPipe(
+      [
         t.curlyBracketOpen,
         p.maybe(WhitespaceLikeParser),
         ExpressionParser,
         p.maybe(WhitespaceLikeParser),
-        t.curlyBracketClose
-      ),
+        t.curlyBracketClose,
+      ],
       ([_begin, whitespaceBefore, value, whitespaceAfter]) => {
         return nodeData({ whitespaceBefore, value, whitespaceAfter }, {});
       }
@@ -198,18 +199,22 @@ ElementParser.setParser(
   nodeParser(
     'Element',
     p.transformSuccess(
-      p.manyBetween(
-        p.pipe(ElementOpenStartParser, AttributesParser, p.maybe(WhitespaceLikeParser), t.greaterThan),
-        ChildParser,
-        p.oneOf(ElementCloseParser, ElementCloseShortcutParser)
+      p.pipe(
+        t.elementOpenStart,
+        ElementNameParser,
+        AttributesParser,
+        p.maybe(WhitespaceLikeParser),
+        t.greaterThan,
+        p.many(ChildParser),
+        p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd))
       ),
       (result, path, ctx) => {
-        const [open, children, close] = result.value;
-        const [elementName, attributes, whitespaceAfterAttributes] = open;
-        if (close !== null) {
-          if (!sameComponent(elementName, close)) {
-            const closeRange = ctx.ranges.get(close);
-            return ParseFailure(closeRange?.end ?? 0, path, `Invalid close tag: wrong component`);
+        const [_begin, elementName, attributes, whitespaceAfterAttributes, _end, children, close] = result.value;
+        const closeName = typeof close === 'string' ? null : close[1];
+        if (closeName) {
+          if (!sameComponent(elementName, closeName)) {
+            const closeRange = ctx.ranges.get(closeName);
+            return ParseFailure(closeRange?.end ?? 0, path, () => `Invalid close tag: wrong component`);
           }
         }
         const node = ctx.createNode(
@@ -217,7 +222,7 @@ ElementParser.setParser(
           result.start,
           result.end,
           { children, attributes, name: elementName, whitespaceAfterAttributes },
-          { namedCloseTag: close !== null }
+          { namedCloseTag: closeName !== null }
         );
         return {
           ...result,
@@ -228,32 +233,28 @@ ElementParser.setParser(
   )
 );
 
-ElementOpenStartParser.setParser(
-  p.apply(t.elementOpenStart, (res, start, end, ctx) => parseElementName(res[2], start + 2, end, ctx))
-);
-
-ElementCloseParser.setParser(
-  p.apply(t.elementClose, (res, start, end, ctx) => parseElementName(res[2], start + 1, end, ctx))
-);
-
-ElementCloseShortcutParser.setParser(p.apply(t.elementCloseShortcut, () => null));
+ElementNameParser.setParser(p.apply(t.elemName, (res, start, end, ctx) => parseElementName(res, start, end, ctx)));
 
 RawElementParser.setParser(
   nodeParser(
     'RawElement',
     p.transformSuccess(
       p.pipe(
-        p.pipe(ElementRawOpenStartParser, AttributesParser, p.maybe(WhitespaceLikeParser), t.greaterThan),
+        t.elementRawOpenStart,
+        ElementNameParser,
+        AttributesParser,
+        p.maybe(WhitespaceLikeParser),
+        t.greaterThan,
         t.rawTextContent,
-        p.oneOf(ElementCloseParser, ElementCloseShortcutParser)
+        p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd))
       ),
       (result, path, ctx) => {
-        const [open, content, close] = result.value;
-        const [elementName, attributes, whitespaceAfterAttributes] = open;
-        if (close !== null) {
-          if (!sameComponent(elementName, close)) {
-            const closeRange = ctx.ranges.get(close);
-            return ParseFailure(closeRange?.end ?? 0, path, `Invalid close tag: wrong component`);
+        const [_begin, elementName, attributes, whitespaceAfterAttributes, _end, content, close] = result.value;
+        const closeName = typeof close === 'string' ? null : close[1];
+        if (closeName) {
+          if (!sameComponent(elementName, closeName)) {
+            const closeRange = ctx.ranges.get(closeName);
+            return ParseFailure(closeRange?.end ?? 0, path, () => `Invalid close tag: wrong component`);
           }
         }
         const node = ctx.createNode(
@@ -261,10 +262,14 @@ RawElementParser.setParser(
           result.start,
           result.end,
           { attributes, name: elementName, whitespaceAfterAttributes },
-          { namedCloseTag: close !== null, content }
+          { namedCloseTag: closeName !== null, content }
         );
         return {
-          ...result,
+          type: result.type,
+          start: result.start,
+          end: result.end,
+          rest: result.rest,
+          ifError: result.ifError,
           value: node,
         };
       }
@@ -272,50 +277,47 @@ RawElementParser.setParser(
   )
 );
 
-ElementRawOpenStartParser.setParser(
-  p.apply(t.elementRawOpenStart, (res, start, end, ctx) => parseElementName(res[2], start + 2, end, ctx))
-);
-
 SelfClosingElementParser.setParser(
   nodeParser(
     'SelfClosingElement',
-    p.apply(
-      p.pipe(ElementSelfClosingStartParser, AttributesParser, p.maybe(WhitespaceLikeParser), t.elementSelfClosingEnd),
-      ([elementName, attributes, whitespaceAfterAttributes, _tagEnd]) => {
+    p.applyPipe(
+      [
+        t.elementSelfClosingStart,
+        ElementNameParser,
+        AttributesParser,
+        p.maybe(WhitespaceLikeParser),
+        t.elementSelfClosingEnd,
+      ],
+      ([_begin, elementName, attributes, whitespaceAfterAttributes, _tagEnd]) => {
         return nodeData({ name: elementName, attributes, whitespaceAfterAttributes }, {});
       }
     )
   )
 );
 
-ElementSelfClosingStartParser.setParser(
-  p.apply(t.elementSelfClosingStart, (res, start, end, ctx) => parseElementName(res[2], start + 2, end, ctx))
-);
-
 LineElementParser.setParser(
   nodeParser(
     'LineElement',
-    p.apply(
-      p.pipe(
-        p.pipe(ElementLineStartParser, AttributesParser, p.maybe(WhitespaceLikeParser), t.greaterThan),
-        p.many(LineChildParser)
-      ),
-      ([open, children]) => {
-        const [elementName, attributes, whitespaceAfterAttributes] = open;
+    p.applyPipe(
+      [
+        t.lessThan,
+        ElementNameParser,
+        AttributesParser,
+        p.maybe(WhitespaceLikeParser),
+        t.greaterThan,
+        p.many(LineChildParser),
+      ],
+      ([_begin, elementName, attributes, whitespaceAfterAttributes, _end, children]) => {
         return nodeData({ name: elementName, attributes, children, whitespaceAfterAttributes }, {});
       }
     )
   )
 );
 
-ElementLineStartParser.setParser(
-  p.apply(t.elementLineStart, (res, start, end, ctx) => parseElementName(res[2], start + 1, end, ctx))
-);
-
 FragmentParser.setParser(
   nodeParser(
     'Fragment',
-    p.apply(p.manyBetween(t.fragmentToken, ChildParser, t.elementCloseShortcut), ([_open, children]) =>
+    p.applyPipe([t.fragmentToken, p.many(ChildParser), t.elementCloseShortcut], ([_open, children]) =>
       nodeData(children, {})
     )
   )
@@ -324,7 +326,7 @@ FragmentParser.setParser(
 RawFragmentParser.setParser(
   nodeParser(
     'RawFragment',
-    p.apply(p.pipe(t.rawFragmentToken, t.rawTextContent, t.elementCloseShortcut), ([_open, content]) =>
+    p.applyPipe([t.rawFragmentToken, t.rawTextContent, t.elementCloseShortcut], ([_open, content]) =>
       nodeData({}, { content })
     )
   )
@@ -335,8 +337,8 @@ AttributesParser.setParser(p.many(AttributeParser));
 AttributeParser.setParser(
   nodeParser(
     'Attribute',
-    p.apply(
-      p.pipe(WhitespaceLikeParser, IdentifierParser, p.maybe(p.pipe(t.equal, ExpressionParser))),
+    p.applyPipe(
+      [WhitespaceLikeParser, IdentifierParser, p.maybe(p.pipe(t.equal, ExpressionParser))],
       ([whitespaceBefore, name, val]) => nodeData({ whitespaceBefore, name, value: val ? val[1] : undefined }, {})
     )
   )
@@ -374,7 +376,7 @@ AnyCommentParser.setParser(p.oneOf(LineCommentParser, BlockCommentParser));
 LineCommentParser.setParser(
   nodeParser(
     'LineComment',
-    p.apply(p.pipe(t.lineCommentStart, p.maybe(t.lineCommentContent)), ([_start, content]) =>
+    p.applyPipe([t.lineCommentStart, p.maybe(t.lineCommentContent)], ([_start, content]) =>
       nodeData({}, { content: content || '' })
     )
   )
@@ -383,7 +385,7 @@ LineCommentParser.setParser(
 BlockCommentParser.setParser(
   nodeParser(
     'BlockComment',
-    p.apply(p.pipe(t.blockCommentStart, p.maybe(t.blockCommentContent), t.blockCommentEnd), ([_start, content]) =>
+    p.applyPipe([t.blockCommentStart, p.maybe(t.blockCommentContent), t.blockCommentEnd], ([_start, content]) =>
       nodeData({}, { content: content || '' })
     )
   )
@@ -444,8 +446,8 @@ ObjOrArrParser.setParser(p.oneOf(ArrParser, ObjParser));
 ArrParser.setParser(
   nodeParser(
     'Arr',
-    p.apply(
-      p.pipe(t.squareBracketOpen, p.maybe(p.oneOf(ListItemsParser, WhitespaceLikeParser)), t.squareBracketClose),
+    p.applyPipe(
+      [t.squareBracketOpen, p.maybe(p.oneOf(ListItemsParser, WhitespaceLikeParser)), t.squareBracketClose],
       ([_open, items, _close]) => nodeData({ items }, {})
     )
   )
@@ -454,8 +456,8 @@ ArrParser.setParser(
 ListItemsParser.setParser(
   nodeParser(
     'ListItems',
-    p.apply(
-      p.pipe(p.manySepBy(ListItemParser, t.comma, { allowEmpty: false }), p.maybe(TrailingCommaParser)),
+    p.applyPipe(
+      [p.manySepBy(ListItemParser, t.comma, { allowEmpty: false }), p.maybe(TrailingCommaParser)],
       ([items, trailingComma]) => nodeData({ items: nonEmptyArray(flattenManySepBy(items)), trailingComma }, {})
     )
   )
@@ -464,8 +466,8 @@ ListItemsParser.setParser(
 ListItemParser.setParser(
   nodeParser(
     'ListItem',
-    p.apply(
-      p.pipe(p.maybe(WhitespaceLikeParser), ExpressionParser, p.maybe(WhitespaceLikeParser)),
+    p.applyPipe(
+      [p.maybe(WhitespaceLikeParser), ExpressionParser, p.maybe(WhitespaceLikeParser)],
       ([whitespaceBefore, item, whitespaceAfter]) => nodeData({ whitespaceBefore, item, whitespaceAfter }, {})
     )
   )
@@ -474,8 +476,8 @@ ListItemParser.setParser(
 ObjParser.setParser(
   nodeParser(
     'Obj',
-    p.apply(
-      p.pipe(t.curlyBracketOpen, p.maybe(p.oneOf(ObjItemsParser, WhitespaceLikeParser)), t.curlyBracketClose),
+    p.applyPipe(
+      [t.curlyBracketOpen, p.maybe(p.oneOf(ObjItemsParser, WhitespaceLikeParser)), t.curlyBracketClose],
       ([_open, items, _close]) => {
         return nodeData({ items }, {});
       }
@@ -486,11 +488,8 @@ ObjParser.setParser(
 ObjItemsParser.setParser(
   nodeParser(
     'ObjItems',
-    p.apply(
-      p.pipe(
-        p.manySepBy(ObjItemParser, t.comma, { allowEmpty: false, allowTrailing: false }),
-        p.maybe(TrailingCommaParser)
-      ),
+    p.applyPipe(
+      [p.manySepBy(ObjItemParser, t.comma, { allowEmpty: false, allowTrailing: false }), p.maybe(TrailingCommaParser)],
       ([properties, trailingComma]) =>
         nodeData({ properties: nonEmptyArray(flattenManySepBy(properties)), trailingComma }, {})
     )
@@ -500,7 +499,7 @@ ObjItemsParser.setParser(
 TrailingCommaParser.setParser(
   nodeParser(
     'TrailingComma',
-    p.apply(p.pipe(t.comma, p.maybe(WhitespaceLikeParser)), ([_comma, whitespaceAfterComma]) =>
+    p.applyPipe([t.comma, p.maybe(WhitespaceLikeParser)], ([_comma, whitespaceAfterComma]) =>
       nodeData({}, { whitespaceAfterComma })
     )
   )
@@ -509,8 +508,8 @@ TrailingCommaParser.setParser(
 ObjItemParser.setParser(
   nodeParser(
     'ObjItem',
-    p.apply(
-      p.pipe(p.maybe(WhitespaceLikeParser), AnyObjPropertyParser, p.maybe(WhitespaceLikeParser)),
+    p.applyPipe(
+      [p.maybe(WhitespaceLikeParser), AnyObjPropertyParser, p.maybe(WhitespaceLikeParser)],
       ([whitespaceBefore, property, whitespaceAfter]) => nodeData({ whitespaceBefore, property, whitespaceAfter }, {})
     )
   )
@@ -523,14 +522,14 @@ AnyObjPropertyParser.setParser(
 ObjPropertyParser.setParser(
   nodeParser(
     'ObjProperty',
-    p.apply(
-      p.pipe(
+    p.applyPipe(
+      [
         p.oneOf(IdentifierParser, StrParser),
         p.maybe(WhitespaceLikeParser),
         t.colon,
         p.maybe(WhitespaceLikeParser),
-        ExpressionParser
-      ),
+        ExpressionParser,
+      ],
       ([name, whitespaceBeforeColon, _colon, whitespaceAfterColon, value]) =>
         nodeData({ name, value, whitespaceAfterColon, whitespaceBeforeColon }, {})
     )
@@ -540,8 +539,8 @@ ObjPropertyParser.setParser(
 ObjComputedPropertyParser.setParser(
   nodeParser(
     'ObjComputedProperty',
-    p.apply(
-      p.pipe(
+    p.applyPipe(
+      [
         t.squareBracketOpen,
         p.maybe(WhitespaceLikeParser),
         ExpressionParser,
@@ -550,8 +549,8 @@ ObjComputedPropertyParser.setParser(
         p.maybe(WhitespaceLikeParser),
         t.colon,
         p.maybe(WhitespaceLikeParser),
-        ExpressionParser
-      ),
+        ExpressionParser,
+      ],
       ([
         _openBracket,
         whitespaceBeforeExpression,
@@ -582,8 +581,8 @@ ObjComputedPropertyParser.setParser(
 ObjPropertyShorthandParser.setParser(
   nodeParser(
     'ObjPropertyShorthand',
-    p.apply(
-      p.pipe(p.maybe(WhitespaceLikeParser), IdentifierParser, p.maybe(WhitespaceLikeParser)),
+    p.applyPipe(
+      [p.maybe(WhitespaceLikeParser), IdentifierParser, p.maybe(WhitespaceLikeParser)],
       ([whitespaceBefore, name, whitespaceAfter]) => nodeData({ whitespaceBefore, name, whitespaceAfter }, {})
     )
   )
@@ -592,7 +591,7 @@ ObjPropertyShorthandParser.setParser(
 SpreadParser.setParser(
   nodeParser(
     'Spread',
-    p.apply(p.pipe(t.spreadOperator, ExpressionParser), ([_op, target]) => nodeData({ target }, {}))
+    p.applyPipe([t.spreadOperator, ExpressionParser], ([_op, target]) => nodeData({ target }, {}))
   )
 );
 
@@ -646,7 +645,7 @@ IdentifierParser.setParser(
 ParenthesisParser.setParser(
   nodeParser(
     'Parenthesis',
-    p.apply(p.pipe(t.parenthesisOpen, ExpressionParser, t.parenthesisClose), ([_open, value, _close]) =>
+    p.applyPipe([t.parenthesisOpen, ExpressionParser, t.parenthesisClose], ([_open, value, _close]) =>
       nodeData({ value }, {})
     )
   )
@@ -657,7 +656,7 @@ ChainableExpressionItemParser.setParser(
 );
 
 ChainableMemberExpressionParser.setParser(
-  p.apply(p.pipe(t.dot, IdentifierParser), ([_dot, indentifier], _start, end) => ({
+  p.applyPipe([t.dot, IdentifierParser], ([_dot, indentifier], _start, end) => ({
     type: 'ChainableMemberExpression',
     indentifier,
     end,
@@ -665,7 +664,7 @@ ChainableMemberExpressionParser.setParser(
 );
 
 ChainableComputedMemberExpressionParser.setParser(
-  p.apply(p.pipe(t.squareBracketOpen, ExpressionParser, t.squareBracketClose), ([_bracket, value], _start, end) => ({
+  p.applyPipe([t.squareBracketOpen, ExpressionParser, t.squareBracketClose], ([_bracket, value], _start, end) => ({
     type: 'ChainableComputedMemberExpression',
     value,
     end,
@@ -673,8 +672,8 @@ ChainableComputedMemberExpressionParser.setParser(
 );
 
 ChainableCallExpressionParser.setParser(
-  p.apply(
-    p.pipe(t.parenthesisOpen, p.maybe(p.oneOf(ListItemsParser, WhitespaceLikeParser)), t.parenthesisClose),
+  p.applyPipe(
+    [t.parenthesisOpen, p.maybe(p.oneOf(ListItemsParser, WhitespaceLikeParser)), t.parenthesisClose],
     ([_parenthesis, args], _start, end) => ({
       type: 'ChainableCallExpression',
       args: args,

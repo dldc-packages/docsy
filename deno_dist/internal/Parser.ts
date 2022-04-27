@@ -1,11 +1,12 @@
 import { StringReader } from './StringReader.ts';
 import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types.ts';
 import { DocsyError } from '../DocsyError.ts';
+import { LinkedList } from './LinkedList.ts';
 
 export function ParseFailure(
   pos: number,
-  path: Array<String>,
-  message: string,
+  path: LinkedList<string>,
+  message: () => string,
   child: ParseResultFailure | null = null
 ): ParseResultFailure {
   return {
@@ -59,7 +60,11 @@ class ResultTrackerImpl<T> implements ResultTracker<T> {
   get(): ParseResult<T> {
     if (this.selectedResult) {
       return {
-        ...this.selectedResult,
+        type: this.selectedResult.type,
+        value: this.selectedResult.value,
+        start: this.selectedResult.start,
+        end: this.selectedResult.end,
+        rest: this.selectedResult.rest,
         ifError: this.selectedError?.error ?? null,
       };
     }
@@ -77,7 +82,7 @@ class ResultTrackerImpl<T> implements ResultTracker<T> {
 }
 
 export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
-  return parser.parse([], input, [], ctx);
+  return parser.parse(LinkedList.create(), input, [], ctx);
 }
 
 export function expectEOF<T>(result: ParseResult<T>): ParseResult<T> {
@@ -103,10 +108,10 @@ export function failureToStack(failure: ParseResultFailure): Stack {
   const stack: Stack = [];
   let current = failure;
   while (current.child !== null) {
-    stack.unshift({ position: current.pos, name: current.path.join('.'), message: current.message });
+    stack.unshift({ position: current.pos, name: current.path.toArray().join('.'), message: current.message() });
     current = current.child;
   }
-  stack.unshift({ position: current.pos, name: current.path.join('.'), message: current.message });
+  stack.unshift({ position: current.pos, name: current.path.toArray().join('.'), message: current.message() });
   return stack;
 }
 

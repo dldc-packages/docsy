@@ -18,3 +18,4 @@ export type {
   StackItem,
   TraversePath,
 } from './internal/types';
+export const version = 'dev-3';

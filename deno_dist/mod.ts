@@ -18,3 +18,4 @@ export type {
   StackItem,
   TraversePath,
 } from './internal/types.ts';
+export const version = 'dev-3';

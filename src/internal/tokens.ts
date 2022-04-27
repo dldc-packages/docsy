@@ -37,9 +37,14 @@ export const elementCloseShortcut = exact('</>');
 export const colon = exact(':');
 export const spreadOperator = exact('...');
 export const equal = exact('=');
+export const lessThan = exact('<');
+export const elementCloseEnd = exact(`/>`);
+export const elementOpenStart = exact('<|');
+export const elementRawOpenStart = exact('<#');
+export const elementSelfClosingStart = exact('</');
+
 // export const rawElementTokenOpen = exact('<#');
 // export const rawElementTokenClose = exact('#>');
-// export const lessThan = exact('<');
 
 // Regexp based
 
@@ -78,32 +83,33 @@ const COMMENT_LINE_START = `${SLASH}${SLASH}`;
 const COMMENT_BLOCK_START = `${SLASH}${STAR}`;
 const ANY_ELEM = `${INJECT_START}|${ELEM_OPEN}|${RAW_ELEM_OPEN}|${LINE_ELEM_OPEN}|${FRAGMENT_OPEN}|${RAW_FRAGMENT_OPEN}|${SELF_CLOSING_ELEM_OPEN}|${ELEM_CLOSE}|${ELEM_SHORT_CLOSE}|${COMMENT_LINE_START}|${COMMENT_BLOCK_START}`;
 
-export const whitespace = simpleRegexp(`${WHITESPACE}+`, 'whitespace');
-export const lineWhitespace = simpleRegexp(`[ \t]+`, 'lineWhitespace');
-export const lineCommentContent = simpleRegexp(`.+`, 'lineCommentContent');
-export const blockCommentContent = simpleRegexp(`(${NEGATIVE_BLOCK_COMMENT_END}${ANYTHING})+`, 'blockCommentContent');
-export const number = simpleRegexp(`[+-]?(${NUM_VARIANT_1}|${NUM_VARIANT_2})`, 'number');
-export const singleQuoteStringContent = simpleRegexp(
+export const whitespace = regexp(`${WHITESPACE}+`, 'whitespace');
+export const elemName = regexp(`${ELEMENT_NAME}`, 'elemName');
+export const lineWhitespace = regexp(`[ \t]+`, 'lineWhitespace');
+export const lineCommentContent = regexp(`.+`, 'lineCommentContent');
+export const blockCommentContent = regexp(`(${NEGATIVE_BLOCK_COMMENT_END}${ANYTHING})+`, 'blockCommentContent');
+export const number = regexp(`[+-]?(${NUM_VARIANT_1}|${NUM_VARIANT_2})`, 'number');
+export const singleQuoteStringContent = regexp(
   `((${ESCAPE_SINGLE_QUOTE})|${NOT_SINGLE_QUOTE_END})+`,
   'singleQuoteStringContent'
 );
-export const doubleQuoteStringContent = simpleRegexp(
+export const doubleQuoteStringContent = regexp(
   `((${ESCAPE_DOUBLE_QUOTE})|${NOT_DOUBLE_QUOTE_END})+`,
   'doubleQuoteStringContent'
 );
-export const backtickStringContent = simpleRegexp(
+export const backtickStringContent = regexp(
   `((${ESCAPE_BACKTICK_QUOTE})|${NOT_BACKTICK_QUOTE_END})+`,
   'backtickStringContent'
 );
-export const identifier = simpleRegexp(IDENTIFIER, 'identifier');
-export const textContent = simpleRegexp(`${ANYTHING}*?(?=$|${ANY_ELEM})`, 'textContent');
-export const lineTextContent = simpleRegexp(`.*?(?=$|${NEW_LINE}|${ANY_ELEM})`, 'lineTextContent');
-export const rawTextContent = simpleRegexp(`${ANYTHING}*?(?=${ELEM_CLOSE}|${ELEM_SHORT_CLOSE})`, 'rawTextContent');
-export const elementOpenStart = regexp(ELEM_OPEN, 'elementOpenStart');
-export const elementClose = regexp(ELEM_CLOSE, 'elementClose');
-export const elementRawOpenStart = regexp(RAW_ELEM_OPEN, 'elementRawOpenStart');
-export const elementSelfClosingStart = regexp(SELF_CLOSING_ELEM_OPEN, 'elementSelfClosingStart');
-export const elementLineStart = regexp(LINE_ELEM_OPEN, 'elementLineStart');
+export const identifier = regexp(IDENTIFIER, 'identifier');
+export const textContent = regexp(`${ANYTHING}*?(?=$|${ANY_ELEM})`, 'textContent');
+export const lineTextContent = regexp(`.*?(?=$|${NEW_LINE}|${ANY_ELEM})`, 'lineTextContent');
+export const rawTextContent = regexp(`${ANYTHING}*?(?=${ELEM_CLOSE}|${ELEM_SHORT_CLOSE})`, 'rawTextContent');
+// export const elementOpenStart = regexp(ELEM_OPEN, 'elementOpenStart');
+// export const elementClose = regexp(ELEM_CLOSE, 'elementClose');
+// export const elementRawOpenStart = regexp(RAW_ELEM_OPEN, 'elementRawOpenStart');
+// export const elementSelfClosingStart = regexp(SELF_CLOSING_ELEM_OPEN, 'elementSelfClosingStart');
+// export const elementLineStart = regexp(LINE_ELEM_OPEN, 'elementLineStart');
 
 function exact<T extends string>(str: T): Parser<T, Ctx> {
   return p.exact<T, Ctx>(str);
@@ -111,8 +117,4 @@ function exact<T extends string>(str: T): Parser<T, Ctx> {
 
 function regexp(pattern: string, name?: string): p.RegexpParser<Ctx> {
   return p.regexp<Ctx>(new RegExp(`^${pattern}`, 'g'), name);
-}
-
-function simpleRegexp(pattern: string, name?: string): p.SimpleRegexpParser<Ctx> {
-  return p.simpleRegexp<Ctx>(new RegExp(`^${pattern}`, 'g'), name);
 }
