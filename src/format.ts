@@ -1,4 +1,4 @@
-import { Node, NodeIs, NodeKind } from './Ast';
+import { Node, NodeData, NodeIs, NodeKind } from './Ast';
 import * as t from './internal/tokens';
 
 export function format(node: Node): Node {
@@ -77,7 +77,7 @@ export function format(node: Node): Node {
     );
   }
 
-  function createNode<K extends NodeKind>(kind: K, children: Node<K>['children'], meta: Node<K>['meta']): Node<K> {
+  function createNode<K extends NodeKind>(kind: K, children: NodeData<K>['children'], meta: Node<K>['meta']): Node<K> {
     const node: Node<K> = {
       kind,
       children,

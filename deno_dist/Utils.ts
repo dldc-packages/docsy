@@ -10,12 +10,11 @@ export const Utils = {
   cloneAtPaths,
   transform,
   updateNodeMeta,
-  updateNodeChildren,
 };
 
 export type NodePath = Array<string | number>;
 export interface NodeWithPath {
-  node: Node;
+  node: Node | undefined | null;
   path: NodePath;
 }
 
@@ -23,13 +22,6 @@ function updateNodeMeta<T extends Node>(node: T, updater: (meta: T['meta']) => T
   return {
     ...node,
     meta: updater(node.meta),
-  };
-}
-
-function updateNodeChildren<T extends Node>(node: T, updater: (meta: T['children']) => T['children']): T {
-  return {
-    ...node,
-    children: updater(node.children),
   };
 }
 
@@ -51,8 +43,12 @@ function getChildren(children: NodeChildrenBase | null | undefined, path: NodePa
   }, []);
 }
 
-function getNodeChildren(item: Node): Array<NodeWithPath> {
-  return getChildren(item.children, ['children']);
+function getNodeChildren(node: Node): Array<NodeWithPath> {
+  const keys = Object.keys(node).filter((v) => v !== 'meta' && v !== 'kind');
+  return keys.reduce<Array<NodeWithPath>>((acc, key) => {
+    acc.push(...getChildren((node as any)[key], [key]));
+    return acc;
+  }, []);
 }
 
 /**
@@ -71,7 +67,9 @@ function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void |
       return;
     }
     getNodeChildren(item).forEach((child) => {
-      traverseInternal(child.node, [...path, ...child.path]);
+      if (child.node) {
+        traverseInternal(child.node, [...path, ...child.path]);
+      }
     });
   }
 }

@@ -1,26 +1,24 @@
 export type QuoteType = 'Single' | 'Double' | 'Backtick';
 
 export type NodeChildrenBase = null | Node | Array<Node> | { [key: string]: NodeChildrenBase };
+export type NodeChildrenRoot = { [key: string]: NodeChildrenBase };
 
 export type NodeMetaBase = { [key: string]: string | number | null | boolean };
 
-export interface CreateNodeData<Children extends NodeChildrenBase, Meta extends NodeMetaBase = {}> {
+export interface CreateNodeData<Children extends NodeChildrenRoot, Meta extends NodeMetaBase = {}> {
   children: Children;
   meta: Meta;
 }
 
-export interface NodeBase {
-  children: NodeChildrenBase;
-  meta: NodeMetaBase;
-}
+export type NodeDataBase = CreateNodeData<NodeChildrenRoot, NodeMetaBase>;
 
-type CreateNodes<Nodes extends { [key: string]: NodeBase }> = Nodes;
+type CreateNodes<Nodes extends { [key: string]: NodeDataBase }> = Nodes;
 
 // Is this anoying ?
 export type NonEmptyArray<T> = [T, ...T[]];
 
 export type Nodes = CreateNodes<{
-  Document: { children: Array<Child>; meta: {} };
+  Document: CreateNodeData<{ children: Array<Child> }>;
   ExpressionDocument: CreateNodeData<{ before?: WhitespaceLike; value?: Expression; after?: WhitespaceLike }>;
   Whitespace: CreateNodeData<{}, { content: string; hasNewLine: boolean }>;
   // Expression
@@ -123,7 +121,7 @@ export type Nodes = CreateNodes<{
   >;
 
   // Fragments
-  Fragment: { children: Array<Child>; meta: {} };
+  Fragment: CreateNodeData<{ children: Array<Child> }>;
   RawFragment: CreateNodeData<{}, { content: string }>;
 
   Text: CreateNodeData<{}, { content: string }>;
@@ -139,7 +137,7 @@ export type Nodes = CreateNodes<{
 
 export type NodeKind = keyof Nodes;
 
-export type Node<K extends NodeKind = NodeKind> = Nodes[K] & { kind: K };
+export type Node<K extends NodeKind = NodeKind> = Nodes[K]['children'] & { kind: K; meta: Nodes[K]['meta'] };
 
 export type NodeData<K extends NodeKind = NodeKind> = Nodes[K];
 

@@ -33,25 +33,25 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
     return result;
   },
   ExpressionDocument(item, options) {
-    if (item.children.value === undefined) {
+    if (item.value === undefined) {
       return undefined;
     }
-    return resolveNode(item.children.value, options);
+    return resolveNode(item.value, options);
   },
   Element(item, options) {
-    const props = resolveAttributes(item.children.attributes, options);
-    const children = resolveChildren(item.children.children, options);
-    const type = resolveElementName(item.children.name, options);
+    const props = resolveAttributes(item.attributes, options);
+    const children = resolveChildren(item.children, options);
+    const type = resolveElementName(item.name, options);
     return resolveJsx(options, type, { ...props, children });
   },
   SelfClosingElement(item, options) {
-    const props = resolveAttributes(item.children.attributes, options);
-    const type = resolveElementName(item.children.name, options);
+    const props = resolveAttributes(item.attributes, options);
+    const type = resolveElementName(item.name, options);
     return resolveJsx(options, type, { ...props });
   },
   RawElement(item, options) {
-    const props = resolveAttributes(item.children.attributes, options);
-    const type = resolveElementName(item.children.name, options);
+    const props = resolveAttributes(item.attributes, options);
+    const type = resolveElementName(item.name, options);
     return resolveJsx(options, type, { ...props, children: item.meta.content });
   },
   Text(item) {
@@ -77,42 +77,42 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
     return undefined;
   },
   MemberExpression(item, options) {
-    const target = resolveNode(item.children.target, options);
+    const target = resolveNode(item.target, options);
     if (target === undefined) {
       throw new DocsyError.MissingGlobalError(
-        item.children.target,
-        `Cannot access property "${serialize(item.children.property)}" of \`${serialize(item.children.target)}\``
+        item.target,
+        `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
       );
     }
     const keys = Object.keys(target);
-    if (keys.indexOf(item.children.property.meta.name) === -1) {
+    if (keys.indexOf(item.property.meta.name) === -1) {
       throw new DocsyError.MissingGlobalError(
-        item.children.target,
-        `Cannot access property "${serialize(item.children.property)}" of \`${serialize(item.children.target)}\``
+        item.target,
+        `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
       );
     }
-    return target[item.children.property.meta.name];
+    return target[item.property.meta.name];
   },
   ComputedMemberExpression(item, options) {
-    const target = resolveNode(item.children.target, options);
+    const target = resolveNode(item.target, options);
     if (target === undefined) {
       throw new DocsyError.MissingGlobalError(
-        item.children.target,
-        `Cannot access property "${serialize(item.children.property)}" of \`${serialize(item.children.target)}\``
+        item.target,
+        `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
       );
     }
-    const property = resolveNode(item.children.property, options);
+    const property = resolveNode(item.property, options);
     const keys = Object.keys(target);
     if (keys.indexOf(property) === -1) {
       throw new DocsyError.MissingGlobalError(
-        item.children.target,
-        `Cannot access property "${serialize(item.children.property)}" of \`${serialize(item.children.target)}\``
+        item.target,
+        `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
       );
     }
     return target[property];
   },
   Obj(item) {
-    const items = item.children.items;
+    const items = item.items;
     const obj: any = {};
     if (items === undefined) {
       return obj;
@@ -126,7 +126,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
     throw new DocsyError.CannotResolveNodeError(items, `resolver not implemented`);
   },
   Arr(item) {
-    const items = item.children.items;
+    const items = item.items;
     const arr: Array<any> = [];
     if (items === undefined) {
       return arr;
@@ -143,15 +143,15 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
     return item.meta.content;
   },
   Inject(item, options) {
-    const content = resolveNode(item.children.value, options);
+    const content = resolveNode(item.value, options);
     if (typeof content !== 'string') {
       // Should we .toString() and allow any value here ?
-      throw new DocsyError.CannotResolveInjectError(item.children.value);
+      throw new DocsyError.CannotResolveInjectError(item.value);
     }
     return (
-      resolveWhitespaceLikeToString(item.children.whitespaceBefore) +
+      resolveWhitespaceLikeToString(item.whitespaceBefore) +
       content +
-      resolveWhitespaceLikeToString(item.children.whitespaceAfter)
+      resolveWhitespaceLikeToString(item.whitespaceAfter)
     );
   },
   ListItems() {
@@ -210,7 +210,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
   },
 };
 
-export function resolveNode(item: Ast.Node, options: ResolveOptions): any {
+export function resolveNode(item: Ast.Node, options: ResolveOptions = {}): any {
   const resolver: Resolver<Ast.Node> = NODE_RESOLVERS[item.kind] as any;
   if (resolver === undefined) {
     throw new DocsyError.CannotResolveNodeError(item, `Invalid node kind: ${item.kind}`);
@@ -220,29 +220,11 @@ export function resolveNode(item: Ast.Node, options: ResolveOptions): any {
   throw new DocsyError.CannotResolveNodeError(item, `resolver not implemented`);
 }
 
-function resolveWhitespaceLikeToString(item: Ast.WhitespaceLike | undefined): string {
-  if (item === undefined) {
-    return '';
-  }
-  const items = Array.isArray(item) ? item : [item];
-  return items
-    .map((node) => {
-      if (Ast.NodeIs.Whitespace(node)) {
-        return node.meta.content;
-      }
-      if (Ast.NodeIs.AnyComment(node)) {
-        return '';
-      }
-      throw new DocsyError.CannotResolveNodeError(node, `resolver not implemented`);
-    })
-    .join('');
-}
-
 /**
  * Join consecutive whitespace / text
  * Return resolved array / single item / undefined
  */
-export function resolveChildren(items: Array<Ast.Child>, options: ResolveOptions): Array<any> | any | undefined {
+export function resolveChildren(items: Array<Ast.Child>, options: ResolveOptions = {}): Array<any> | any | undefined {
   const result: Array<any> = [];
   items.forEach((child) => {
     const next = resolveNode(child, options);
@@ -262,66 +244,37 @@ export function resolveChildren(items: Array<Ast.Child>, options: ResolveOptions
   return result;
 }
 
-export function resolveAttributes(attrs: Array<Ast.Attribute>, options: ResolveOptions): any {
+export function resolveAttributes(attrs: Array<Ast.Attribute>, options: ResolveOptions = {}): any {
   const obj: any = {};
   attrs.forEach((attr) => {
-    const key: string = attr.children.name.meta.name;
-    if (attr.children.value === undefined) {
+    const key: string = attr.name.meta.name;
+    if (attr.value === undefined) {
       obj[key] = true;
     } else {
-      obj[key] = resolveNode(attr.children.value, options);
+      obj[key] = resolveNode(attr.value, options);
     }
     return;
   });
   return obj;
 }
 
-// function resolveObject(items: Ast.ObjItems | Ast.WhitespaceLike | undefined): any {
-
-//   // items.forEach((propItem) => {
-//   //   if (Ast.NodeIs.ObjItems(propItem)) {
-//   //     // ignore non object items
-//   //     return;
-//   //   }
-//   //   const prop = propItem.children.item;
-//   //   if (Ast.NodeIs.Spread(prop)) {
-//   //     const value = resolveNode(prop.children.target);
-//   //     obj = {
-//   //       ...obj,
-//   //       ...value,
-//   //     };
-//   //     return;
-//   //   }
-//   //   if (Ast.NodeIs.ObjProperty(prop)) {
-//   //     const value = resolveNode(prop.children.value);
-//   //     if (Ast.NodeIs.Identifier(prop.children.name)) {
-//   //       obj[prop.children.name.meta.name] = value;
-//   //       return;
-//   //     }
-//   //     if (Ast.NodeIs.Str(prop.children.name)) {
-//   //       obj[prop.children.name.meta.value] = value;
-//   //       return;
-//   //     }
-//   //     return;
-//   //   }
-//   //   if (Ast.NodeIs.ObjComputedProperty(prop)) {
-//   //     const key = resolveNode(prop.children.expression);
-//   //     const value = resolveNode(prop.children.value);
-//   //     obj[key] = value;
-//   //     return;
-//   //   }
-//   //   if (Ast.NodeIs.ObjPropertyShorthand(prop)) {
-//   //     const key = prop.children.name.meta.name;
-//   //     const value = resolveNode(prop.children.name);
-//   //     obj[key] = value;
-//   //     return;
-//   //   }
-//   //   throw new DocsyError.CannotResolveNodeError(prop, `resolver not implemented`);
-//   // });
-//   // return obj;
-// }
-
-// -- Utils
+function resolveWhitespaceLikeToString(item: Ast.WhitespaceLike | undefined): string {
+  if (item === undefined) {
+    return '';
+  }
+  const items = Array.isArray(item) ? item : [item];
+  return items
+    .map((node) => {
+      if (Ast.NodeIs.Whitespace(node)) {
+        return node.meta.content;
+      }
+      if (Ast.NodeIs.AnyComment(node)) {
+        return '';
+      }
+      throw new DocsyError.CannotResolveNodeError(node, `resolver not implemented`);
+    })
+    .join('');
+}
 
 function resolveJsx(options: ResolveOptions, type: string, props: any): any {
   const { jsx } = options;

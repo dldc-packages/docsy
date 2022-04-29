@@ -142,7 +142,7 @@ ExpressionDocumentParser.setParser(
 DocumentParser.setParser(
   nodeParser(
     'Document',
-    p.applyPipe([p.many(ChildParser), t.eof], ([children]) => nodeData(children, {}))
+    p.applyPipe([p.many(ChildParser), t.eof], ([children]) => nodeData({ children }, {}))
   )
 );
 
@@ -196,84 +196,78 @@ AnyElementParser.setParser(
 );
 
 ElementParser.setParser(
-  nodeParser(
-    'Element',
-    p.transformSuccess(
-      p.pipe(
-        t.elementOpenStart,
-        ElementNameParser,
-        AttributesParser,
-        p.maybe(WhitespaceLikeParser),
-        t.greaterThan,
-        p.many(ChildParser),
-        p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd))
-      ),
-      (result, path, ctx) => {
-        const [_begin, elementName, attributes, whitespaceAfterAttributes, _end, children, close] = result.value;
-        const closeName = typeof close === 'string' ? null : close[1];
-        if (closeName) {
-          if (!sameComponent(elementName, closeName)) {
-            const closeRange = ctx.ranges.get(closeName);
-            return ParseFailure(closeRange?.end ?? 0, path, () => `Invalid close tag: wrong component`);
-          }
+  p.transformSuccess(
+    p.pipe(
+      t.elementOpenStart,
+      ElementNameParser,
+      AttributesParser,
+      p.maybe(WhitespaceLikeParser),
+      t.greaterThan,
+      p.many(ChildParser),
+      p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd))
+    ),
+    (result, path, ctx): ParseResult<Ast.Element> => {
+      const [_begin, elementName, attributes, whitespaceAfterAttributes, _end, children, close] = result.value;
+      const closeName = typeof close === 'string' ? null : close[1];
+      if (closeName) {
+        if (!sameComponent(elementName, closeName)) {
+          const closeRange = ctx.ranges.get(closeName);
+          return ParseFailure(closeRange?.end ?? 0, path, () => `Invalid close tag: wrong component`);
         }
-        const node = ctx.createNode(
-          'Element',
-          result.start,
-          result.end,
-          { children, attributes, name: elementName, whitespaceAfterAttributes },
-          { namedCloseTag: closeName !== null }
-        );
-        return {
-          ...result,
-          value: node,
-        };
       }
-    )
+      const node = ctx.createNode(
+        'Element',
+        result.start,
+        result.end,
+        { children, attributes, name: elementName, whitespaceAfterAttributes },
+        { namedCloseTag: closeName !== null }
+      );
+      return {
+        ...result,
+        value: node,
+      };
+    }
   )
 );
 
 ElementNameParser.setParser(p.apply(t.elemName, (res, start, end, ctx) => parseElementName(res, start, end, ctx)));
 
 RawElementParser.setParser(
-  nodeParser(
-    'RawElement',
-    p.transformSuccess(
-      p.pipe(
-        t.elementRawOpenStart,
-        ElementNameParser,
-        AttributesParser,
-        p.maybe(WhitespaceLikeParser),
-        t.greaterThan,
-        t.rawTextContent,
-        p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd))
-      ),
-      (result, path, ctx) => {
-        const [_begin, elementName, attributes, whitespaceAfterAttributes, _end, content, close] = result.value;
-        const closeName = typeof close === 'string' ? null : close[1];
-        if (closeName) {
-          if (!sameComponent(elementName, closeName)) {
-            const closeRange = ctx.ranges.get(closeName);
-            return ParseFailure(closeRange?.end ?? 0, path, () => `Invalid close tag: wrong component`);
-          }
+  p.transformSuccess(
+    p.pipe(
+      t.elementRawOpenStart,
+      ElementNameParser,
+      AttributesParser,
+      p.maybe(WhitespaceLikeParser),
+      t.greaterThan,
+      t.rawTextContent,
+      p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd))
+    ),
+    (result, path, ctx): ParseResult<Ast.RawElement> => {
+      const [_begin, elementName, attributes, whitespaceAfterAttributes, _end, content, close] = result.value;
+      const closeName = typeof close === 'string' ? null : close[1];
+      if (closeName) {
+        if (!sameComponent(elementName, closeName)) {
+          const closeRange = ctx.ranges.get(closeName);
+          return ParseFailure(closeRange?.end ?? 0, path, () => `Invalid close tag: wrong component`);
         }
-        const node = ctx.createNode(
-          'RawElement',
-          result.start,
-          result.end,
-          { attributes, name: elementName, whitespaceAfterAttributes },
-          { namedCloseTag: closeName !== null, content }
-        );
-        return {
-          type: result.type,
-          start: result.start,
-          end: result.end,
-          rest: result.rest,
-          ifError: result.ifError,
-          value: node,
-        };
       }
-    )
+      const node = ctx.createNode(
+        'RawElement',
+        result.start,
+        result.end,
+        { attributes, name: elementName, whitespaceAfterAttributes },
+        { namedCloseTag: closeName !== null, content }
+      );
+      return {
+        type: result.type,
+        start: result.start,
+        end: result.end,
+        rest: result.rest,
+        ifError: result.ifError,
+        value: node,
+      };
+    }
   )
 );
 
@@ -318,7 +312,7 @@ FragmentParser.setParser(
   nodeParser(
     'Fragment',
     p.applyPipe([t.fragmentToken, p.many(ChildParser), t.elementCloseShortcut], ([_open, children]) =>
-      nodeData(children, {})
+      nodeData({ children }, {})
     )
   )
 );
@@ -692,10 +686,7 @@ function sameComponent(left: Ast.ElementName, right: Ast.ElementName): boolean {
     return true;
   }
   if (Ast.NodeIs.ElementNameMember(left) && Ast.NodeIs.ElementNameMember(right)) {
-    return (
-      sameComponent(left.children.target, right.children.target) &&
-      sameComponent(left.children.property, right.children.property)
-    );
+    return sameComponent(left.target, right.target) && sameComponent(left.property, right.property);
   }
   return false;
 }

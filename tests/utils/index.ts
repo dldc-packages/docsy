@@ -1,6 +1,7 @@
 import fse from 'fs-extra';
 import path from 'path';
 import * as Ast from '../../src/Ast';
+import { Utils } from '../../src/Utils';
 
 export function readFile(name: string): string {
   const testFileFolder = path.resolve(process.cwd(), 'tests/files');
@@ -16,26 +17,6 @@ function indent(content: string): string {
     .join('\n');
 }
 
-function debugNodeChildren(children: Ast.NodeChildrenBase): string {
-  if (children === null) {
-    return 'null';
-  }
-  if (Array.isArray(children)) {
-    if (children.length === 0) {
-      return '[]';
-    }
-    return children.map((child, index) => `${index}: ${debugNodeChildren(child)}`).join('\n');
-  }
-  if (children.kind) {
-    return debugNode(children as any);
-  }
-  const entries = Object.entries(children);
-  if (entries.length === 0) {
-    return '{}';
-  }
-  return entries.map(([name, child]) => `${name}: ${debugNodeChildren(child)}`).join('\n');
-}
-
 export function debugNode(node: Ast.Node | Array<Ast.Node>): string {
   if (Array.isArray(node)) {
     return node.map((child) => debugNode(child)).join('\n\n');
@@ -47,25 +28,17 @@ export function debugNode(node: Ast.Node | Array<Ast.Node>): string {
       nodeHeader += `(${metas.map(([name, value]) => `${name}: ${value}`).join(', ')})`;
     }
   }
-  if (!node.children) {
-    return nodeHeader;
-  }
-  if (Array.isArray(node.children)) {
-    if (node.children.length === 0) {
-      return [nodeHeader, `children: []`].join('\n');
-    }
-    return [nodeHeader, ...node.children.map((node) => indent(debugNode(node)))].join('\n');
-  }
-  const children = Object.entries(node.children);
+  const children = Utils.getNodeChildren(node);
   if (children.length === 0) {
     return nodeHeader;
   }
   return [
     nodeHeader,
     ...children
-      .map(([name, child]) => {
+      .map(({ node: child, path }) => {
+        const name = path.join('.');
         if (child) {
-          const childText = debugNodeChildren(child);
+          const childText = debugNode(child);
           if (childText.split('\n').length > 1) {
             return `${name}:\n${childText}`;
           }

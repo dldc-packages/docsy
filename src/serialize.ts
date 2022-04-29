@@ -16,11 +16,7 @@ export function serialize(node: Ast.Node): string {
       return serializeChildren(item.children);
     }
     if (Ast.NodeIs.ExpressionDocument(item)) {
-      return (
-        serializeWhitespaceLike(item.children.before) +
-        serializeInternal(item.children.value) +
-        serializeWhitespaceLike(item.children.after)
-      );
+      return serializeWhitespaceLike(item.before) + serializeInternal(item.value) + serializeWhitespaceLike(item.after);
     }
     if (Ast.NodeIs.Whitespace(item)) {
       return item.meta.content;
@@ -39,19 +35,19 @@ export function serialize(node: Ast.Node): string {
     }
     if (Ast.NodeIs.ListItems(item)) {
       return (
-        item.children.items.map((item) => serializeInternal(item)).join(',') +
-        (item.children.trailingComma ? serializeInternal(item.children.trailingComma) : '')
+        item.items.map((item) => serializeInternal(item)).join(',') +
+        (item.trailingComma ? serializeInternal(item.trailingComma) : '')
       );
     }
     if (Ast.NodeIs.ListItem(item)) {
       return (
-        serializeWhitespaceLike(item.children.whitespaceBefore) +
-        serializeInternal(item.children.item) +
-        serializeWhitespaceLike(item.children.whitespaceAfter)
+        serializeWhitespaceLike(item.whitespaceBefore) +
+        serializeInternal(item.item) +
+        serializeWhitespaceLike(item.whitespaceAfter)
       );
     }
     if (Ast.NodeIs.TrailingComma(item)) {
-      return `,${serializeWhitespaceLike(item.children.whitespaceAfter)}`;
+      return `,${serializeWhitespaceLike(item.whitespaceAfter)}`;
     }
     if (Ast.NodeIs.Bool(item)) {
       return item.meta.value ? 'true' : 'false';
@@ -63,16 +59,16 @@ export function serialize(node: Ast.Node): string {
       return `null`;
     }
     if (Ast.NodeIs.MemberExpression(item)) {
-      return serializeInternal(item.children.target) + '.' + serializeInternal(item.children.property);
+      return serializeInternal(item.target) + '.' + serializeInternal(item.property);
     }
     if (Ast.NodeIs.ComputedMemberExpression(item)) {
-      return serializeInternal(item.children.target) + `[${serializeInternal(item.children.property)}]`;
+      return serializeInternal(item.target) + `[${serializeInternal(item.property)}]`;
     }
     if (Ast.NodeIs.CallExpression(item)) {
-      return serializeInternal(item.children.target) + `(${serializeInternal(item.children.arguments)})`;
+      return serializeInternal(item.target) + `(${serializeInternal(item.arguments)})`;
     }
     if (Ast.NodeIs.ElementNameMember(item)) {
-      return serializeInternal(item.children.target) + '.' + serializeInternal(item.children.property);
+      return serializeInternal(item.target) + '.' + serializeInternal(item.property);
     }
     if (Ast.NodeIs.AnyComment(item)) {
       return serializeChild(item);
@@ -81,25 +77,25 @@ export function serialize(node: Ast.Node): string {
   }
 
   function serializeElement(elem: Ast.Element): string {
-    const childrenStr = serializeChildren(elem.children.children);
+    const childrenStr = serializeChildren(elem.children);
     return [
       `<|`,
-      serializeInternal(elem.children.name),
-      serializeAttributes(elem.children.attributes),
-      serializeInternal(elem.children.whitespaceAfterAttributes),
+      serializeInternal(elem.name),
+      serializeAttributes(elem.attributes),
+      serializeInternal(elem.whitespaceAfterAttributes),
       '>',
       childrenStr,
-      elem.meta.namedCloseTag ? `<${serializeInternal(elem.children.name)}/>` : `</>`,
+      elem.meta.namedCloseTag ? `<${serializeInternal(elem.name)}/>` : `</>`,
     ].join('');
   }
 
   function serializeLineElement(elem: Ast.LineElement): string {
-    const childrenStr = serializeChildren(elem.children.children);
+    const childrenStr = serializeChildren(elem.children);
     return [
       `<`,
-      serializeInternal(elem.children.name),
-      serializeAttributes(elem.children.attributes),
-      serializeInternal(elem.children.whitespaceAfterAttributes),
+      serializeInternal(elem.name),
+      serializeAttributes(elem.attributes),
+      serializeInternal(elem.whitespaceAfterAttributes),
       '>',
       childrenStr,
     ].join('');
@@ -108,27 +104,27 @@ export function serialize(node: Ast.Node): string {
   function serializeRawElement(elem: Ast.RawElement): string {
     return [
       `<#`,
-      serializeInternal(elem.children.name),
-      serializeAttributes(elem.children.attributes),
-      serializeInternal(elem.children.whitespaceAfterAttributes),
+      serializeInternal(elem.name),
+      serializeAttributes(elem.attributes),
+      serializeInternal(elem.whitespaceAfterAttributes),
       '>',
       elem.meta.content,
-      elem.meta.namedCloseTag ? `<${serializeInternal(elem.children.name)}/>` : `</>`,
+      elem.meta.namedCloseTag ? `<${serializeInternal(elem.name)}/>` : `</>`,
     ].join('');
   }
 
   function serializeSelfClosingElement(elem: Ast.SelfClosingElement): string {
     return [
       `</`,
-      serializeInternal(elem.children.name),
-      serializeAttributes(elem.children.attributes),
-      serializeInternal(elem.children.whitespaceAfterAttributes),
+      serializeInternal(elem.name),
+      serializeAttributes(elem.attributes),
+      serializeInternal(elem.whitespaceAfterAttributes),
       '/>',
     ].join('');
   }
 
   function serializeObj(item: Ast.Obj): string {
-    return `{` + serializeObjItems(item.children.items) + `}`;
+    return `{` + serializeObjItems(item.items) + `}`;
   }
 
   function serializeObjItems(item: Ast.ObjItems | Ast.WhitespaceLike | undefined): string {
@@ -139,10 +135,10 @@ export function serialize(node: Ast.Node): string {
       return serializeWhitespaceLike(item);
     }
     if (Ast.NodeIs.ObjItems(item)) {
-      item.children.properties;
+      item.properties;
       return (
-        item.children.properties.map((item) => serializeObjItem(item)).join(',') +
-        (item.children.trailingComma ? serializeInternal(item.children.trailingComma) : '')
+        item.properties.map((item) => serializeObjItem(item)).join(',') +
+        (item.trailingComma ? serializeInternal(item.trailingComma) : '')
       );
     }
     return serializeWhitespaceLike(item);
@@ -150,50 +146,50 @@ export function serialize(node: Ast.Node): string {
 
   function serializeObjItem(item: Ast.ObjItem): string {
     return [
-      serializeWhitespaceLike(item.children.whitespaceBefore),
-      serializeAnyObjProperty(item.children.property),
-      serializeWhitespaceLike(item.children.whitespaceAfter),
+      serializeWhitespaceLike(item.whitespaceBefore),
+      serializeAnyObjProperty(item.property),
+      serializeWhitespaceLike(item.whitespaceAfter),
     ].join('');
   }
 
   function serializeAnyObjProperty(prop: Ast.AnyObjProperty): string {
     if (Ast.NodeIs.ObjProperty(prop)) {
       return [
-        serializeInternal(prop.children.name),
-        serializeWhitespaceLike(prop.children.whitespaceBeforeColon),
+        serializeInternal(prop.name),
+        serializeWhitespaceLike(prop.whitespaceBeforeColon),
         ':',
-        serializeWhitespaceLike(prop.children.whitespaceAfterColon),
-        serializeInternal(prop.children.value),
+        serializeWhitespaceLike(prop.whitespaceAfterColon),
+        serializeInternal(prop.value),
       ].join('');
     }
     if (Ast.NodeIs.ObjComputedProperty(prop)) {
       return [
         '[',
-        serializeWhitespaceLike(prop.children.whitespaceBeforeExpression),
-        serializeInternal(prop.children.expression),
-        serializeWhitespaceLike(prop.children.whitespaceAfterExpression),
+        serializeWhitespaceLike(prop.whitespaceBeforeExpression),
+        serializeInternal(prop.expression),
+        serializeWhitespaceLike(prop.whitespaceAfterExpression),
         ']',
-        serializeWhitespaceLike(prop.children.whitespaceBeforeColon),
+        serializeWhitespaceLike(prop.whitespaceBeforeColon),
         ':',
-        serializeWhitespaceLike(prop.children.whitespaceAfterColon),
-        serializeInternal(prop.children.value),
+        serializeWhitespaceLike(prop.whitespaceAfterColon),
+        serializeInternal(prop.value),
       ].join('');
     }
     if (Ast.NodeIs.ObjPropertyShorthand(prop)) {
       return [
-        serializeWhitespaceLike(prop.children.whitespaceBefore),
-        serializeInternal(prop.children.name),
-        serializeWhitespaceLike(prop.children.whitespaceAfter),
+        serializeWhitespaceLike(prop.whitespaceBefore),
+        serializeInternal(prop.name),
+        serializeWhitespaceLike(prop.whitespaceAfter),
       ].join('');
     }
     if (Ast.NodeIs.Spread(prop)) {
-      return `...${serializeInternal(prop.children.target)}`;
+      return `...${serializeInternal(prop.target)}`;
     }
     throw new DocsyError.CannotSerializeNodeError(prop, `Invalid property`);
   }
 
   function serializeArr(item: Ast.Arr): string {
-    return `[` + serializeInternal(item.children.items) + `]`;
+    return `[` + serializeInternal(item.items) + `]`;
   }
 
   // function serializeListItems(items: Array<Ast.ListItem> | Ast.Whitespace | undefined): string {
@@ -280,9 +276,9 @@ export function serialize(node: Ast.Node): string {
     if (Ast.NodeIs.Inject(item)) {
       return (
         '{' +
-        serializeInternal(item.children.whitespaceBefore) +
-        serializeInternal(item.children.value) +
-        serializeInternal(item.children.whitespaceAfter) +
+        serializeInternal(item.whitespaceBefore) +
+        serializeInternal(item.value) +
+        serializeInternal(item.whitespaceAfter) +
         '}'
       );
     }
@@ -325,12 +321,11 @@ export function serialize(node: Ast.Node): string {
   }
 
   function serializeAttribute(attr: Ast.Attribute): string {
-    if (attr.children.value === undefined) {
-      return serializeInternal(attr.children.whitespaceBefore) + serializeInternal(attr.children.name);
+    if (attr.value === undefined) {
+      return serializeInternal(attr.whitespaceBefore) + serializeInternal(attr.name);
     }
     return (
-      serializeInternal(attr.children.whitespaceBefore) +
-      `${serializeInternal(attr.children.name)}=${serializeInternal(attr.children.value)}`
+      serializeInternal(attr.whitespaceBefore) + `${serializeInternal(attr.name)}=${serializeInternal(attr.value)}`
     );
   }
 }
