@@ -189,7 +189,6 @@ test(`Parse Line element eof`, () => {
   const file = `<Demo> Hello`;
   expect(() => parseDocument(file)).not.toThrow();
   const result = parseDocument(file).document as any;
-  console.log(debugNode(result.children));
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('LineElement');
 });
