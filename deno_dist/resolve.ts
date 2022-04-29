@@ -1,27 +1,28 @@
 import { DocsyError } from './DocsyError.ts';
 import * as Ast from './Ast.ts';
 import { serialize } from './serialize.ts';
+import { isReadonlyArray } from './internal/utils.ts';
+import { ParserResultBase } from './ParserResult.ts';
 
-export type ResolveValues = {
-  [key: string]: any;
-};
-
-export type ResolveNext = {
-  current: (item: Ast.Node) => any;
-  node: (item: Ast.Node) => any;
-  array: (items: Array<Ast.Node>) => Array<any>;
-};
-
-export type ResolveHook = (item: Ast.Node, next: ResolveNext) => any;
-
-type ResolveOptions = {
+export type ResolveOptions = {
+  file?: ParserResultBase;
   jsx?: (type: string, props: any, key?: string | number) => any;
   globals?: any;
 };
 
-type Resolver<N extends Ast.Node> = (item: N, options: ResolveOptions) => any;
+export function resolve(item: Ast.Node, options: ResolveOptions = {}): any {
+  return resolveNode(item, options);
+}
 
-const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
+function resolveNode(item: Ast.Node, options: ResolveOptions): any {
+  const resolver = NODE_RESOLVERS[item.kind] as any;
+  if (resolver === undefined) {
+    throw new DocsyError.CannotResolveNode(options.file, item, `Invalid node kind: ${item.kind}`);
+  }
+  return resolver(item, options);
+}
+
+const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ResolveOptions) => any } = {
   Document(item, options) {
     const result = resolveChildren(item.children, options);
     if (result.length === 0) {
@@ -42,17 +43,17 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
     const props = resolveAttributes(item.attributes, options);
     const children = resolveChildren(item.children, options);
     const type = resolveElementName(item.name, options);
-    return resolveJsx(options, type, { ...props, children });
+    return resolveJsx(item, options, type, { ...props, children });
   },
   SelfClosingElement(item, options) {
     const props = resolveAttributes(item.attributes, options);
     const type = resolveElementName(item.name, options);
-    return resolveJsx(options, type, { ...props });
+    return resolveJsx(item, options, type, { ...props });
   },
   RawElement(item, options) {
     const props = resolveAttributes(item.attributes, options);
     const type = resolveElementName(item.name, options);
-    return resolveJsx(options, type, { ...props, children: item.meta.content });
+    return resolveJsx(item, options, type, { ...props, children: item.meta.content });
   },
   Text(item) {
     return item.meta.content;
@@ -79,14 +80,16 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
   MemberExpression(item, options) {
     const target = resolveNode(item.target, options);
     if (target === undefined) {
-      throw new DocsyError.MissingGlobalError(
+      throw new DocsyError.MissingGlobal(
+        options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
       );
     }
     const keys = Object.keys(target);
     if (keys.indexOf(item.property.meta.name) === -1) {
-      throw new DocsyError.MissingGlobalError(
+      throw new DocsyError.MissingGlobal(
+        options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
       );
@@ -96,7 +99,8 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
   ComputedMemberExpression(item, options) {
     const target = resolveNode(item.target, options);
     if (target === undefined) {
-      throw new DocsyError.MissingGlobalError(
+      throw new DocsyError.MissingGlobal(
+        options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
       );
@@ -104,40 +108,41 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
     const property = resolveNode(item.property, options);
     const keys = Object.keys(target);
     if (keys.indexOf(property) === -1) {
-      throw new DocsyError.MissingGlobalError(
+      throw new DocsyError.MissingGlobal(
+        options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of \`${serialize(item.target)}\``
       );
     }
     return target[property];
   },
-  Obj(item) {
+  Obj(item, options) {
     const items = item.items;
     const obj: any = {};
     if (items === undefined) {
       return obj;
     }
-    if (Array.isArray(items)) {
+    if (isReadonlyArray(items)) {
       return obj;
     }
     if (!Ast.NodeIs.ObjItems(items)) {
       return obj;
     }
-    throw new DocsyError.CannotResolveNodeError(items, `resolver not implemented`);
+    throw new DocsyError.CannotResolveNode(options.file, items, `resolver not implemented`);
   },
-  Arr(item) {
+  Arr(item, options) {
     const items = item.items;
     const arr: Array<any> = [];
     if (items === undefined) {
       return arr;
     }
-    if (Array.isArray(items)) {
+    if (isReadonlyArray(items)) {
       return arr;
     }
     if (!Ast.NodeIs.ListItems(items)) {
       return arr;
     }
-    throw new DocsyError.CannotResolveNodeError(items, `resolver not implemented`);
+    throw new DocsyError.CannotResolveNode(options.file, items, `resolver not implemented`);
   },
   Whitespace(item) {
     return item.meta.content;
@@ -146,7 +151,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
     const content = resolveNode(item.value, options);
     if (typeof content !== 'string') {
       // Should we .toString() and allow any value here ?
-      throw new DocsyError.CannotResolveInjectError(item.value);
+      throw new DocsyError.CannotResolveInject(options.file, item.value);
     }
     return (
       resolveWhitespaceLikeToString(item.whitespaceBefore) +
@@ -210,21 +215,16 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: Resolver<Ast.Node<K>> } = {
   },
 };
 
-export function resolveNode(item: Ast.Node, options: ResolveOptions = {}): any {
-  const resolver: Resolver<Ast.Node> = NODE_RESOLVERS[item.kind] as any;
-  if (resolver === undefined) {
-    throw new DocsyError.CannotResolveNodeError(item, `Invalid node kind: ${item.kind}`);
-  }
-  return resolver(item, options);
-
-  throw new DocsyError.CannotResolveNodeError(item, `resolver not implemented`);
-}
+// -- Utils
 
 /**
  * Join consecutive whitespace / text
  * Return resolved array / single item / undefined
  */
-export function resolveChildren(items: Array<Ast.Child>, options: ResolveOptions = {}): Array<any> | any | undefined {
+export function resolveChildren(
+  items: ReadonlyArray<Ast.Child>,
+  options: ResolveOptions = {}
+): Array<any> | any | undefined {
   const result: Array<any> = [];
   items.forEach((child) => {
     const next = resolveNode(child, options);
@@ -244,7 +244,7 @@ export function resolveChildren(items: Array<Ast.Child>, options: ResolveOptions
   return result;
 }
 
-export function resolveAttributes(attrs: Array<Ast.Attribute>, options: ResolveOptions = {}): any {
+export function resolveAttributes(attrs: ReadonlyArray<Ast.Attribute>, options: ResolveOptions = {}): any {
   const obj: any = {};
   attrs.forEach((attr) => {
     const key: string = attr.name.meta.name;
@@ -258,7 +258,7 @@ export function resolveAttributes(attrs: Array<Ast.Attribute>, options: ResolveO
   return obj;
 }
 
-function resolveWhitespaceLikeToString(item: Ast.WhitespaceLike | undefined): string {
+function resolveWhitespaceLikeToString(item: Ast.WhitespaceLike | undefined, options: ResolveOptions = {}): string {
   if (item === undefined) {
     return '';
   }
@@ -271,15 +271,15 @@ function resolveWhitespaceLikeToString(item: Ast.WhitespaceLike | undefined): st
       if (Ast.NodeIs.AnyComment(node)) {
         return '';
       }
-      throw new DocsyError.CannotResolveNodeError(node, `resolver not implemented`);
+      throw new DocsyError.CannotResolveNode(options.file, node, `resolver not implemented`);
     })
     .join('');
 }
 
-function resolveJsx(options: ResolveOptions, type: string, props: any): any {
+function resolveJsx(node: Ast.Node, options: ResolveOptions, type: string, props: any): any {
   const { jsx } = options;
   if (!jsx || typeof jsx !== 'function') {
-    throw new DocsyError.MissingJsxFunctionError();
+    throw new DocsyError.MissingJsxFunction(options.file, node);
   }
   const key = props.key;
   if (props.key) {
@@ -291,7 +291,11 @@ function resolveJsx(options: ResolveOptions, type: string, props: any): any {
 function resolveElementName(name: Ast.ElementName, options: ResolveOptions): any {
   const type = resolveNode(name, options);
   if (type === undefined) {
-    throw new DocsyError.MissingGlobalError(name, `You probably forgot to provide a value for ${serialize(name)}`);
+    throw new DocsyError.MissingGlobal(
+      options.file,
+      name,
+      `You probably forgot to provide a value for ${serialize(name)}`
+    );
   }
   return type;
 }

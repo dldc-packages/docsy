@@ -7,8 +7,10 @@ export * from './DocsyError.ts';
 export type { NodePath, NodeWithPath } from './Utils.ts';
 export { Utils } from './Utils.ts';
 export type {
-  Position,
   Range,
+  Ranges,
+  ReadonlyMap,
+  ReadonlyRanges,
   ParseResult,
   ParseResultFailure,
   ParseResultSuccess,
@@ -18,4 +20,3 @@ export type {
   StackItem,
   TraversePath,
 } from './internal/types.ts';
-export const version = 'dev-3';

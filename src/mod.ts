@@ -7,8 +7,10 @@ export * from './DocsyError';
 export type { NodePath, NodeWithPath } from './Utils';
 export { Utils } from './Utils';
 export type {
-  Position,
   Range,
+  Ranges,
+  ReadonlyMap,
+  ReadonlyRanges,
   ParseResult,
   ParseResultFailure,
   ParseResultSuccess,
@@ -18,4 +20,3 @@ export type {
   StackItem,
   TraversePath,
 } from './internal/types';
-export const version = 'dev-3';

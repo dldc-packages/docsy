@@ -2,9 +2,9 @@ import { Utils, parseDocument, serialize, Ast } from '../src/mod';
 
 test.skip('should filter item', () => {
   const doc = `Hello </Component/> Foo </Bar/><|Content>Hello </Bold/> </>`;
-  const parsed = parseDocument(doc);
-  expect(parsed.document.children.length).toBe(5);
-  const withoutComponent = Utils.filter(parsed.document, (node) => Ast.NodeIs.SelfClosingElement(node) === false);
+  const parsed = parseDocument(doc, 'source.docsy');
+  expect(parsed.result.children.length).toBe(5);
+  const withoutComponent = Utils.filter(parsed.result, (node) => Ast.NodeIs.SelfClosingElement(node) === false);
   expect(serialize(withoutComponent)).toBe('Hello  Foo <|Content>Hello  </>');
 });
 
@@ -31,21 +31,21 @@ test('should clone at paths', () => {
 
 test.skip('should transform item', () => {
   const doc = `Hello <|Component|> Foo <|Bar|><|Content>Hello <|Bold|> |>`;
-  const parsed = parseDocument(doc);
-  const before = JSON.stringify(parsed.document);
-  const updated = Utils.transform(parsed.document, (node) => {
+  const parsed = parseDocument(doc, 'source.docsy');
+  const before = JSON.stringify(parsed.result);
+  const updated = Utils.transform(parsed.result, (node) => {
     if (Ast.NodeIs.Identifier(node) && node.meta.name === 'Bold') {
       return Utils.updateNodeMeta(node, (meta) => ({ ...meta, name: 'Italic' }));
     }
     return node;
   });
-  expect(before).toEqual(JSON.stringify(parsed.document));
+  expect(before).toEqual(JSON.stringify(parsed.result));
   expect(serialize(updated)).toEqual(`Hello <|Component|> Foo <|Bar|><|Content>Hello <|Italic|> |>`);
 });
 
 // test('should component name and props', () => {
 //   const doc = `<|SomeComponent foo="bar" num=41>Inner content|>`;
-//   const parsed = parseDocument(doc);
+//   const parsed = parseDocument(doc, 'source.docsy');
 //   const updated = Utils.transform(parsed.document, (node) => {
 //     if (NodeIs.Identifier(node) && node.meta.name === 'SomeComponent') {
 //       return Utils.updateNodeMeta(node, (meta) => ({ ...meta, name: 'UpdatedComponent' }));
@@ -63,7 +63,7 @@ test.skip('should transform item', () => {
 
 // test('should override sub changes', () => {
 //   const doc = `<|SomeComponent foo="bar" num=41>Inner content|>`;
-//   const parsed = parseDocument(doc);
+//   const parsed = parseDocument(doc, 'source.docsy');
 //   const updated = Utils.transform(parsed.document, (node) => {
 //     if (NodeIs.Num(node)) {
 //       return Utils.createNodeFromValue(42);

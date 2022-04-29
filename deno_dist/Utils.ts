@@ -1,6 +1,7 @@
 import { DocsyError } from './DocsyError.ts';
 import { Node, CreateNode, Expression, NodeChildrenBase, isValidNodeKind } from './Ast.ts';
 import { TraversePath } from './internal/types.ts';
+import { isReadonlyArray } from './internal/utils.ts';
 
 export const Utils = {
   filter,
@@ -29,7 +30,7 @@ function getChildren(children: NodeChildrenBase | null | undefined, path: NodePa
   if (children === null || children === undefined) {
     return [];
   }
-  if (Array.isArray(children)) {
+  if (isReadonlyArray(children)) {
     return children.map((node, index) => ({ node, path: [...path, index] }));
   }
   if (children.kind && isValidNodeKind(children.kind)) {
@@ -169,7 +170,7 @@ function createNodeFromValue(value: unknown): Expression {
     //   { trailingComma: false }
     // );
   }
-  throw new DocsyError.CannotTransformValueError(value);
+  throw new DocsyError.CannotTransformValue(value);
 }
 
 function isObject(val: any): boolean {

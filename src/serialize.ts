@@ -1,252 +1,35 @@
 import * as Ast from './Ast';
-import { DocsyError } from './DocsyError';
 import * as t from './internal/tokens';
+import { DocsyError } from './DocsyError';
+import { isReadonlyArray } from './internal/utils';
+import { ParserResultBase } from './ParserResult';
 
-export function serialize(node: Ast.Node): string {
-  return serializeInternal(node);
+export type SerializeOptions = {
+  file?: ParserResultBase;
+};
 
-  function serializeInternal(item: Array<Ast.Node> | Ast.Node | null | undefined): string {
-    if (item === null || item === undefined) {
-      return '';
-    }
-    if (Array.isArray(item)) {
-      return item.map(serializeInternal).join('');
-    }
-    if (Ast.NodeIs.Document(item)) {
-      return serializeChildren(item.children);
-    }
-    if (Ast.NodeIs.ExpressionDocument(item)) {
-      return serializeWhitespaceLike(item.before) + serializeInternal(item.value) + serializeWhitespaceLike(item.after);
-    }
-    if (Ast.NodeIs.Whitespace(item)) {
-      return item.meta.content;
-    }
-    if (Ast.NodeIs.Identifier(item)) {
-      return item.meta.name;
-    }
-    if (Ast.NodeIs.Str(item)) {
-      return serializeString(item);
-    }
-    if (Ast.NodeIs.Obj(item)) {
-      return serializeObj(item);
-    }
-    if (Ast.NodeIs.Arr(item)) {
-      return serializeArr(item);
-    }
-    if (Ast.NodeIs.ListItems(item)) {
-      return (
-        item.items.map((item) => serializeInternal(item)).join(',') +
-        (item.trailingComma ? serializeInternal(item.trailingComma) : '')
-      );
-    }
-    if (Ast.NodeIs.ListItem(item)) {
-      return (
-        serializeWhitespaceLike(item.whitespaceBefore) +
-        serializeInternal(item.item) +
-        serializeWhitespaceLike(item.whitespaceAfter)
-      );
-    }
-    if (Ast.NodeIs.TrailingComma(item)) {
-      return `,${serializeWhitespaceLike(item.whitespaceAfter)}`;
-    }
-    if (Ast.NodeIs.Bool(item)) {
-      return item.meta.value ? 'true' : 'false';
-    }
-    if (Ast.NodeIs.Num(item)) {
-      return item.meta.rawValue;
-    }
-    if (Ast.NodeIs.Null(item)) {
-      return `null`;
-    }
-    if (Ast.NodeIs.MemberExpression(item)) {
-      return serializeInternal(item.target) + '.' + serializeInternal(item.property);
-    }
-    if (Ast.NodeIs.ComputedMemberExpression(item)) {
-      return serializeInternal(item.target) + `[${serializeInternal(item.property)}]`;
-    }
-    if (Ast.NodeIs.CallExpression(item)) {
-      return serializeInternal(item.target) + `(${serializeInternal(item.arguments)})`;
-    }
-    if (Ast.NodeIs.ElementNameMember(item)) {
-      return serializeInternal(item.target) + '.' + serializeInternal(item.property);
-    }
-    if (Ast.NodeIs.AnyComment(item)) {
-      return serializeChild(item);
-    }
-    throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
-  }
+export function serialize(item: Ast.Node, options: SerializeOptions = {}): any {
+  return serializeNode(item, options);
+}
 
-  function serializeElement(elem: Ast.Element): string {
-    const childrenStr = serializeChildren(elem.children);
-    return [
-      `<|`,
-      serializeInternal(elem.name),
-      serializeAttributes(elem.attributes),
-      serializeInternal(elem.whitespaceAfterAttributes),
-      '>',
-      childrenStr,
-      elem.meta.namedCloseTag ? `<${serializeInternal(elem.name)}/>` : `</>`,
-    ].join('');
-  }
-
-  function serializeLineElement(elem: Ast.LineElement): string {
-    const childrenStr = serializeChildren(elem.children);
-    return [
-      `<`,
-      serializeInternal(elem.name),
-      serializeAttributes(elem.attributes),
-      serializeInternal(elem.whitespaceAfterAttributes),
-      '>',
-      childrenStr,
-    ].join('');
-  }
-
-  function serializeRawElement(elem: Ast.RawElement): string {
-    return [
-      `<#`,
-      serializeInternal(elem.name),
-      serializeAttributes(elem.attributes),
-      serializeInternal(elem.whitespaceAfterAttributes),
-      '>',
-      elem.meta.content,
-      elem.meta.namedCloseTag ? `<${serializeInternal(elem.name)}/>` : `</>`,
-    ].join('');
-  }
-
-  function serializeSelfClosingElement(elem: Ast.SelfClosingElement): string {
-    return [
-      `</`,
-      serializeInternal(elem.name),
-      serializeAttributes(elem.attributes),
-      serializeInternal(elem.whitespaceAfterAttributes),
-      '/>',
-    ].join('');
-  }
-
-  function serializeObj(item: Ast.Obj): string {
-    return `{` + serializeObjItems(item.items) + `}`;
-  }
-
-  function serializeObjItems(item: Ast.ObjItems | Ast.WhitespaceLike | undefined): string {
-    if (item === undefined) {
-      return '';
-    }
-    if (Array.isArray(item)) {
-      return serializeWhitespaceLike(item);
-    }
-    if (Ast.NodeIs.ObjItems(item)) {
-      item.properties;
-      return (
-        item.properties.map((item) => serializeObjItem(item)).join(',') +
-        (item.trailingComma ? serializeInternal(item.trailingComma) : '')
-      );
-    }
-    return serializeWhitespaceLike(item);
-  }
-
-  function serializeObjItem(item: Ast.ObjItem): string {
-    return [
-      serializeWhitespaceLike(item.whitespaceBefore),
-      serializeAnyObjProperty(item.property),
-      serializeWhitespaceLike(item.whitespaceAfter),
-    ].join('');
-  }
-
-  function serializeAnyObjProperty(prop: Ast.AnyObjProperty): string {
-    if (Ast.NodeIs.ObjProperty(prop)) {
-      return [
-        serializeInternal(prop.name),
-        serializeWhitespaceLike(prop.whitespaceBeforeColon),
-        ':',
-        serializeWhitespaceLike(prop.whitespaceAfterColon),
-        serializeInternal(prop.value),
-      ].join('');
-    }
-    if (Ast.NodeIs.ObjComputedProperty(prop)) {
-      return [
-        '[',
-        serializeWhitespaceLike(prop.whitespaceBeforeExpression),
-        serializeInternal(prop.expression),
-        serializeWhitespaceLike(prop.whitespaceAfterExpression),
-        ']',
-        serializeWhitespaceLike(prop.whitespaceBeforeColon),
-        ':',
-        serializeWhitespaceLike(prop.whitespaceAfterColon),
-        serializeInternal(prop.value),
-      ].join('');
-    }
-    if (Ast.NodeIs.ObjPropertyShorthand(prop)) {
-      return [
-        serializeWhitespaceLike(prop.whitespaceBefore),
-        serializeInternal(prop.name),
-        serializeWhitespaceLike(prop.whitespaceAfter),
-      ].join('');
-    }
-    if (Ast.NodeIs.Spread(prop)) {
-      return `...${serializeInternal(prop.target)}`;
-    }
-    throw new DocsyError.CannotSerializeNodeError(prop, `Invalid property`);
-  }
-
-  function serializeArr(item: Ast.Arr): string {
-    return `[` + serializeInternal(item.items) + `]`;
-  }
-
-  // function serializeListItems(items: Array<Ast.ListItem> | Ast.Whitespace | undefined): string {
-  //   if (items === undefined) {
-  //     return '';
-  //   }
-  //   if (Array.isArray(items)) {
-  //     return items
-  //       .map((objectItem) => {
-  //         return (
-  //           serializeInternal(objectItem.children.whitespaceBefore) +
-  //           serializeInternal(objectItem.children.item) +
-  //           serializeInternal(objectItem.children.whitespaceAfter)
-  //         );
-  //       })
-  //       .join(',');
-  //   }
-  //   return serializeInternal(items);
-  // }
-
-  // function serializeArguments(items: Array<Ast.ListItem> | Ast.Whitespace | undefined): string {
-  //   if (items === undefined) {
-  //     return '()';
-  //   }
-  //   if (Array.isArray(items)) {
-  //     return `(` + items.map(serializeInternal).join(',') + `)`;
-  //   }
-  //   return `(` + serializeInternal(items) + `)`;
-  // }
-
-  // function serializeAnyObjProperty(item: Ast.AnyObjProperty): string {
-  //   if (Ast.NodeIs.ObjProperty(item)) {
-  //     return serializeInternal(item.children.name) + ': ' + serializeInternal(item.children.value);
-  //   }
-  //   if (Ast.NodeIs.ObjComputedProperty(item)) {
-  //     return `[${serializeInternal(item.children.expression)}]: ${serializeInternal(item.children.value)}`;
-  //   }
-  //   if (Ast.NodeIs.ObjPropertyShorthand(item)) {
-  //     return serializeInternal(item.children.name);
-  //   }
-  //   if (Ast.NodeIs.Spread(item)) {
-  //     return `...${serializeInternal(item.children.target)}`;
-  //   }
-  //   throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
-  // }
-
-  function serializeWhitespaceLike(whitespace: Ast.WhitespaceLike | undefined): string {
-    if (whitespace === undefined) {
-      return '';
-    }
-    if (Array.isArray(whitespace)) {
-      return whitespace.map(serializeInternal).join('');
-    }
-    return serializeInternal(whitespace);
-  }
-
-  function serializeString(item: Ast.Str) {
+const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: SerializeOptions) => string } = {
+  Document(item, options) {
+    return serializeNodes(item.children, options);
+  },
+  ExpressionDocument(item, options) {
+    return (
+      serializeWhitespaceLike(item.before, options) +
+      serializeNode(item.value, options) +
+      serializeWhitespaceLike(item.after, options)
+    );
+  },
+  Whitespace(item) {
+    return item.meta.content;
+  },
+  Identifier(item) {
+    return item.meta.name;
+  },
+  Str(item) {
     if (item.meta.quote === 'Single') {
       return t.SINGLE_QUOTE + item.meta.value.replace(/'/g, `\\'`) + t.SINGLE_QUOTE;
     }
@@ -257,75 +40,220 @@ export function serialize(node: Ast.Node): string {
       return t.BACKTICK + item.meta.value.replace(/`/g, '\\`') + t.BACKTICK;
     }
     throw new DocsyError.UnexpectedError(`Invalid Qutote type on Str`);
-  }
+  },
+  Bool(item) {
+    return item.meta.value ? 'true' : 'false';
+  },
+  Num(item) {
+    return item.meta.rawValue;
+  },
+  Null() {
+    return `null`;
+  },
+  Undefined() {
+    return `undefined`;
+  },
+  Arr(item, options) {
+    return `[` + serializeNodeOrWhitespaceLike(item.items, options) + `]`;
+  },
+  ListItems(item, options) {
+    return [serializeNodes(item.items, options, ','), serializeNode(item.trailingComma, options)].join('');
+  },
+  TrailingComma(item, options) {
+    return `,` + serializeWhitespaceLike(item.whitespaceAfter, options);
+  },
+  ListItem(item, options) {
+    return [
+      serializeWhitespaceLike(item.whitespaceBefore, options),
+      serializeNode(item.item, options),
+      serializeWhitespaceLike(item.whitespaceAfter, options),
+    ].join('');
+  },
+  Spread(item, options) {
+    return `...${serializeNode(item.target, options)}`;
+  },
+  Obj(item, options) {
+    return `{` + serializeNodeOrWhitespaceLike(item.items, options) + `}`;
+  },
+  ObjItems(item, options) {
+    return [serializeNodes(item.properties, options), serializeNode(item.trailingComma, options)].join('');
+  },
+  ObjItem(item, options) {
+    return [
+      serializeWhitespaceLike(item.whitespaceBefore, options),
+      serializeNode(item.property, options),
+      serializeWhitespaceLike(item.whitespaceAfter, options),
+    ].join('');
+  },
+  ObjProperty(item, options) {
+    return [
+      serializeNode(item.name, options),
+      serializeWhitespaceLike(item.whitespaceBeforeColon, options),
+      ':',
+      serializeWhitespaceLike(item.whitespaceAfterColon, options),
+      serializeNode(item.value, options),
+    ].join('');
+  },
+  ObjComputedProperty(item, options) {
+    return [
+      '[',
+      serializeWhitespaceLike(item.whitespaceBeforeExpression, options),
+      serializeNode(item.expression, options),
+      serializeWhitespaceLike(item.whitespaceAfterExpression, options),
+      ']',
+      serializeWhitespaceLike(item.whitespaceBeforeColon, options),
+      ':',
+      serializeWhitespaceLike(item.whitespaceAfterColon, options),
+      serializeNode(item.value, options),
+    ].join('');
+  },
+  ObjPropertyShorthand(item, options) {
+    return [
+      serializeWhitespaceLike(item.whitespaceBefore, options),
+      serializeNode(item.name, options),
+      serializeWhitespaceLike(item.whitespaceAfter, options),
+    ].join('');
+  },
+  CallExpression(item, options) {
+    return serializeNode(item.target, options) + `(${serializeNodeOrWhitespaceLike(item.arguments, options)})`;
+  },
+  MemberExpression(item, options) {
+    return serializeNode(item.target, options) + '.' + serializeNode(item.property, options);
+  },
+  ComputedMemberExpression(item, options) {
+    return serializeNode(item.target, options) + `[${serializeNode(item.property, options)}]`;
+  },
+  Parenthesis(item, options) {
+    return [
+      '(',
+      serializeWhitespaceLike(item.whitespaceBefore, options),
+      serializeNode(item.value, options),
+      serializeWhitespaceLike(item.whitespaceAfter, options),
+      ')',
+    ].join('');
+  },
+  LineComment(item) {
+    return `//${item.meta.content}`;
+  },
+  BlockComment(item) {
+    return `/*${item.meta.content}*/`;
+  },
+  Element(item, options) {
+    return [
+      `<|`,
+      serializeNode(item.name, options),
+      serializeNodes(item.attributes, options),
+      serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
+      '>',
+      serializeNodes(item.children, options),
+      item.meta.namedCloseTag ? `<${serializeNode(item.name, options)}/>` : `</>`,
+    ].join('');
+  },
+  RawElement(item, options) {
+    return [
+      `<#`,
+      serializeNode(item.name, options),
+      serializeNodes(item.attributes, options),
+      serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
+      '>',
+      item.meta.content,
+      item.meta.namedCloseTag ? `<${serializeNode(item.name, options)}/>` : `</>`,
+    ].join('');
+  },
+  SelfClosingElement(item, options) {
+    return [
+      `</`,
+      serializeNode(item.name, options),
+      serializeNodes(item.attributes, options),
+      serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
+      '/>',
+    ].join('');
+  },
+  LineElement(item, options) {
+    return [
+      `<`,
+      serializeNode(item.name, options),
+      serializeNodes(item.attributes, options),
+      serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
+      '>',
+      serializeNodes(item.children, options),
+    ].join('');
+  },
+  Fragment(item, options) {
+    return `<|>${serializeNodes(item.children, options)}</>`;
+  },
+  RawFragment(item) {
+    return `<#>${item.meta.content}</>`;
+  },
+  Text(item) {
+    return item.meta.content;
+  },
+  Inject(item, options) {
+    return [
+      '{',
+      serializeWhitespaceLike(item.whitespaceBefore, options),
+      serializeNode(item.value, options),
+      serializeWhitespaceLike(item.whitespaceAfter, options),
+      '}',
+    ].join('');
+  },
+  Attribute(item, options) {
+    return [
+      serializeWhitespaceLike(item.whitespaceBefore, options),
+      serializeNode(item.name, options),
+      item.value ? `=${serializeNode(item.value, options)}` : '',
+    ].join('');
+  },
+  ElementNameMember(item, options) {
+    return serializeNode(item.target, options) + '.' + serializeNode(item.property, options);
+  },
+};
 
-  function serializeChildren(items: null | Array<Ast.Child>): string {
-    if (!items || items.length === 0) {
-      return '';
-    }
-    return items.map((sub) => serializeChild(sub)).join('');
-  }
+// -- Utils
 
-  function serializeChild(item: Ast.Child): string {
-    if (Ast.NodeIs.Whitespace(item)) {
-      return item.meta.content;
-    }
-    if (Ast.NodeIs.Text(item)) {
-      return item.meta.content;
-    }
-    if (Ast.NodeIs.Inject(item)) {
-      return (
-        '{' +
-        serializeInternal(item.whitespaceBefore) +
-        serializeInternal(item.value) +
-        serializeInternal(item.whitespaceAfter) +
-        '}'
-      );
-    }
-    if (Ast.NodeIs.Element(item)) {
-      return serializeElement(item);
-    }
-    if (Ast.NodeIs.RawElement(item)) {
-      return serializeRawElement(item);
-    }
-    if (Ast.NodeIs.Fragment(item)) {
-      return `<|>${serializeChildren(item.children)}</>`;
-    }
-    if (Ast.NodeIs.RawFragment(item)) {
-      return `<#>${item.meta.content}</>`;
-    }
-    if (Ast.NodeIs.SelfClosingElement(item)) {
-      return serializeSelfClosingElement(item);
-    }
-    if (Ast.NodeIs.LineElement(item)) {
-      return serializeLineElement(item);
-    }
-    if (Ast.NodeIs.AnyComment(item)) {
-      return serializeComment(item);
-    }
-    throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
+function serializeNode(item: Ast.Node | undefined | null, options: SerializeOptions): any {
+  if (item === undefined || item === null) {
+    return '';
   }
-
-  function serializeComment(item: Ast.AnyComment): string {
-    if (Ast.NodeIs.LineComment(item)) {
-      return `//${item.meta.content}`;
-    }
-    if (Ast.NodeIs.BlockComment(item)) {
-      return `/*${item.meta.content}*/`;
-    }
-    throw new DocsyError.CannotSerializeNodeError(item, `serializer not implemented`);
+  const serializer = NODE_SERIALIZER[item.kind] as any;
+  if (serializer === undefined) {
+    throw new DocsyError.CannotSerializeNode(options.file, item, `Invalid node kind: ${item.kind}`);
   }
+  return serializer(item, options);
+}
 
-  function serializeAttributes(attributes: Array<Ast.Attribute>): string {
-    return attributes.map((attr) => serializeAttribute(attr)).join('');
+function serializeNodes(items: null | ReadonlyArray<Ast.Node>, options: SerializeOptions, joiner: string = ''): string {
+  if (!items || items.length === 0) {
+    return '';
   }
+  return items.map((sub) => serializeNode(sub, options)).join(joiner);
+}
 
-  function serializeAttribute(attr: Ast.Attribute): string {
-    if (attr.value === undefined) {
-      return serializeInternal(attr.whitespaceBefore) + serializeInternal(attr.name);
-    }
+function serializeWhitespaceLike(whitespace: Ast.WhitespaceLike | undefined, options: SerializeOptions): string {
+  if (whitespace === undefined) {
+    return '';
+  }
+  if (isReadonlyArray(whitespace)) {
+    return whitespace.map((item) => serializeNode(item, options)).join('');
+  }
+  return serializeNode(whitespace, options);
+}
+
+function serializeNodeOrWhitespaceLike(
+  item: Ast.Node | Ast.WhitespaceLike | undefined,
+  options: SerializeOptions
+): string {
+  if (item === undefined) {
+    return '';
+  }
+  if (isReadonlyArray(item)) {
+    return serializeWhitespaceLike(item, options);
+  }
+  if (Ast.NodeIs.ObjItems(item)) {
+    item.properties;
     return (
-      serializeInternal(attr.whitespaceBefore) + `${serializeInternal(attr.name)}=${serializeInternal(attr.value)}`
+      item.properties.map((item) => serializeNode(item, options)).join(',') + serializeNode(item.trailingComma, options)
     );
   }
+  return serializeNode(item, options);
 }

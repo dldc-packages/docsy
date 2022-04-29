@@ -1,8 +1,6 @@
 import * as Ast from '../Ast';
 import * as p from './parsers';
-import { Parser } from './types';
-
-export type Ranges = Map<Ast.Node, { start: number; end: number }>;
+import { Parser, Ranges } from './types';
 
 export type ParserContext = {
   ranges: Ranges;

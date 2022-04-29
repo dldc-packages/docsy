@@ -4,37 +4,30 @@ import * as t from './internal/tokens.ts';
 import { StringReader } from './internal/StringReader.ts';
 import { DocsyError } from './DocsyError.ts';
 import { executeParser, failureToStack, ParseSuccess, ParseFailure } from './internal/Parser.ts';
-import { createContext, Ranges, rule, nodeParser, nodeData, ParserContext } from './internal/ParserContext.ts';
-import { ParseResult } from './internal/types.ts';
+import { createContext, rule, nodeParser, nodeData, ParserContext } from './internal/ParserContext.ts';
+import { Parser, ParseResult } from './internal/types.ts';
+import { ParserResult } from './ParserResult.ts';
 
-export interface ParseDocumentResult {
-  document: Ast.Document;
-  ranges: Ranges;
-}
-
-export interface ParseDocumentExpressionResult {
-  expression: Ast.ExpressionDocument;
-  ranges: Ranges;
-}
-
-export function parseDocument(file: string): ParseDocumentResult {
+function runParser<T extends Ast.Node>(
+  parser: Parser<T, ParserContext>,
+  source: string,
+  file: string
+): ParserResult<T> {
   const ctx = createContext();
-  const input = StringReader(file);
-  const result = executeParser(DocumentParser, input, ctx);
+  const input = StringReader(source);
+  const result = executeParser(parser, input, ctx);
   if (result.type === 'Failure') {
-    throw new DocsyError.ParsingError(failureToStack(result));
+    throw new DocsyError.ParsingError(file, source, failureToStack(result));
   }
-  return { document: result.value, ranges: ctx.ranges };
+  return new ParserResult<T>(file, source, result.value, ctx.ranges);
 }
 
-export function parseExpression(file: string): ParseDocumentExpressionResult {
-  const ctx = createContext();
-  const input = StringReader(file);
-  const result = executeParser(ExpressionDocumentParser, input, ctx);
-  if (result.type === 'Failure') {
-    throw new DocsyError.ParsingError(failureToStack(result));
-  }
-  return { expression: result.value, ranges: ctx.ranges };
+export function parseDocument(source: string, file: string): ParserResult<Ast.Document> {
+  return runParser(DocumentParser, source, file);
+}
+
+export function parseExpression(source: string, file: string): ParserResult<Ast.ExpressionDocument> {
+  return runParser(ExpressionDocumentParser, source, file);
 }
 
 export const DocumentParser = rule<Ast.Document>('Document');
@@ -699,7 +692,7 @@ function flattenManySepBy<T, Sep>(result: p.ManySepByResult<T, Sep>): Array<T> {
   return [head, ...tail.map((v) => v.item)];
 }
 
-function nonEmptyArray<T>(arr: Array<T>): Ast.NonEmptyArray<T> {
+function nonEmptyArray<T>(arr: ReadonlyArray<T>): Ast.NonEmptyArray<T> {
   if (arr.length === 0) {
     throw new DocsyError.UnexpectedError('Unexpected empty array');
   }

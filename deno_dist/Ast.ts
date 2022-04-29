@@ -1,6 +1,6 @@
 export type QuoteType = 'Single' | 'Double' | 'Backtick';
 
-export type NodeChildrenBase = null | Node | Array<Node> | { [key: string]: NodeChildrenBase };
+export type NodeChildrenBase = null | Node | ReadonlyArray<Node> | { [key: string]: NodeChildrenBase };
 export type NodeChildrenRoot = { [key: string]: NodeChildrenBase };
 
 export type NodeMetaBase = { [key: string]: string | number | null | boolean };
@@ -15,10 +15,10 @@ export type NodeDataBase = CreateNodeData<NodeChildrenRoot, NodeMetaBase>;
 type CreateNodes<Nodes extends { [key: string]: NodeDataBase }> = Nodes;
 
 // Is this anoying ?
-export type NonEmptyArray<T> = [T, ...T[]];
+export type NonEmptyArray<T> = readonly [T, ...T[]];
 
 export type Nodes = CreateNodes<{
-  Document: CreateNodeData<{ children: Array<Child> }>;
+  Document: CreateNodeData<{ children: ReadonlyArray<Child> }>;
   ExpressionDocument: CreateNodeData<{ before?: WhitespaceLike; value?: Expression; after?: WhitespaceLike }>;
   Whitespace: CreateNodeData<{}, { content: string; hasNewLine: boolean }>;
   // Expression
@@ -95,33 +95,33 @@ export type Nodes = CreateNodes<{
   Element: CreateNodeData<
     {
       name: ElementName;
-      attributes: Array<Attribute>;
+      attributes: ReadonlyArray<Attribute>;
       whitespaceAfterAttributes?: WhitespaceLike;
-      children: Array<Child>;
+      children: ReadonlyArray<Child>;
     },
     { namedCloseTag: boolean }
   >;
   RawElement: CreateNodeData<
-    { name: ElementName; attributes: Array<Attribute>; whitespaceAfterAttributes?: WhitespaceLike },
+    { name: ElementName; attributes: ReadonlyArray<Attribute>; whitespaceAfterAttributes?: WhitespaceLike },
     { namedCloseTag: boolean; content: string }
   >;
   SelfClosingElement: CreateNodeData<{
     name: ElementName;
-    attributes: Array<Attribute>;
+    attributes: ReadonlyArray<Attribute>;
     whitespaceAfterAttributes?: WhitespaceLike;
   }>;
   LineElement: CreateNodeData<
     {
       name: ElementName;
-      attributes: Array<Attribute>;
+      attributes: ReadonlyArray<Attribute>;
       whitespaceAfterAttributes?: WhitespaceLike;
-      children: Array<Child>;
+      children: ReadonlyArray<Child>;
     },
     {}
   >;
 
   // Fragments
-  Fragment: CreateNodeData<{ children: Array<Child> }>;
+  Fragment: CreateNodeData<{ children: ReadonlyArray<Child> }>;
   RawFragment: CreateNodeData<{}, { content: string }>;
 
   Text: CreateNodeData<{}, { content: string }>;
@@ -137,7 +137,10 @@ export type Nodes = CreateNodes<{
 
 export type NodeKind = keyof Nodes;
 
-export type Node<K extends NodeKind = NodeKind> = Nodes[K]['children'] & { kind: K; meta: Nodes[K]['meta'] };
+export type Node<K extends NodeKind = NodeKind> = Readonly<Nodes[K]['children']> & {
+  readonly kind: K;
+  readonly meta: Readonly<Nodes[K]['meta']>;
+};
 
 export type NodeData<K extends NodeKind = NodeKind> = Nodes[K];
 

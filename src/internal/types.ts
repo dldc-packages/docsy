@@ -1,15 +1,27 @@
 import { LinkedList } from './LinkedList';
 import { StringReader } from './StringReader';
+import * as Ast from '../Ast';
 
 export type Position = {
-  line: number;
-  column: number;
-  offset: number;
+  readonly line: number;
+  readonly column: number;
+  readonly offset: number;
 };
 
 export interface Range {
-  start: Position;
-  end: Position;
+  readonly start: number;
+  readonly end: number;
+}
+
+export type Ranges = Map<Ast.Node, Range>;
+
+export type ReadonlyRanges = ReadonlyMap<Ast.Node, Range>;
+
+export interface ReadonlyMap<K, V> {
+  forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void;
+  get(key: K): V | undefined;
+  has(key: K): boolean;
+  readonly size: number;
 }
 
 export interface ParseResultFailure {
