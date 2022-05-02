@@ -21,7 +21,7 @@ export class ParserResult<T extends Ast.Node> implements ParserResultBase {
     this.result = result;
   }
 
-  throw(node: Ast.Node, message: string) {
+  throw(node: Ast.Node, message: string): never {
     throw new DocsyError.FileError(this, node, message);
   }
 }
