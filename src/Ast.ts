@@ -292,7 +292,7 @@ export const CreateNode: {
 } = NODES.reduce<any>((acc, kind) => {
   acc[kind] = (children: Nodes[NodeKind]['children'], meta: Nodes[NodeKind]['meta']) => ({
     kind,
-    children,
+    ...children,
     meta,
   });
   return acc;
