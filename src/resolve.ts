@@ -246,7 +246,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
   },
   Attribute(item, options) {
     return new IntermediateResolvedValue({
-      name: resolveNode(item.name, options),
+      name: item.name.meta.name,
       value: item.value ? resolveNode(item.value, options) : true,
     });
   },
