@@ -1,3 +1,6 @@
+import { Parsed } from './Parsed.ts';
+import { IntermediateResolvedValue as IRV } from './resolve.ts';
+
 export type QuoteType = 'Single' | 'Double' | 'Backtick';
 
 export type NodeChildrenBase = null | Node | ReadonlyArray<Node> | { [key: string]: NodeChildrenBase };
@@ -5,94 +8,137 @@ export type NodeChildrenRoot = { [key: string]: NodeChildrenBase };
 
 export type NodeMetaBase = { [key: string]: string | number | null | boolean };
 
-export interface CreateNodeData<Children extends NodeChildrenRoot, Meta extends NodeMetaBase = {}> {
+export interface CreateNodeData<Resolved, Children extends NodeChildrenRoot, Meta extends NodeMetaBase = {}> {
   children: Children;
   meta: Meta;
+  resolved: Resolved;
 }
 
-export type NodeDataBase = CreateNodeData<NodeChildrenRoot, NodeMetaBase>;
+export type NodeDataBase = CreateNodeData<any, NodeChildrenRoot, NodeMetaBase>;
 
 type CreateNodes<Nodes extends { [key: string]: NodeDataBase }> = Nodes;
+
+export type JsxElement = any;
+
+export type JsxElements = Array<JsxElement> | JsxElement | undefined;
 
 // Is this anoying ?
 export type NonEmptyArray<T> = readonly [T, ...T[]];
 
+export type ResolveSpread = { kind: 'spread'; target: any };
+export type ResolvedObjProperty = { kind: 'property'; name: string; value: any };
+export type ResolvedListValue = { kind: 'value'; value: any };
+export type ResolvedAttribute = { name: string; value: any };
+
+export type ResolveObjItem = ResolvedObjProperty | ResolveSpread;
+export type ResolveListItem = ResolvedListValue | ResolveSpread;
+
 export type Nodes = CreateNodes<{
-  Document: CreateNodeData<{ children: ReadonlyArray<Child> }>;
-  ExpressionDocument: CreateNodeData<{ before?: WhitespaceLike; value?: Expression; after?: WhitespaceLike }>;
-  Whitespace: CreateNodeData<{}, { content: string; hasNewLine: boolean }>;
+  Document: CreateNodeData<JsxElements, { children: ReadonlyArray<Child> }>;
+  ExpressionDocument: CreateNodeData<any, { before?: WhitespaceLike; value?: Expression; after?: WhitespaceLike }>;
+  Whitespace: CreateNodeData<string, {}, { content: string; hasNewLine: boolean }>;
   // Expression
   // -- Identifier
-  Identifier: CreateNodeData<{}, { name: string }>;
+  Identifier: CreateNodeData<any, {}, { name: string }>;
   // -- Literal values
-  Str: CreateNodeData<{}, { value: string; quote: QuoteType }>;
-  Bool: CreateNodeData<{}, { value: boolean }>;
-  Num: CreateNodeData<{}, { value: number; rawValue: string }>;
-  Null: CreateNodeData<{}>;
-  Undefined: CreateNodeData<{}>;
+  Str: CreateNodeData<string, {}, { value: string; quote: QuoteType }>;
+  Bool: CreateNodeData<boolean, {}, { value: boolean }>;
+  Num: CreateNodeData<number, {}, { value: number; rawValue: string }>;
+  Null: CreateNodeData<null, {}>;
+  Undefined: CreateNodeData<undefined, {}>;
 
-  Arr: CreateNodeData<{ items?: ListItems | WhitespaceLike }, {}>;
+  Arr: CreateNodeData<Array<any>, { items?: ListItems | WhitespaceLike }, {}>;
 
   // Used for array and arguments
-  ListItems: CreateNodeData<{ items: NonEmptyArray<ListItem>; trailingComma?: TrailingComma }, {}>;
-  TrailingComma: CreateNodeData<{ whitespaceAfter?: WhitespaceLike }, {}>;
-  ListItem: CreateNodeData<{
-    whitespaceBefore?: WhitespaceLike;
-    item: Expression | Spread;
-    whitespaceAfter?: WhitespaceLike;
-  }>;
+  ListItems: CreateNodeData<
+    IRV<Array<ResolveListItem>>,
+    { items: NonEmptyArray<ListItem>; trailingComma?: TrailingComma },
+    {}
+  >;
+  TrailingComma: CreateNodeData<never, { whitespaceAfter?: WhitespaceLike }, {}>;
+  ListItem: CreateNodeData<
+    IRV<ResolveListItem>,
+    {
+      whitespaceBefore?: WhitespaceLike;
+      item: Expression | Spread;
+      whitespaceAfter?: WhitespaceLike;
+    }
+  >;
 
-  Spread: CreateNodeData<{ target: Expression }>;
+  Spread: CreateNodeData<IRV<ResolveSpread>, { target: Expression }>;
 
-  Obj: CreateNodeData<{ items?: ObjItems | WhitespaceLike }, {}>;
-  ObjItems: CreateNodeData<{ properties: NonEmptyArray<ObjItem>; trailingComma?: TrailingComma }, {}>;
-  ObjItem: CreateNodeData<{
-    whitespaceBefore?: WhitespaceLike;
-    property: AnyObjProperty;
-    whitespaceAfter?: WhitespaceLike;
-  }>;
-  ObjProperty: CreateNodeData<{
-    name: Str | Identifier;
-    whitespaceBeforeColon?: WhitespaceLike;
-    whitespaceAfterColon?: WhitespaceLike;
-    value: Expression;
-  }>;
-  ObjComputedProperty: CreateNodeData<{
-    whitespaceBeforeExpression?: WhitespaceLike;
-    expression: Expression;
-    whitespaceAfterExpression?: WhitespaceLike;
-    whitespaceBeforeColon?: WhitespaceLike;
-    whitespaceAfterColon?: WhitespaceLike;
-    value: Expression;
-  }>;
-  ObjPropertyShorthand: CreateNodeData<{
-    whitespaceBefore?: WhitespaceLike;
-    name: Identifier;
-    whitespaceAfter?: WhitespaceLike;
-  }>;
+  Obj: CreateNodeData<Record<string, any>, { items?: ObjItems | WhitespaceLike }, {}>;
+  ObjItems: CreateNodeData<
+    IRV<Array<ResolveObjItem>>,
+    { properties: NonEmptyArray<ObjItem>; trailingComma?: TrailingComma },
+    {}
+  >;
+  ObjItem: CreateNodeData<
+    IRV<ResolveObjItem>,
+    {
+      whitespaceBefore?: WhitespaceLike;
+      property: AnyObjProperty;
+      whitespaceAfter?: WhitespaceLike;
+    }
+  >;
+  ObjProperty: CreateNodeData<
+    IRV<ResolvedObjProperty>,
+    {
+      name: Str | Identifier;
+      whitespaceBeforeColon?: WhitespaceLike;
+      whitespaceAfterColon?: WhitespaceLike;
+      value: Expression;
+    }
+  >;
+  ObjComputedProperty: CreateNodeData<
+    IRV<ResolvedObjProperty>,
+    {
+      whitespaceBeforeExpression?: WhitespaceLike;
+      expression: Expression;
+      whitespaceAfterExpression?: WhitespaceLike;
+      whitespaceBeforeColon?: WhitespaceLike;
+      whitespaceAfterColon?: WhitespaceLike;
+      value: Expression;
+    }
+  >;
+  ObjPropertyShorthand: CreateNodeData<
+    IRV<ResolvedObjProperty>,
+    {
+      whitespaceBefore?: WhitespaceLike;
+      name: Identifier;
+      whitespaceAfter?: WhitespaceLike;
+    }
+  >;
 
   // -- Function call
-  CallExpression: CreateNodeData<{ target: ChainableExpression; arguments?: ListItems | WhitespaceLike }, {}>;
+  CallExpression: CreateNodeData<any, { target: ChainableExpression; arguments?: ListItems | WhitespaceLike }, {}>;
   // -- Member & Parenthesis
-  MemberExpression: CreateNodeData<{ target: ChainableExpression; property: Identifier }>;
-  ComputedMemberExpression: CreateNodeData<{
-    target: ChainableExpression;
-    whitespaceBefore?: WhitespaceLike;
-    property: Expression;
-    whitespaceAfter?: WhitespaceLike;
-  }>;
-  Parenthesis: CreateNodeData<{
-    whitespaceBefore?: WhitespaceLike;
-    value: Expression;
-    whitespaceAfter?: WhitespaceLike;
-  }>;
+  MemberExpression: CreateNodeData<any, { target: ChainableExpression; property: Identifier }>;
+  ComputedMemberExpression: CreateNodeData<
+    any,
+    {
+      target: ChainableExpression;
+      whitespaceBefore?: WhitespaceLike;
+      property: Expression;
+      whitespaceAfter?: WhitespaceLike;
+    }
+  >;
+  Parenthesis: CreateNodeData<
+    any,
+    {
+      whitespaceBefore?: WhitespaceLike;
+      value: Expression;
+      whitespaceAfter?: WhitespaceLike;
+    }
+  >;
 
   // Comments
-  LineComment: CreateNodeData<{}, { content: string }>;
-  BlockComment: CreateNodeData<{}, { content: string }>;
+  LineComment: CreateNodeData<null, {}, { content: string }>;
+  BlockComment: CreateNodeData<null, {}, { content: string }>;
 
   // Element
   Element: CreateNodeData<
+    JsxElement,
     {
       name: ElementName;
       attributes: ReadonlyArray<Attribute>;
@@ -102,15 +148,20 @@ export type Nodes = CreateNodes<{
     { namedCloseTag: boolean }
   >;
   RawElement: CreateNodeData<
+    JsxElement,
     { name: ElementName; attributes: ReadonlyArray<Attribute>; whitespaceAfterAttributes?: WhitespaceLike },
     { namedCloseTag: boolean; content: string }
   >;
-  SelfClosingElement: CreateNodeData<{
-    name: ElementName;
-    attributes: ReadonlyArray<Attribute>;
-    whitespaceAfterAttributes?: WhitespaceLike;
-  }>;
+  SelfClosingElement: CreateNodeData<
+    JsxElement,
+    {
+      name: ElementName;
+      attributes: ReadonlyArray<Attribute>;
+      whitespaceAfterAttributes?: WhitespaceLike;
+    }
+  >;
   LineElement: CreateNodeData<
+    JsxElement,
     {
       name: ElementName;
       attributes: ReadonlyArray<Attribute>;
@@ -121,18 +172,25 @@ export type Nodes = CreateNodes<{
   >;
 
   // Fragments
-  Fragment: CreateNodeData<{ children: ReadonlyArray<Child> }>;
-  RawFragment: CreateNodeData<{}, { content: string }>;
+  Fragment: CreateNodeData<JsxElement, { children: ReadonlyArray<Child> }>;
+  RawFragment: CreateNodeData<string, {}, { content: string }>;
 
-  Text: CreateNodeData<{}, { content: string }>;
+  Text: CreateNodeData<string, {}, { content: string }>;
 
-  Inject: CreateNodeData<{ whitespaceBefore?: WhitespaceLike; value: Expression; whitespaceAfter?: WhitespaceLike }>;
+  Inject: CreateNodeData<
+    any,
+    { whitespaceBefore?: WhitespaceLike; value: Expression; whitespaceAfter?: WhitespaceLike }
+  >;
 
   // Attributes
-  Attribute: CreateNodeData<{ whitespaceBefore: WhitespaceLike; name: Identifier; value?: Expression }, {}>;
+  Attribute: CreateNodeData<
+    IRV<ResolvedAttribute>,
+    { whitespaceBefore: WhitespaceLike; name: Identifier; value?: Expression },
+    {}
+  >;
 
   // Tag name member </foo.bar/>
-  ElementNameMember: CreateNodeData<{ target: ElementName; property: Identifier }>;
+  ElementNameMember: CreateNodeData<any, { target: ElementName; property: Identifier }>;
 }>;
 
 export type NodeKind = keyof Nodes;
@@ -140,7 +198,11 @@ export type NodeKind = keyof Nodes;
 export type Node<K extends NodeKind = NodeKind> = Readonly<Nodes[K]['children']> & {
   readonly kind: K;
   readonly meta: Readonly<Nodes[K]['meta']>;
+  // When the node is created by a parser you get the Parsed instance
+  readonly parsed?: Parsed<Node>;
 };
+
+export type NodeResolved<K extends NodeKind = NodeKind> = Nodes[K]['resolved'];
 
 export type NodeData<K extends NodeKind = NodeKind> = Nodes[K];
 
@@ -272,6 +334,13 @@ const NodeIsInternal: { oneOf: typeof nodeIsOneOf } & {
   { oneOf: nodeIsOneOf }
 );
 
+function isWhitespaceLike(node: Node | NonEmptyArray<Node> | Array<Node>): node is WhitespaceLike {
+  if (Array.isArray(node)) {
+    return node.every(isWhitespaceLike);
+  }
+  return NodeIsInternal.Whitespace(node as Node) || AnyComment(node as Node);
+}
+
 export const NodeIs = {
   ...NodeIsInternal,
   ElementName,
@@ -283,18 +352,28 @@ export const NodeIs = {
   Expression,
   AnyElement,
   AnyComment,
+  WhitespaceLike: isWhitespaceLike,
 };
 
 // CreateNode
 
-export const CreateNode: {
+export function createNode<K extends NodeKind>(
+  kind: K,
+  children: Nodes[K]['children'],
+  meta: Nodes[K]['meta'],
+  parsed?: Parsed
+): Node<K> {
+  if (parsed) {
+    return { kind, parsed, meta, ...children };
+  }
+  return { kind, meta, ...children };
+}
+
+export const NodeBuilder: {
   [K in NodeKind]: (children: Nodes[K]['children'], meta: Nodes[K]['meta']) => Node<K>;
 } = NODES.reduce<any>((acc, kind) => {
-  acc[kind] = (children: Nodes[NodeKind]['children'], meta: Nodes[NodeKind]['meta']) => ({
-    kind,
-    ...children,
-    meta,
-  });
+  acc[kind] = (children: Nodes[NodeKind]['children'], meta: Nodes[NodeKind]['meta']) =>
+    createNode(kind, children, meta);
   return acc;
 }, {});
 

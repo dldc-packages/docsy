@@ -3,7 +3,7 @@ export * from './parse';
 export * from './serialize';
 export * from './resolve';
 export * from './format';
-export * from './ParserResult';
+export * from './Parsed';
 export * from './DocsyError';
 export type { NodePath, NodeWithPath } from './Utils';
 export { Utils } from './Utils';

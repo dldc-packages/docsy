@@ -2,10 +2,10 @@ import * as Ast from './Ast.ts';
 import * as t from './internal/tokens.ts';
 import { DocsyError } from './DocsyError.ts';
 import { isReadonlyArray } from './internal/utils.ts';
-import { ParserResultBase } from './ParserResult.ts';
+import { Parsed } from './Parsed.ts';
 
 export type SerializeOptions = {
-  file?: ParserResultBase;
+  file?: Parsed;
 };
 
 export function serialize(item: Ast.Node, options: SerializeOptions = {}): any {

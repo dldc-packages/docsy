@@ -1,6 +1,7 @@
 import { Utils, parseDocument, serialize, Ast } from '../src/mod';
+import { debugNode } from './utils';
 
-test.skip('should filter item', () => {
+test('should filter item', () => {
   const doc = `Hello </Component/> Foo </Bar/><|Content>Hello </Bold/> </>`;
   const parsed = parseDocument(doc, 'source.docsy');
   expect(parsed.result.children.length).toBe(5);
@@ -29,18 +30,18 @@ test('should clone at paths', () => {
   expect(copy3.bar.arr[1]).toBe(obj.bar.arr[1]);
 });
 
-test.skip('should transform item', () => {
-  const doc = `Hello <|Component|> Foo <|Bar|><|Content>Hello <|Bold|> |>`;
+test('should transform item', () => {
+  const doc = `Hello </Component/> Foo </Bar/><|Content>Hello </Bold/> </>`;
   const parsed = parseDocument(doc, 'source.docsy');
-  const before = JSON.stringify(parsed.result);
+  const before = debugNode(parsed.result);
   const updated = Utils.transform(parsed.result, (node) => {
     if (Ast.NodeIs.Identifier(node) && node.meta.name === 'Bold') {
       return Utils.updateNodeMeta(node, (meta) => ({ ...meta, name: 'Italic' }));
     }
     return node;
   });
-  expect(before).toEqual(JSON.stringify(parsed.result));
-  expect(serialize(updated)).toEqual(`Hello <|Component|> Foo <|Bar|><|Content>Hello <|Italic|> |>`);
+  expect(before).toEqual(debugNode(parsed.result));
+  expect(serialize(updated)).toEqual(`Hello </Component/> Foo </Bar/><|Content>Hello </Italic/> </>`);
 });
 
 // test('should component name and props', () => {

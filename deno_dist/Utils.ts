@@ -1,5 +1,5 @@
 import { DocsyError } from './DocsyError.ts';
-import { Node, CreateNode, Expression, NodeChildrenBase, isValidNodeKind } from './Ast.ts';
+import { Node, NodeBuilder, Expression, NodeChildrenBase, isValidNodeKind } from './Ast.ts';
 import { TraversePath } from './internal/types.ts';
 import { isReadonlyArray } from './internal/utils.ts';
 
@@ -45,7 +45,7 @@ function getChildren(children: NodeChildrenBase | null | undefined, path: NodePa
 }
 
 function getNodeChildren(node: Node): Array<NodeWithPath> {
-  const keys = Object.keys(node).filter((v) => v !== 'meta' && v !== 'kind');
+  const keys = Object.keys(node).filter((v) => v !== 'meta' && v !== 'kind' && v !== 'parsed');
   return keys.reduce<Array<NodeWithPath>>((acc, key) => {
     acc.push(...getChildren((node as any)[key], [key]));
     return acc;
@@ -127,37 +127,37 @@ function transform<N extends Node>(node: N, onNode: (item: Node, path: TraverseP
 
 function createNodeFromValue(value: unknown): Expression {
   if (value === null) {
-    return CreateNode.Null({}, {});
+    return NodeBuilder.Null({}, {});
   }
   if (value === undefined) {
-    return CreateNode.Undefined({}, {});
+    return NodeBuilder.Undefined({}, {});
   }
   if (typeof value === 'boolean') {
-    return CreateNode.Bool({}, { value });
+    return NodeBuilder.Bool({}, { value });
   }
   if (typeof value === 'number') {
-    return CreateNode.Num({}, { value, rawValue: String(value) });
+    return NodeBuilder.Num({}, { value, rawValue: String(value) });
   }
   if (typeof value === 'string') {
-    return CreateNode.Str({}, { value, quote: 'Single' });
+    return NodeBuilder.Str({}, { value, quote: 'Single' });
   }
   if (Array.isArray(value)) {
     throw new DocsyError('Not implemented');
-    // return CreateNode.Array(
-    //   { items: value.map((val) => CreateNode.ListItem({ item: createNodeFromValue(val) }, {})) },
+    // return NodeBuilder.Array(
+    //   { items: value.map((val) => NodeBuilder.ListItem({ item: createNodeFromValue(val) }, {})) },
     //   { trailingComma: false }
     // );
   }
   if (isPlainObject(value)) {
     throw new DocsyError('Not implemented');
-    // return CreateNode.Obj(
+    // return NodeBuilder.Obj(
     //   {
     //     items: Object.keys(value).map((key) => {
-    //       return CreateNode.ObjectItem(
+    //       return NodeBuilder.ObjectItem(
     //         {
-    //           item: CreateNode.ObjectProperty(
+    //           item: NodeBuilder.ObjectProperty(
     //             {
-    //               name: CreateNode.Str({}, { value: key, quote: 'Single' }),
+    //               name: NodeBuilder.Str({}, { value: key, quote: 'Single' }),
     //               value: createNodeFromValue((value as any)[key]),
     //             },
     //             {}

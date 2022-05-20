@@ -3,7 +3,7 @@ export * from './parse.ts';
 export * from './serialize.ts';
 export * from './resolve.ts';
 export * from './format.ts';
-export * from './ParserResult.ts';
+export * from './Parsed.ts';
 export * from './DocsyError.ts';
 export type { NodePath, NodeWithPath } from './Utils.ts';
 export { Utils } from './Utils.ts';

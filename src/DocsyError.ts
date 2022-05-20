@@ -3,7 +3,7 @@ import { stackToString } from './internal/Parser';
 import { StringReader } from './internal/StringReader';
 import { Stack } from './internal/types';
 import { offsetToPosition } from './internal/utils';
-import { ParserResultBase } from './ParserResult';
+import { Parsed, ParsedBase } from './Parsed';
 
 export class DocsyError extends Error {
   constructor(message: string) {
@@ -15,13 +15,18 @@ export class DocsyError extends Error {
   public static NotEOF: typeof DocsyNotEOF;
   public static CannotTransformValue: typeof DocsyCannotTransformValue;
   public static UnexpectedError: typeof DocsyUnexpectedError;
-  public static ParserNotImplemented: typeof ParserNotImplemented;
+  public static ParserNotImplemented: typeof DocsyParserNotImplemented;
+  public static ResolverNotImplemented: typeof DocsyResolverNotImplemented;
+  public static ParsedNotReady: typeof DocsyParsedNotReady;
 
   public static FileError: typeof DocsyFileError;
+  // These error extends FileError
   public static MissingGlobal: typeof DocsyMissingGlobal;
+  public static TypeError: typeof DocsyTypeError;
   public static CannotResolveNode: typeof DocsyCannotResolveNode;
   public static CannotResolveInject: typeof DocsyCannotResolveInject;
   public static MissingJsxFunction: typeof DocsyMissingJsxFunction;
+  public static MissingFragment: typeof DocsyMissingFragment;
   public static CannotSerializeNode: typeof DocsyCannotSerializeNode;
 }
 
@@ -57,15 +62,27 @@ class DocsyUnexpectedError extends DocsyError {
   }
 }
 
-class ParserNotImplemented extends DocsyError {
+class DocsyParserNotImplemented extends DocsyError {
   constructor(public parserName: string) {
     super(`Cannot get parser rule "${parserName}": no parser defined !`);
   }
 }
 
+class DocsyResolverNotImplemented extends DocsyError {
+  constructor(public parserName: string) {
+    super(`Cannot get parser rule "${parserName}": no parser defined !`);
+  }
+}
+
+class DocsyParsedNotReady extends DocsyError {
+  constructor(public fileName: string) {
+    super(`Parsed not ready for file "${fileName}", did you try to access parsed.result before parsing is done ?`);
+  }
+}
+
 class DocsyFileError extends DocsyError {
   constructor(
-    public readonly file: ParserResultBase | undefined,
+    public readonly file: ParsedBase | undefined,
     public readonly node: Node,
     public readonly docsyMessage: string
   ) {
@@ -86,25 +103,31 @@ class DocsyFileError extends DocsyError {
 }
 
 class DocsyMissingGlobal extends DocsyFileError {
-  constructor(file: ParserResultBase | undefined, node: Node, message: string) {
+  constructor(file: Parsed | undefined, node: Node, message: string) {
     super(file, node, `Missing global: ${message}`);
   }
 }
 
+class DocsyTypeError extends DocsyFileError {
+  constructor(file: Parsed | undefined, node: Node, message: string) {
+    super(file, node, `TypeError: ${message}`);
+  }
+}
+
 class DocsyCannotResolveNode extends DocsyFileError {
-  constructor(file: ParserResultBase | undefined, node: Node, message?: string) {
+  constructor(file: Parsed | undefined, node: Node, message?: string) {
     super(file, node, `Cannot resolve node ${node.kind}${message ? ': ' + message : ''}`);
   }
 }
 
 class DocsyCannotResolveInject extends DocsyFileError {
-  constructor(file: ParserResultBase | undefined, node: Node) {
+  constructor(file: Parsed | undefined, node: Node) {
     super(file, node, `Inject content should resolve to string`);
   }
 }
 
 class DocsyMissingJsxFunction extends DocsyFileError {
-  constructor(file: ParserResultBase | undefined, node: Node) {
+  constructor(file: Parsed | undefined, node: Node) {
     super(
       file,
       node,
@@ -113,21 +136,35 @@ class DocsyMissingJsxFunction extends DocsyFileError {
   }
 }
 
+class DocsyMissingFragment extends DocsyFileError {
+  constructor(file: Parsed | undefined, node: Node) {
+    super(file, node, `Missing global: No Fragment provided.`);
+  }
+}
+
 class DocsyCannotSerializeNode extends DocsyFileError {
-  constructor(file: ParserResultBase | undefined, node: Node, message?: string) {
+  constructor(file: Parsed | undefined, node: Node, message?: string) {
     super(file, node, `Cannot serialize node ${node.kind}${message ? ': ' + message : ''}`);
   }
 }
 
-DocsyError.ParsingError = DocsyParsingError;
-DocsyError.NotEOF = DocsyNotEOF;
-DocsyError.CannotTransformValue = DocsyCannotTransformValue;
-DocsyError.UnexpectedError = DocsyUnexpectedError;
-DocsyError.ParserNotImplemented = ParserNotImplemented;
+const ERRORS: Omit<typeof DocsyError, keyof typeof Error> = {
+  ParsingError: DocsyParsingError,
+  NotEOF: DocsyNotEOF,
+  CannotTransformValue: DocsyCannotTransformValue,
+  UnexpectedError: DocsyUnexpectedError,
+  ParserNotImplemented: DocsyParserNotImplemented,
+  ResolverNotImplemented: DocsyResolverNotImplemented,
 
-DocsyError.FileError = DocsyFileError;
-DocsyError.MissingGlobal = DocsyMissingGlobal;
-DocsyError.CannotResolveNode = DocsyCannotResolveNode;
-DocsyError.CannotResolveInject = DocsyCannotResolveInject;
-DocsyError.MissingJsxFunction = DocsyMissingJsxFunction;
-DocsyError.CannotSerializeNode = DocsyCannotSerializeNode;
+  ParsedNotReady: DocsyParsedNotReady,
+  FileError: DocsyFileError,
+  MissingGlobal: DocsyMissingGlobal,
+  TypeError: DocsyTypeError,
+  CannotResolveNode: DocsyCannotResolveNode,
+  CannotResolveInject: DocsyCannotResolveInject,
+  MissingJsxFunction: DocsyMissingJsxFunction,
+  MissingFragment: DocsyMissingFragment,
+  CannotSerializeNode: DocsyCannotSerializeNode,
+};
+
+Object.assign(DocsyError, ERRORS);

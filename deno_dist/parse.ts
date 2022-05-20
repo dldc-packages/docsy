@@ -6,27 +6,25 @@ import { DocsyError } from './DocsyError.ts';
 import { executeParser, failureToStack, ParseSuccess, ParseFailure } from './internal/Parser.ts';
 import { createContext, rule, nodeParser, nodeData, ParserContext } from './internal/ParserContext.ts';
 import { Parser, ParseResult } from './internal/types.ts';
-import { ParserResult } from './ParserResult.ts';
+import { Parsed } from './Parsed.ts';
+import { INTERNAL } from './internal.ts';
 
-function runParser<T extends Ast.Node>(
-  parser: Parser<T, ParserContext>,
-  source: string,
-  file: string
-): ParserResult<T> {
-  const ctx = createContext();
+function runParser<T extends Ast.Node>(parser: Parser<T, ParserContext<T>>, source: string, file: string): Parsed<T> {
+  const ctx = createContext<T>(file, source);
   const input = StringReader(source);
   const result = executeParser(parser, input, ctx);
   if (result.type === 'Failure') {
     throw new DocsyError.ParsingError(file, source, failureToStack(result));
   }
-  return new ParserResult<T>(file, source, result.value, ctx.ranges);
+  ctx.parsed[INTERNAL].setResult(result.value);
+  return ctx.parsed;
 }
 
-export function parseDocument(source: string, file: string): ParserResult<Ast.Document> {
+export function parseDocument(source: string, file: string): Parsed<Ast.Document> {
   return runParser(DocumentParser, source, file);
 }
 
-export function parseExpression(source: string, file: string): ParserResult<Ast.ExpressionDocument> {
+export function parseExpression(source: string, file: string): Parsed<Ast.ExpressionDocument> {
   return runParser(ExpressionDocumentParser, source, file);
 }
 
@@ -372,8 +370,9 @@ LineCommentParser.setParser(
 BlockCommentParser.setParser(
   nodeParser(
     'BlockComment',
-    p.applyPipe([t.blockCommentStart, p.maybe(t.blockCommentContent), t.blockCommentEnd], ([_start, content]) =>
-      nodeData({}, { content: content || '' })
+    p.applyPipe(
+      [t.blockCommentStart, p.maybe(t.blockCommentContent), p.oneOf(t.blockCommentEnd, t.eof)],
+      ([_start, content]) => nodeData({}, { content: content || '' })
     )
   )
 );
@@ -663,7 +662,7 @@ ChainableCallExpressionParser.setParser(
     [t.parenthesisOpen, p.maybe(p.oneOf(ListItemsParser, WhitespaceLikeParser)), t.parenthesisClose],
     ([_parenthesis, args], _start, end) => ({
       type: 'ChainableCallExpression',
-      args: args,
+      arguments: args,
       end,
     })
   )

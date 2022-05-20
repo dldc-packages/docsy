@@ -78,6 +78,21 @@ test(`Parse ExpressionDocument with many before and after`, () => {
   expect(result.after.kind).toBe('Whitespace');
 });
 
+test(`Parse function call`, () => {
+  const file = 'add(6, 9)';
+  expect(() => parseExpression(file, 'expression.docsy')).not.toThrow();
+  const result = parseExpression(file, 'expression.docsy').result as any;
+  expect(result.kind).toBe('ExpressionDocument');
+  expect(result.value.kind).toBe('CallExpression');
+  expect(result.value.arguments).toMatchObject({
+    kind: 'ListItems',
+    items: [
+      { kind: 'ListItem', item: { kind: 'Num' } },
+      { kind: 'ListItem', item: { kind: 'Num' } },
+    ],
+  });
+});
+
 test(`Parse a document with text`, () => {
   const file = `Hello`;
   expect(() => parseDocument(file, 'source.docsy')).not.toThrow();
@@ -138,7 +153,7 @@ test(`Parse Element`, () => {
   const result = parseDocument(file, 'source.docsy').result as any;
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('Element');
-  expect(result.children[0].name).toEqual({
+  expect(result.children[0].name).toMatchObject({
     kind: 'Identifier',
     meta: { name: 'Demo' },
   });
@@ -151,7 +166,7 @@ test(`Parse Element unamed close`, () => {
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toEqual('Element');
   expect(result.children[0].meta).toEqual({ namedCloseTag: false });
-  expect(result.children[0].name).toEqual({
+  expect(result.children[0].name).toMatchObject({
     kind: 'Identifier',
     meta: { name: 'Demo' },
   });
@@ -471,6 +486,20 @@ test(`Parse an empty line comment then EOF`, () => {
   expect(() => parseDocument(file, 'source.docsy')).not.toThrow();
   const result = parseDocument(file, 'source.docsy').result as any;
   expect(result.children[0].kind).toBe('LineComment');
+});
+
+test(`Parse block comment`, () => {
+  const file = `/* some comment */`;
+  expect(() => parseDocument(file, 'source.docsy')).not.toThrow();
+  const result = parseDocument(file, 'source.docsy').result as any;
+  expect(result.children[0].kind).toBe('BlockComment');
+});
+
+test(`Parse block comment ended with EOF`, () => {
+  const file = `/* some comment \n\n`;
+  expect(() => parseDocument(file, 'source.docsy')).not.toThrow();
+  const result = parseDocument(file, 'source.docsy').result as any;
+  expect(result.children[0].kind).toBe('BlockComment');
 });
 
 test(`Parse single slash`, () => {

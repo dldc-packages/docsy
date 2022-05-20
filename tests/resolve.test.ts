@@ -1,4 +1,4 @@
-import { resolve, parseDocument } from '../src/mod';
+import { resolve, parseDocument, parseExpression } from '../src/mod';
 
 test('Resolve simple text', () => {
   const node = parseDocument('Hello', 'source.docsy');
@@ -34,4 +34,26 @@ test('Resolve element', () => {
     props: { children: undefined },
     type: 'DemoType',
   });
+});
+
+test('Resolve function', () => {
+  const node = parseExpression(`getNum()`, 'source.docsy');
+  const resolved = resolve(node.result, {
+    globals: { getNum: () => 42 },
+  });
+  expect(resolved).toEqual(42);
+});
+
+test('Resolve function with params', () => {
+  const node = parseExpression(`add(2, 8)`, 'source.docsy');
+  const resolved = resolve(node.result, {
+    globals: { add: (a: number, b: number) => a + b },
+  });
+  expect(resolved).toEqual(10);
+});
+
+test('Resolve parenthesis', () => {
+  const node = parseExpression(`(42)`, 'source.docsy');
+  const resolved = resolve(node.result);
+  expect(resolved).toEqual(42);
 });
