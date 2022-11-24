@@ -8,6 +8,7 @@ import { createContext, rule, nodeParser, nodeData, ParserContext } from './inte
 import { Parser, ParseResult } from './internal/types';
 import { Parsed } from './Parsed';
 import { INTERNAL } from './internal';
+import { nonEmptyArray } from './Utils';
 
 function runParser<T extends Ast.Node>(parser: Parser<T, ParserContext<T>>, source: string, file: string): Parsed<T> {
   const ctx = createContext<T>(file, source);
@@ -689,13 +690,6 @@ function flattenManySepBy<T, Sep>(result: p.ManySepByResult<T, Sep>): Array<T> {
   }
   const { head, tail } = result;
   return [head, ...tail.map((v) => v.item)];
-}
-
-function nonEmptyArray<T>(arr: ReadonlyArray<T>): Ast.NonEmptyArray<T> {
-  if (arr.length === 0) {
-    throw new DocsyError.UnexpectedError('Unexpected empty array');
-  }
-  return arr as Ast.NonEmptyArray<T>;
 }
 
 function parseElementName(str: string, start: number, end: number, ctx: ParserContext): Ast.ElementName {
