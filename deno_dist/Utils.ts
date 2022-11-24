@@ -1,5 +1,5 @@
 import { DocsyError } from './DocsyError.ts';
-import { Node, NodeBuilder, Expression, NodeChildrenBase, isValidNodeKind } from './Ast.ts';
+import { Node, NodeBuilder, Expression, NodeChildrenBase, isValidNodeKind, NonEmptyArray } from './Ast.ts';
 import { TraversePath } from './internal/types.ts';
 import { isReadonlyArray } from './internal/utils.ts';
 
@@ -11,6 +11,7 @@ export const Utils = {
   cloneAtPaths,
   transform,
   updateNodeMeta,
+  nonEmptyArray,
 };
 
 export type NodePath = Array<string | number>;
@@ -142,33 +143,52 @@ function createNodeFromValue(value: unknown): Expression {
     return NodeBuilder.Str({}, { value, quote: 'Single' });
   }
   if (Array.isArray(value)) {
-    throw new DocsyError('Not implemented');
-    // return NodeBuilder.Array(
-    //   { items: value.map((val) => NodeBuilder.ListItem({ item: createNodeFromValue(val) }, {})) },
-    //   { trailingComma: false }
-    // );
+    if (value.length === 0) {
+      return NodeBuilder.Arr({}, {});
+    }
+    return NodeBuilder.Arr(
+      {
+        items: NodeBuilder.ListItems(
+          {
+            items: nonEmptyArray(
+              value.map((v) => {
+                return NodeBuilder.ListItem({ item: createNodeFromValue(v) }, {});
+              })
+            ),
+          },
+          {}
+        ),
+      },
+      {}
+    );
   }
   if (isPlainObject(value)) {
-    throw new DocsyError('Not implemented');
-    // return NodeBuilder.Obj(
-    //   {
-    //     items: Object.keys(value).map((key) => {
-    //       return NodeBuilder.ObjectItem(
-    //         {
-    //           item: NodeBuilder.ObjectProperty(
-    //             {
-    //               name: NodeBuilder.Str({}, { value: key, quote: 'Single' }),
-    //               value: createNodeFromValue((value as any)[key]),
-    //             },
-    //             {}
-    //           ),
-    //         },
-    //         {}
-    //       );
-    //     }),
-    //   },
-    //   { trailingComma: false }
-    // );
+    if (Object.keys(value).length === 0) {
+      return NodeBuilder.Obj({}, {});
+    }
+    return NodeBuilder.Obj(
+      {
+        items: NodeBuilder.ObjItems(
+          {
+            properties: nonEmptyArray(
+              Object.entries(value).map(([key, v]) => {
+                return NodeBuilder.ObjItem(
+                  {
+                    property: NodeBuilder.ObjProperty(
+                      { name: NodeBuilder.Identifier({}, { name: key }), value: createNodeFromValue(v) },
+                      {}
+                    ),
+                  },
+                  {}
+                );
+              })
+            ),
+          },
+          {}
+        ),
+      },
+      {}
+    );
   }
   throw new DocsyError.CannotTransformValue(value);
 }
@@ -253,4 +273,11 @@ function updateAtPath(obj: unknown, path: TraversePath, value: unknown) {
     parent = parent[part];
   });
   parent[updateKey as any] = value;
+}
+
+export function nonEmptyArray<T>(arr: ReadonlyArray<T>): NonEmptyArray<T> {
+  if (arr.length === 0) {
+    throw new DocsyError.UnexpectedError('Unexpected empty array');
+  }
+  return arr as NonEmptyArray<T>;
 }

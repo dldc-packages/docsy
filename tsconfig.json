@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "es5",
+    "target": "ESNext",
     "module": "ES2020",
     "lib": ["esnext"],
     "importHelpers": true,
