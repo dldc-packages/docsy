@@ -1,53 +1,11 @@
 import fse from 'fs-extra';
 import path from 'path';
-import * as Ast from '../../src/Ast';
-import { Utils } from '../../src/Utils';
 
 export function readFile(name: string): string {
   const testFileFolder = path.resolve(process.cwd(), 'tests/files');
   const filePath = path.resolve(testFileFolder, `${name}.docsy`);
   const file = fse.readFileSync(filePath, { encoding: 'utf8' });
   return file;
-}
-
-function indent(content: string): string {
-  return content
-    .split('\n')
-    .map((line) => `  ${line}`)
-    .join('\n');
-}
-
-export function debugNode(node: Ast.Node | Array<Ast.Node>): string {
-  if (Array.isArray(node)) {
-    return node.map((child) => debugNode(child)).join('\n\n');
-  }
-  let nodeHeader = `${node.kind}`;
-  if (node.meta) {
-    const metas = Object.entries(node.meta);
-    if (metas.length) {
-      nodeHeader += `(${metas.map(([name, value]) => `${name}: ${value}`).join(', ')})`;
-    }
-  }
-  const children = Utils.getNodeChildren(node);
-  if (children.length === 0) {
-    return nodeHeader;
-  }
-  return [
-    nodeHeader,
-    ...children
-      .map(({ node: child, path }) => {
-        const name = path.join('.');
-        if (child) {
-          const childText = debugNode(child);
-          if (childText.split('\n').length > 1) {
-            return `${name}:\n${childText}`;
-          }
-          return `${name}: ${indent(childText)}`;
-        }
-        return `${name}: null`;
-      })
-      .map((v) => indent(v)),
-  ].join('\n');
 }
 
 // type DebugNodeOptions = { inlineSep: string; newLineSep: string; priority: number };

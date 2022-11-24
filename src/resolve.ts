@@ -75,37 +75,33 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
   RawElement(item, options) {
     const props = resolveAttributes(item.attributes, options);
     const type = resolveNode(item.name, options);
-    return resolveJsx(item, options, type, { ...props, children: item.meta.content });
+    return resolveJsx(item, options, type, { ...props, children: item.content });
   },
   Fragment(item, options) {
     const children = resolveElementChildren(item.children, options);
     return resolveJsx(item, options, resolveFragment(item, options), { children });
   },
   RawFragment(item) {
-    return item.meta.content;
+    return item.content;
   },
   Text(item) {
-    return item.meta.content;
+    return item.content;
   },
   Identifier(item, config) {
     const { globals: globalsValues = {} } = config;
-    if (Object.hasOwn(globalsValues, item.meta.name) === false) {
-      throw new DocsyError.MissingGlobal(
-        config.file,
-        item,
-        `You probably forgot to provide a value for ${item.meta.name}`
-      );
+    if (Object.hasOwn(globalsValues, item.name) === false) {
+      throw new DocsyError.MissingGlobal(config.file, item, `You probably forgot to provide a value for ${item.name}`);
     }
-    return globalsValues[item.meta.name];
+    return globalsValues[item.name];
   },
   Bool(item) {
-    return item.meta.value;
+    return item.value;
   },
   Str(item) {
-    return item.meta.value;
+    return item.value;
   },
   Num(item) {
-    return item.meta.value;
+    return item.value;
   },
   Null() {
     return null;
@@ -124,7 +120,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
         )}')`
       );
     }
-    return target[item.property.meta.name];
+    return target[item.property.name];
   },
   ComputedMemberExpression(item, options) {
     const target = resolveNode(item.target, options);
@@ -176,7 +172,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
     return resolveListItems(resolved);
   },
   Whitespace(item) {
-    return item.meta.content;
+    return item.content;
   },
   Inject(item, options) {
     return resolveNode(item.value, options);
@@ -246,7 +242,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
   },
   Attribute(item, options) {
     return new IntermediateResolvedValue({
-      name: item.name.meta.name,
+      name: item.name.name,
       value: item.value ? resolveNode(item.value, options) : true,
     });
   },
@@ -261,7 +257,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
         )}')`
       );
     }
-    return target[item.property.meta.name];
+    return target[item.property.name];
   },
 };
 
@@ -361,7 +357,7 @@ function printValueType(val: any): string {
 }
 
 function resolveObjPropertyName(item: Ast.Str | Ast.Identifier): string {
-  return Ast.NodeIs.Identifier(item) ? item.meta.name : item.meta.value;
+  return Ast.NodeIs.Identifier(item) ? item.name : item.value;
 }
 
 function resolveListItems(items: Array<Ast.ResolveListItem>): Array<any> {

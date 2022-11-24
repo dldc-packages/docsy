@@ -1,5 +1,4 @@
 import { Utils, parseDocument, serialize, Ast } from '../src/mod';
-import { debugNode } from './utils';
 
 test('should filter item', () => {
   const doc = `Hello </Component/> Foo </Bar/><|Content>Hello </Bold/> </>`;
@@ -33,14 +32,14 @@ test('should clone at paths', () => {
 test('should transform item', () => {
   const doc = `Hello </Component/> Foo </Bar/><|Content>Hello </Bold/> </>`;
   const parsed = parseDocument(doc, 'source.docsy');
-  const before = debugNode(parsed.result);
+  const before = Utils.debug(parsed.result);
   const updated = Utils.transform(parsed.result, (node) => {
-    if (Ast.NodeIs.Identifier(node) && node.meta.name === 'Bold') {
-      return Utils.updateNodeMeta(node, (meta) => ({ ...meta, name: 'Italic' }));
+    if (Ast.NodeIs.Identifier(node) && node.name === 'Bold') {
+      return { ...node, name: 'Italic' };
     }
     return node;
   });
-  expect(before).toEqual(debugNode(parsed.result));
+  expect(before).toEqual(Utils.debug(parsed.result));
   expect(serialize(updated)).toEqual(`Hello </Component/> Foo </Bar/><|Content>Hello </Italic/> </>`);
 });
 
