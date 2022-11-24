@@ -190,7 +190,14 @@ function createNodeFromValue(value: unknown): Ast.Expression {
     }
     return Ast.NodeBuilder.Arr({
       items: Ast.NodeBuilder.ListItems({
-        items: nonEmptyArray(value.map((v) => Ast.NodeBuilder.ListItem({ item: createNodeFromValue(v) }))),
+        items: nonEmptyArray(
+          value.map((v, i) => {
+            return Ast.NodeBuilder.ListItem({
+              item: createNodeFromValue(v),
+              whitespaceBefore: i === 0 ? undefined : Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }),
+            });
+          })
+        ),
       }),
     });
   }
@@ -198,12 +205,16 @@ function createNodeFromValue(value: unknown): Ast.Expression {
     if (Object.keys(value).length === 0) {
       return Ast.NodeBuilder.Obj({});
     }
-    const properties: Array<Ast.ObjItem> = Object.entries(value).map(([key, v]) => {
+    const properties: Array<Ast.ObjItem> = Object.entries(value).map(([key, v], i) => {
+      const isLast = i === Object.keys(value).length - 1;
       return Ast.NodeBuilder.ObjItem({
         property: Ast.NodeBuilder.ObjProperty({
           name: Ast.NodeBuilder.Identifier({ name: key }),
           value: createNodeFromValue(v),
+          whitespaceAfterColon: Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }),
         }),
+        whitespaceBefore: Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }),
+        whitespaceAfter: isLast ? Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }) : undefined,
       });
     });
 

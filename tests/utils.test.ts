@@ -43,6 +43,13 @@ test('should transform item', () => {
   expect(serialize(updated)).toEqual(`Hello </Component/> Foo </Bar/><|Content>Hello </Italic/> </>`);
 });
 
+test('should correctly transform array and object to node', () => {
+  const data = { foo: 'bar', num: 42, arr: [1, 2, 3] };
+  const node = Utils.createNodeFromValue(data);
+  expect(node.kind).toBe('Obj');
+  expect(serialize(node)).toBe(`{ foo: 'bar', num: 42, arr: [1, 2, 3] }`);
+});
+
 // test('should component name and props', () => {
 //   const doc = `<|SomeComponent foo="bar" num=41>Inner content|>`;
 //   const parsed = parseDocument(doc, 'source.docsy');
