@@ -4,7 +4,7 @@ import * as t from './internal/tokens.ts';
 import { StringReader } from './internal/StringReader.ts';
 import { DocsyError } from './DocsyError.ts';
 import { executeParser, failureToStack, ParseSuccess, ParseFailure } from './internal/Parser.ts';
-import { createContext, rule, nodeParser, nodeData, ParserContext } from './internal/ParserContext.ts';
+import { createContext, rule, nodeParser, ParserContext } from './internal/ParserContext.ts';
 import { Parser, ParseResult } from './internal/types.ts';
 import { Parsed } from './Parsed.ts';
 import { INTERNAL } from './internal.ts';
@@ -122,10 +122,10 @@ ExpressionDocumentParser.setParser(
   nodeParser(
     'ExpressionDocument',
     p.oneOf(
-      p.apply(t.eof, () => nodeData({}, {})), // empty
+      p.apply(t.eof, () => ({})), // empty
       p.apply(
         p.pipe(p.maybe(WhitespaceLikeParser), p.maybe(ExpressionParser), p.maybe(WhitespaceLikeParser)),
-        ([before, value, after]) => nodeData({ value, before, after }, {})
+        ([before, value, after]) => ({ value, before, after })
       )
     )
   )
@@ -134,7 +134,7 @@ ExpressionDocumentParser.setParser(
 DocumentParser.setParser(
   nodeParser(
     'Document',
-    p.applyPipe([p.many(ChildParser), t.eof], ([children]) => nodeData({ children }, {}))
+    p.applyPipe([p.many(ChildParser), t.eof], ([children]) => ({ children }))
   )
 );
 
@@ -156,7 +156,7 @@ InjectParser.setParser(
         t.curlyBracketClose,
       ],
       ([_begin, whitespaceBefore, value, whitespaceAfter]) => {
-        return nodeData({ whitespaceBefore, value, whitespaceAfter }, {});
+        return { whitespaceBefore, value, whitespaceAfter };
       }
     )
   )
@@ -165,14 +165,14 @@ InjectParser.setParser(
 TextParser.setParser(
   nodeParser(
     'Text',
-    p.apply(t.textContent, (content) => nodeData({}, { content }))
+    p.apply(t.textContent, (content) => ({ content }))
   )
 );
 
 LineTextParser.setParser(
   nodeParser(
     'Text',
-    p.apply(t.lineTextContent, (content) => nodeData({}, { content }))
+    p.apply(t.lineTextContent, (content) => ({ content }))
   )
 );
 
@@ -207,13 +207,13 @@ ElementParser.setParser(
           return ParseFailure(closeRange?.end ?? 0, path, () => `Invalid close tag: wrong component`);
         }
       }
-      const node = ctx.createNode(
-        'Element',
-        result.start,
-        result.end,
-        { children, attributes, name: elementName, whitespaceAfterAttributes },
-        { namedCloseTag: closeName !== null }
-      );
+      const node = ctx.createNode('Element', result.start, result.end, {
+        children,
+        attributes,
+        name: elementName,
+        whitespaceAfterAttributes,
+        namedCloseTag: closeName !== null,
+      });
       return {
         ...result,
         value: node,
@@ -244,13 +244,13 @@ RawElementParser.setParser(
           return ParseFailure(closeRange?.end ?? 0, path, () => `Invalid close tag: wrong component`);
         }
       }
-      const node = ctx.createNode(
-        'RawElement',
-        result.start,
-        result.end,
-        { attributes, name: elementName, whitespaceAfterAttributes },
-        { namedCloseTag: closeName !== null, content }
-      );
+      const node = ctx.createNode('RawElement', result.start, result.end, {
+        attributes,
+        name: elementName,
+        whitespaceAfterAttributes,
+        namedCloseTag: closeName !== null,
+        content,
+      });
       return {
         type: result.type,
         start: result.start,
@@ -275,7 +275,7 @@ SelfClosingElementParser.setParser(
         t.elementSelfClosingEnd,
       ],
       ([_begin, elementName, attributes, whitespaceAfterAttributes, _tagEnd]) => {
-        return nodeData({ name: elementName, attributes, whitespaceAfterAttributes }, {});
+        return { name: elementName, attributes, whitespaceAfterAttributes };
       }
     )
   )
@@ -294,7 +294,7 @@ LineElementParser.setParser(
         p.many(LineChildParser),
       ],
       ([_begin, elementName, attributes, whitespaceAfterAttributes, _end, children]) => {
-        return nodeData({ name: elementName, attributes, children, whitespaceAfterAttributes }, {});
+        return { name: elementName, attributes, children, whitespaceAfterAttributes };
       }
     )
   )
@@ -303,18 +303,14 @@ LineElementParser.setParser(
 FragmentParser.setParser(
   nodeParser(
     'Fragment',
-    p.applyPipe([t.fragmentToken, p.many(ChildParser), t.elementCloseShortcut], ([_open, children]) =>
-      nodeData({ children }, {})
-    )
+    p.applyPipe([t.fragmentToken, p.many(ChildParser), t.elementCloseShortcut], ([_open, children]) => ({ children }))
   )
 );
 
 RawFragmentParser.setParser(
   nodeParser(
     'RawFragment',
-    p.applyPipe([t.rawFragmentToken, t.rawTextContent, t.elementCloseShortcut], ([_open, content]) =>
-      nodeData({}, { content })
-    )
+    p.applyPipe([t.rawFragmentToken, t.rawTextContent, t.elementCloseShortcut], ([_open, content]) => ({ content }))
   )
 );
 
@@ -325,7 +321,7 @@ AttributeParser.setParser(
     'Attribute',
     p.applyPipe(
       [WhitespaceLikeParser, IdentifierParser, p.maybe(p.pipe(t.equal, ExpressionParser))],
-      ([whitespaceBefore, name, val]) => nodeData({ whitespaceBefore, name, value: val ? val[1] : undefined }, {})
+      ([whitespaceBefore, name, val]) => ({ whitespaceBefore, name, value: val ? val[1] : undefined })
     )
   )
 );
@@ -342,7 +338,7 @@ WhitespaceParser.setParser(
     'Whitespace',
     p.apply(t.whitespace, (content) => {
       const hasNewLine = content.indexOf('\n') >= 0;
-      return nodeData({}, { content, hasNewLine });
+      return { content, hasNewLine };
     })
   )
 );
@@ -352,7 +348,7 @@ LineWhitespaceParser.setParser(
     'Whitespace',
     p.apply(t.lineWhitespace, (content) => {
       const hasNewLine = content.indexOf('\n') >= 0;
-      return nodeData({}, { content, hasNewLine });
+      return { content, hasNewLine };
     })
   )
 );
@@ -362,9 +358,9 @@ AnyCommentParser.setParser(p.oneOf(LineCommentParser, BlockCommentParser));
 LineCommentParser.setParser(
   nodeParser(
     'LineComment',
-    p.applyPipe([t.lineCommentStart, p.maybe(t.lineCommentContent)], ([_start, content]) =>
-      nodeData({}, { content: content || '' })
-    )
+    p.applyPipe([t.lineCommentStart, p.maybe(t.lineCommentContent)], ([_start, content]) => ({
+      content: content || '',
+    }))
   )
 );
 
@@ -373,7 +369,7 @@ BlockCommentParser.setParser(
     'BlockComment',
     p.applyPipe(
       [t.blockCommentStart, p.maybe(t.blockCommentContent), p.oneOf(t.blockCommentEnd, t.eof)],
-      ([_start, content]) => nodeData({}, { content: content || '' })
+      ([_start, content]) => ({ content: content || '' })
     )
   )
 );
@@ -385,28 +381,28 @@ PrimitiveParser.setParser(p.oneOf(NumParser, BoolParser, NullParser, UndefinedPa
 NumParser.setParser(
   nodeParser(
     'Num',
-    p.apply(t.number, (rawValue) => nodeData({}, { value: parseFloat(rawValue), rawValue }))
+    p.apply(t.number, (rawValue) => ({ value: parseFloat(rawValue), rawValue }))
   )
 );
 
 BoolParser.setParser(
   nodeParser(
     'Bool',
-    p.apply(p.oneOf(t.trueToken, t.falseToken), (val) => nodeData({}, { value: val === 'true' ? true : false }))
+    p.apply(p.oneOf(t.trueToken, t.falseToken), (val) => ({ value: val === 'true' ? true : false }))
   )
 );
 
 NullParser.setParser(
   nodeParser(
     'Null',
-    p.apply(t.nullToken, () => nodeData({}, {}))
+    p.apply(t.nullToken, () => ({}))
   )
 );
 
 UndefinedParser.setParser(
   nodeParser(
     'Undefined',
-    p.apply(t.undefinedToken, () => nodeData({}, {}))
+    p.apply(t.undefinedToken, () => ({}))
   )
 );
 
@@ -422,7 +418,7 @@ StrParser.setParser(
       ([rawQuote, content]) => {
         const quote: Ast.QuoteType =
           rawQuote === t.SINGLE_QUOTE ? 'Single' : rawQuote === t.DOUBLE_QUOTE ? 'Double' : 'Backtick';
-        return nodeData({}, { value: content ?? '', quote });
+        return { value: content ?? '', quote };
       }
     )
   )
@@ -435,7 +431,7 @@ ArrParser.setParser(
     'Arr',
     p.applyPipe(
       [t.squareBracketOpen, p.maybe(p.oneOf(ListItemsParser, WhitespaceLikeParser)), t.squareBracketClose],
-      ([_open, items, _close]) => nodeData({ items }, {})
+      ([_open, items, _close]) => ({ items })
     )
   )
 );
@@ -445,7 +441,7 @@ ListItemsParser.setParser(
     'ListItems',
     p.applyPipe(
       [p.manySepBy(ListItemParser, t.comma, { allowEmpty: false }), p.maybe(TrailingCommaParser)],
-      ([items, trailingComma]) => nodeData({ items: nonEmptyArray(flattenManySepBy(items)), trailingComma }, {})
+      ([items, trailingComma]) => ({ items: nonEmptyArray(flattenManySepBy(items)), trailingComma })
     )
   )
 );
@@ -455,7 +451,7 @@ ListItemParser.setParser(
     'ListItem',
     p.applyPipe(
       [p.maybe(WhitespaceLikeParser), ExpressionParser, p.maybe(WhitespaceLikeParser)],
-      ([whitespaceBefore, item, whitespaceAfter]) => nodeData({ whitespaceBefore, item, whitespaceAfter }, {})
+      ([whitespaceBefore, item, whitespaceAfter]) => ({ whitespaceBefore, item, whitespaceAfter })
     )
   )
 );
@@ -466,7 +462,7 @@ ObjParser.setParser(
     p.applyPipe(
       [t.curlyBracketOpen, p.maybe(p.oneOf(ObjItemsParser, WhitespaceLikeParser)), t.curlyBracketClose],
       ([_open, items, _close]) => {
-        return nodeData({ items }, {});
+        return { items };
       }
     )
   )
@@ -477,8 +473,7 @@ ObjItemsParser.setParser(
     'ObjItems',
     p.applyPipe(
       [p.manySepBy(ObjItemParser, t.comma, { allowEmpty: false, allowTrailing: false }), p.maybe(TrailingCommaParser)],
-      ([properties, trailingComma]) =>
-        nodeData({ properties: nonEmptyArray(flattenManySepBy(properties)), trailingComma }, {})
+      ([properties, trailingComma]) => ({ properties: nonEmptyArray(flattenManySepBy(properties)), trailingComma })
     )
   )
 );
@@ -486,9 +481,9 @@ ObjItemsParser.setParser(
 TrailingCommaParser.setParser(
   nodeParser(
     'TrailingComma',
-    p.applyPipe([t.comma, p.maybe(WhitespaceLikeParser)], ([_comma, whitespaceAfterComma]) =>
-      nodeData({}, { whitespaceAfterComma })
-    )
+    p.applyPipe([t.comma, p.maybe(WhitespaceLikeParser)], ([_comma, whitespaceAfter]) => ({
+      whitespaceAfter,
+    }))
   )
 );
 
@@ -497,7 +492,7 @@ ObjItemParser.setParser(
     'ObjItem',
     p.applyPipe(
       [p.maybe(WhitespaceLikeParser), AnyObjPropertyParser, p.maybe(WhitespaceLikeParser)],
-      ([whitespaceBefore, property, whitespaceAfter]) => nodeData({ whitespaceBefore, property, whitespaceAfter }, {})
+      ([whitespaceBefore, property, whitespaceAfter]) => ({ whitespaceBefore, property, whitespaceAfter })
     )
   )
 );
@@ -517,8 +512,12 @@ ObjPropertyParser.setParser(
         p.maybe(WhitespaceLikeParser),
         ExpressionParser,
       ],
-      ([name, whitespaceBeforeColon, _colon, whitespaceAfterColon, value]) =>
-        nodeData({ name, value, whitespaceAfterColon, whitespaceBeforeColon }, {})
+      ([name, whitespaceBeforeColon, _colon, whitespaceAfterColon, value]) => ({
+        name,
+        value,
+        whitespaceAfterColon,
+        whitespaceBeforeColon,
+      })
     )
   )
 );
@@ -549,17 +548,14 @@ ObjComputedPropertyParser.setParser(
         whitespaceAfterColon,
         value,
       ]) => {
-        return nodeData(
-          {
-            whitespaceBeforeExpression,
-            expression,
-            whitespaceAfterExpression,
-            whitespaceBeforeColon,
-            whitespaceAfterColon,
-            value,
-          },
-          {}
-        );
+        return {
+          whitespaceBeforeExpression,
+          expression,
+          whitespaceAfterExpression,
+          whitespaceBeforeColon,
+          whitespaceAfterColon,
+          value,
+        };
       }
     )
   )
@@ -570,7 +566,7 @@ ObjPropertyShorthandParser.setParser(
     'ObjPropertyShorthand',
     p.applyPipe(
       [p.maybe(WhitespaceLikeParser), IdentifierParser, p.maybe(WhitespaceLikeParser)],
-      ([whitespaceBefore, name, whitespaceAfter]) => nodeData({ whitespaceBefore, name, whitespaceAfter }, {})
+      ([whitespaceBefore, name, whitespaceAfter]) => ({ whitespaceBefore, name, whitespaceAfter })
     )
   )
 );
@@ -578,7 +574,7 @@ ObjPropertyShorthandParser.setParser(
 SpreadParser.setParser(
   nodeParser(
     'Spread',
-    p.applyPipe([t.spreadOperator, ExpressionParser], ([_op, target]) => nodeData({ target }, {}))
+    p.applyPipe([t.spreadOperator, ExpressionParser], ([_op, target]) => ({ target }))
   )
 );
 
@@ -597,21 +593,21 @@ ChainableExpressionParser.setParser(
           return ParseSuccess(
             start,
             right.rest,
-            ctx.createNode('MemberExpression', start, end, { target, property: item.indentifier }, {})
+            ctx.createNode('MemberExpression', start, end, { target, property: item.indentifier })
           );
         }
         if (item.type === 'ChainableComputedMemberExpression') {
           return ParseSuccess(
             start,
             right.rest,
-            ctx.createNode('ComputedMemberExpression', start, end, { target, property: item.value }, {})
+            ctx.createNode('ComputedMemberExpression', start, end, { target, property: item.value })
           );
         }
         if (item.type === 'ChainableCallExpression') {
           return ParseSuccess(
             start,
             right.rest,
-            ctx.createNode('CallExpression', start, end, { target, arguments: item.arguments }, {})
+            ctx.createNode('CallExpression', start, end, { target, arguments: item.arguments })
           );
         }
         throw new DocsyError.UnexpectedError(`Access on invalid type`);
@@ -625,16 +621,14 @@ ChainableExpressionBaseParser.setParser(p.oneOf(IdentifierParser, ParenthesisPar
 IdentifierParser.setParser(
   nodeParser(
     'Identifier',
-    p.apply(t.identifier, (name) => nodeData({}, { name }))
+    p.apply(t.identifier, (name) => ({ name }))
   )
 );
 
 ParenthesisParser.setParser(
   nodeParser(
     'Parenthesis',
-    p.applyPipe([t.parenthesisOpen, ExpressionParser, t.parenthesisClose], ([_open, value, _close]) =>
-      nodeData({ value }, {})
-    )
+    p.applyPipe([t.parenthesisOpen, ExpressionParser, t.parenthesisClose], ([_open, value, _close]) => ({ value }))
   )
 );
 
@@ -675,7 +669,7 @@ function sameComponent(left: Ast.ElementName, right: Ast.ElementName): boolean {
   if (left.kind !== right.kind) {
     return false;
   }
-  if (Ast.NodeIs.Identifier(left) && Ast.NodeIs.Identifier(right) && left.meta.name === right.meta.name) {
+  if (Ast.NodeIs.Identifier(left) && Ast.NodeIs.Identifier(right) && left.name === right.name) {
     return true;
   }
   if (Ast.NodeIs.ElementNameMember(left) && Ast.NodeIs.ElementNameMember(right)) {
@@ -695,23 +689,17 @@ function flattenManySepBy<T, Sep>(result: p.ManySepByResult<T, Sep>): Array<T> {
 function parseElementName(str: string, start: number, end: number, ctx: ParserContext): Ast.ElementName {
   const parts = str.split('.');
   if (parts.length === 1) {
-    return ctx.createNode('Identifier', start, end, {}, { name: parts[0] });
+    return ctx.createNode('Identifier', start, end, { name: parts[0] });
   }
   const [first, ...rest] = parts;
   let pos = 0;
-  let acc: Ast.ElementName = ctx.createNode('Identifier', start + pos, start + pos + first.length, {}, { name: first });
+  let acc: Ast.ElementName = ctx.createNode('Identifier', start + pos, start + pos + first.length, { name: first });
   pos += first.length;
   for (const part of rest) {
-    acc = ctx.createNode(
-      'ElementNameMember',
-      start,
-      start + pos + part.length,
-      {
-        target: acc,
-        property: ctx.createNode('Identifier', start + pos, start + pos + part.length, {}, { name: part }),
-      },
-      {}
-    );
+    acc = ctx.createNode('ElementNameMember', start, start + pos + part.length, {
+      target: acc,
+      property: ctx.createNode('Identifier', start + pos, start + pos + part.length, { name: part }),
+    });
     pos += part.length;
   }
   return acc;

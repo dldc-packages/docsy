@@ -24,28 +24,28 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Seria
     );
   },
   Whitespace(item) {
-    return item.meta.content;
+    return item.content;
   },
   Identifier(item) {
-    return item.meta.name;
+    return item.name;
   },
   Str(item) {
-    if (item.meta.quote === 'Single') {
-      return t.SINGLE_QUOTE + item.meta.value.replace(/'/g, `\\'`) + t.SINGLE_QUOTE;
+    if (item.quote === 'Single') {
+      return t.SINGLE_QUOTE + item.value.replace(/'/g, `\\'`) + t.SINGLE_QUOTE;
     }
-    if (item.meta.quote === 'Double') {
-      return t.DOUBLE_QUOTE + item.meta.value.replace(/"/g, `\\"`) + t.DOUBLE_QUOTE;
+    if (item.quote === 'Double') {
+      return t.DOUBLE_QUOTE + item.value.replace(/"/g, `\\"`) + t.DOUBLE_QUOTE;
     }
-    if (item.meta.quote === 'Backtick') {
-      return t.BACKTICK + item.meta.value.replace(/`/g, '\\`') + t.BACKTICK;
+    if (item.quote === 'Backtick') {
+      return t.BACKTICK + item.value.replace(/`/g, '\\`') + t.BACKTICK;
     }
     throw new DocsyError.UnexpectedError(`Invalid Qutote type on Str`);
   },
   Bool(item) {
-    return item.meta.value ? 'true' : 'false';
+    return item.value ? 'true' : 'false';
   },
   Num(item) {
-    return item.meta.rawValue;
+    return item.rawValue;
   },
   Null() {
     return `null`;
@@ -133,10 +133,10 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Seria
     ].join('');
   },
   LineComment(item) {
-    return `//${item.meta.content}`;
+    return `//${item.content}`;
   },
   BlockComment(item) {
-    return `/*${item.meta.content}*/`;
+    return `/*${item.content}*/`;
   },
   Element(item, options) {
     return [
@@ -146,7 +146,7 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Seria
       serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
       '>',
       serializeNodes(item.children, options),
-      item.meta.namedCloseTag ? `<${serializeNode(item.name, options)}/>` : `</>`,
+      item.namedCloseTag ? `<${serializeNode(item.name, options)}/>` : `</>`,
     ].join('');
   },
   RawElement(item, options) {
@@ -156,8 +156,8 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Seria
       serializeNodes(item.attributes, options),
       serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
       '>',
-      item.meta.content,
-      item.meta.namedCloseTag ? `<${serializeNode(item.name, options)}/>` : `</>`,
+      item.content,
+      item.namedCloseTag ? `<${serializeNode(item.name, options)}/>` : `</>`,
     ].join('');
   },
   SelfClosingElement(item, options) {
@@ -183,10 +183,10 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Seria
     return `<|>${serializeNodes(item.children, options)}</>`;
   },
   RawFragment(item) {
-    return `<#>${item.meta.content}</>`;
+    return `<#>${item.content}</>`;
   },
   Text(item) {
-    return item.meta.content;
+    return item.content;
   },
   Inject(item, options) {
     return [

@@ -1,4 +1,4 @@
-import { Node, NodeData, NodeIs, NodeKind } from './Ast.ts';
+import { Node, NodeContent, NodeIs, NodeKind } from './Ast.ts';
 import * as t from './internal/tokens.ts';
 
 export function format(node: Node): Node {
@@ -13,76 +13,56 @@ export function format(node: Node): Node {
 
   function formatString(item: Node<'Str'>): Node<'Str'> {
     // if new line & backtick => keep backtick
-    if (item.meta.value.indexOf('\n') && item.meta.quote === 'Backtick') {
+    if (item.value.indexOf('\n') && item.quote === 'Backtick') {
       return item;
     }
-    const hasSingle = item.meta.value.indexOf(t.SINGLE_QUOTE) >= 0;
-    const hasDouble = item.meta.value.indexOf(t.DOUBLE_QUOTE) >= 0;
-    const hasBacktick = item.meta.value.indexOf(t.BACKTICK) >= 0;
+    const hasSingle = item.value.indexOf(t.SINGLE_QUOTE) >= 0;
+    const hasDouble = item.value.indexOf(t.DOUBLE_QUOTE) >= 0;
+    const hasBacktick = item.value.indexOf(t.BACKTICK) >= 0;
     // No single => use single
     if (hasSingle === false) {
-      if (item.meta.quote !== 'Single') {
+      if (item.quote !== 'Single') {
         return item;
       }
-      return createNode(
-        'Str',
-        {},
-        {
-          value: item.meta.value,
-          quote: 'Single',
-        }
-      );
+      return createNode('Str', {
+        value: item.value,
+        quote: 'Single',
+      });
     }
     // no double quote => use double
     if (hasDouble === false) {
-      if (item.meta.quote !== 'Double') {
+      if (item.quote !== 'Double') {
         return item;
       }
-      return createNode(
-        'Str',
-        {},
-        {
-          value: item.meta.value,
-          quote: 'Double',
-        }
-      );
+      return createNode('Str', {
+        value: item.value,
+        quote: 'Double',
+      });
     }
     // at this point there are both single and double
     // if not backtick => use backtick
     if (hasBacktick === false) {
-      if (item.meta.quote !== 'Backtick') {
+      if (item.quote !== 'Backtick') {
         return item;
       }
-      return createNode(
-        'Str',
-        {},
-        {
-          value: item.meta.value,
-          quote: 'Backtick',
-        }
-      );
+      return createNode('Str', {
+        value: item.value,
+        quote: 'Backtick',
+      });
     }
     // fallback to single quote with escape
-    if (item.meta.quote === 'Single') {
+    if (item.quote === 'Single') {
       return item;
     }
     // escape unscaped single quote
-    return createNode(
-      'Str',
-      {},
-      {
-        value: item.meta.value.replace(/([^\\]')/g, "\\'"),
-        quote: 'Single',
-      }
-    );
+    return createNode('Str', {
+      value: item.value.replace(/([^\\]')/g, "\\'"),
+      quote: 'Single',
+    });
   }
 
-  function createNode<K extends NodeKind>(kind: K, children: NodeData<K>['children'], meta: Node<K>['meta']): Node<K> {
-    const node: Node<K> = {
-      kind,
-      children,
-      meta,
-    } as any;
+  function createNode<K extends NodeKind>(kind: K, content: NodeContent<K>): Node<K> {
+    const node: Node<K> = { kind, ...content } as any;
     return node;
   }
 }

@@ -1,5 +1,5 @@
+import * as Ast from './Ast.ts';
 import { DocsyError } from './DocsyError.ts';
-import { Node, NodeBuilder, Expression, NodeChildrenBase, isValidNodeKind, NonEmptyArray } from './Ast.ts';
 import { TraversePath } from './internal/types.ts';
 import { isReadonlyArray } from './internal/utils.ts';
 
@@ -8,49 +8,70 @@ export const Utils = {
   traverse,
   createNodeFromValue,
   getNodeChildren,
+  getAllNodeChildren,
+  getNodeData,
   cloneAtPaths,
   transform,
-  updateNodeMeta,
   nonEmptyArray,
+  debug,
 };
 
 export type NodePath = Array<string | number>;
+
 export interface NodeWithPath {
-  node: Node | undefined | null;
+  node: Ast.Node | undefined | null;
   path: NodePath;
 }
 
-function updateNodeMeta<T extends Node>(node: T, updater: (meta: T['meta']) => T['meta']): T {
-  return {
-    ...node,
-    meta: updater(node.meta),
-  };
-}
-
-function getChildren(children: NodeChildrenBase | null | undefined, path: NodePath): Array<NodeWithPath> {
-  if (children === null || children === undefined) {
-    return [];
-  }
+function getChildrenDeep(children: Ast.NodeContentChildren, path: NodePath): Array<NodeWithPath> {
   if (isReadonlyArray(children)) {
     return children.map((node, index) => ({ node, path: [...path, index] }));
   }
-  if (children.kind && isValidNodeKind(children.kind)) {
+  if (children.kind && Ast.isValidNodeKind(children.kind)) {
     // is node
     return [{ node: children as any, path }];
   }
   // Object
   return Object.keys(children).reduce<Array<NodeWithPath>>((acc, key) => {
-    acc.push(...getChildren((children as any)[key], [...path, key]));
+    acc.push(...getChildrenDeep((children as any)[key], [...path, key]));
     return acc;
   }, []);
 }
 
-function getNodeChildren(node: Node): Array<NodeWithPath> {
-  const keys = Object.keys(node).filter((v) => v !== 'meta' && v !== 'kind' && v !== 'parsed');
-  return keys.reduce<Array<NodeWithPath>>((acc, key) => {
-    acc.push(...getChildren((node as any)[key], [key]));
-    return acc;
-  }, []);
+/**
+ * Traverse the node data (children object and arrays) but it dos not traverse children nodes
+ * @param node
+ * @returns
+ */
+function getAllNodeChildren(node: Ast.Node): Array<NodeWithPath> {
+  const result: Array<NodeWithPath> = [];
+  Object.entries(getNodeChildren(node)).forEach(([key, value]) => {
+    result.push(...getChildrenDeep(value, [key]));
+  });
+  return result;
+}
+
+/**
+ * Filter node content to keep only non data properties (node or array / object of nodes)
+ * @param node
+ * @returns
+ */
+function getNodeChildren(node: Ast.Node): Record<string, Ast.NodeContentChildren> {
+  const result: Record<string, Ast.NodeContentChildren> = {};
+  Object.entries(node).forEach(([key, value]) => {
+    if (key === 'kind' || key === 'parsed') {
+      return;
+    }
+    if (value === null || value === undefined) {
+      return;
+    }
+    const type = typeof value;
+    if (type === 'string' || type === 'number' || type === 'boolean' || type === 'bigint') {
+      return;
+    }
+    result[key] = value;
+  });
+  return result;
 }
 
 /**
@@ -60,15 +81,15 @@ function getNodeChildren(node: Node): Array<NodeWithPath> {
  * @param onNode
  * @returns
  */
-function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void | false | null): void {
+function traverse(node: Ast.Node, onNode: (item: Ast.Node, path: TraversePath) => void | false | null): void {
   return traverseInternal(node, []);
 
-  function traverseInternal(item: Node, path: TraversePath) {
+  function traverseInternal(item: Ast.Node, path: TraversePath) {
     const traverseChildren = onNode(item, path);
     if (traverseChildren === false) {
       return;
     }
-    getNodeChildren(item).forEach((child) => {
+    getAllNodeChildren(item).forEach((child) => {
       if (child.node) {
         traverseInternal(child.node, [...path, ...child.path]);
       }
@@ -76,7 +97,28 @@ function traverse(node: Node, onNode: (item: Node, path: TraversePath) => void |
   }
 }
 
-function filter<N extends Node>(node: N, onNode: (item: Node, path: TraversePath) => boolean): N {
+function getNodeData(node: Ast.Node): Record<string, Ast.NodeContentData> {
+  const result: Record<string, Ast.NodeContentData> = {};
+  Object.entries(node).forEach(([key, value]) => {
+    if (key === 'kind' || key === 'parsed') {
+      return;
+    }
+    const type = typeof value;
+    if (
+      value === null ||
+      value === undefined ||
+      type === 'string' ||
+      type === 'number' ||
+      type === 'boolean' ||
+      type === 'bigint'
+    ) {
+      result[key] = value;
+    }
+  });
+  return result;
+}
+
+function filter<N extends Ast.Node>(node: N, onNode: (item: Ast.Node, path: TraversePath) => boolean): N {
   const removePaths: Array<TraversePath> = [];
 
   if (onNode(node, []) === false) {
@@ -104,8 +146,8 @@ function filter<N extends Node>(node: N, onNode: (item: Node, path: TraversePath
   return cloned;
 }
 
-function transform<N extends Node>(node: N, onNode: (item: Node, path: TraversePath) => Node): N {
-  const replaceItems: Array<{ path: TraversePath; node: Node }> = [];
+function transform<N extends Ast.Node>(node: N, onNode: (item: Ast.Node, path: TraversePath) => Ast.Node): N {
+  const replaceItems: Array<{ path: TraversePath; node: Ast.Node }> = [];
 
   traverse(node, (node, path) => {
     const updated = onNode(node, path);
@@ -126,69 +168,46 @@ function transform<N extends Node>(node: N, onNode: (item: Node, path: TraverseP
   return cloned;
 }
 
-function createNodeFromValue(value: unknown): Expression {
+function createNodeFromValue(value: unknown): Ast.Expression {
   if (value === null) {
-    return NodeBuilder.Null({}, {});
+    return Ast.NodeBuilder.Null();
   }
   if (value === undefined) {
-    return NodeBuilder.Undefined({}, {});
+    return Ast.NodeBuilder.Undefined();
   }
   if (typeof value === 'boolean') {
-    return NodeBuilder.Bool({}, { value });
+    return Ast.NodeBuilder.Bool({ value });
   }
   if (typeof value === 'number') {
-    return NodeBuilder.Num({}, { value, rawValue: String(value) });
+    return Ast.NodeBuilder.Num({ value, rawValue: String(value) });
   }
   if (typeof value === 'string') {
-    return NodeBuilder.Str({}, { value, quote: 'Single' });
+    return Ast.NodeBuilder.Str({ value, quote: 'Single' });
   }
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      return NodeBuilder.Arr({}, {});
+      return Ast.NodeBuilder.Arr({});
     }
-    return NodeBuilder.Arr(
-      {
-        items: NodeBuilder.ListItems(
-          {
-            items: nonEmptyArray(
-              value.map((v) => {
-                return NodeBuilder.ListItem({ item: createNodeFromValue(v) }, {});
-              })
-            ),
-          },
-          {}
-        ),
-      },
-      {}
-    );
+    return Ast.NodeBuilder.Arr({
+      items: Ast.NodeBuilder.ListItems({
+        items: nonEmptyArray(value.map((v) => Ast.NodeBuilder.ListItem({ item: createNodeFromValue(v) }))),
+      }),
+    });
   }
   if (isPlainObject(value)) {
     if (Object.keys(value).length === 0) {
-      return NodeBuilder.Obj({}, {});
+      return Ast.NodeBuilder.Obj({});
     }
-    return NodeBuilder.Obj(
-      {
-        items: NodeBuilder.ObjItems(
-          {
-            properties: nonEmptyArray(
-              Object.entries(value).map(([key, v]) => {
-                return NodeBuilder.ObjItem(
-                  {
-                    property: NodeBuilder.ObjProperty(
-                      { name: NodeBuilder.Identifier({}, { name: key }), value: createNodeFromValue(v) },
-                      {}
-                    ),
-                  },
-                  {}
-                );
-              })
-            ),
-          },
-          {}
-        ),
-      },
-      {}
-    );
+    const properties: Array<Ast.ObjItem> = Object.entries(value).map(([key, v]) => {
+      return Ast.NodeBuilder.ObjItem({
+        property: Ast.NodeBuilder.ObjProperty({
+          name: Ast.NodeBuilder.Identifier({ name: key }),
+          value: createNodeFromValue(v),
+        }),
+      });
+    });
+
+    return Ast.NodeBuilder.Obj({ items: Ast.NodeBuilder.ObjItems({ properties: nonEmptyArray(properties) }) });
   }
   throw new DocsyError.CannotTransformValue(value);
 }
@@ -275,9 +294,49 @@ function updateAtPath(obj: unknown, path: TraversePath, value: unknown) {
   parent[updateKey as any] = value;
 }
 
-export function nonEmptyArray<T>(arr: ReadonlyArray<T>): NonEmptyArray<T> {
+export function nonEmptyArray<T>(arr: ReadonlyArray<T>): Ast.NonEmptyArray<T> {
   if (arr.length === 0) {
     throw new DocsyError.UnexpectedError('Unexpected empty array');
   }
-  return arr as NonEmptyArray<T>;
+  return arr as Ast.NonEmptyArray<T>;
+}
+
+function indent(content: string): string {
+  return content
+    .split('\n')
+    .map((line) => `  ${line}`)
+    .join('\n');
+}
+
+export function debug(node: Ast.Node | Array<Ast.Node>): string {
+  if (Array.isArray(node)) {
+    return node.map((child) => debug(child)).join('\n\n');
+  }
+  let nodeHeader = `${node.kind}`;
+
+  const dataItems = Object.entries(getNodeData(node));
+  if (dataItems.length) {
+    nodeHeader += `(${dataItems.map(([name, value]) => `${name}: ${value}`).join(', ')})`;
+  }
+
+  const children = getAllNodeChildren(node);
+  if (children.length === 0) {
+    return nodeHeader;
+  }
+  return [
+    nodeHeader,
+    ...children
+      .map(({ node: child, path }) => {
+        const name = path.join('.');
+        if (child) {
+          const childText = debug(child);
+          if (childText.split('\n').length > 1) {
+            return `${name}:\n${childText}`;
+          }
+          return `${name}: ${indent(childText)}`;
+        }
+        return `${name}: null`;
+      })
+      .map((v) => indent(v)),
+  ].join('\n');
 }
