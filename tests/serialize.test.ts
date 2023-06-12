@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { parseDocument, serialize } from '../src/mod';
 import { readFile } from './utils';
 

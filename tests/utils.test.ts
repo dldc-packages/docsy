@@ -1,4 +1,5 @@
-import { Utils, parseDocument, serialize, Ast } from '../src/mod';
+import { expect, test } from 'vitest';
+import { Ast, Utils, parseDocument, serialize } from '../src/mod';
 
 test('should filter item', () => {
   const doc = `Hello </Component/> Foo </Bar/><|Content>Hello </Bold/> </>`;

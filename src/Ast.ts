@@ -286,25 +286,25 @@ export type WhitespaceLike = Whitespace | AnyComment | NonEmptyArray<Whitespace 
 
 // Groups
 const ElementName = combine('ElementNameMember', 'Identifier');
-export type ElementName = typeof ElementName['__type'];
+export type ElementName = (typeof ElementName)['__type'];
 
 const AnyElement = combine('Element', 'RawElement', 'SelfClosingElement', 'LineElement', 'Fragment', 'RawFragment');
-export type AnyElement = typeof AnyElement['__type'];
+export type AnyElement = (typeof AnyElement)['__type'];
 
 const ObjOrArr = combine('Arr', 'Obj');
-export type ObjOrArr = typeof ObjOrArr['__type'];
+export type ObjOrArr = (typeof ObjOrArr)['__type'];
 
 const Primitive = combine('Null', 'Undefined', 'Bool', 'Num', 'Str');
-export type Primitive = typeof Primitive['__type'];
+export type Primitive = (typeof Primitive)['__type'];
 
 const AnyObjProperty = combine('ObjProperty', 'ObjComputedProperty', 'ObjPropertyShorthand', 'Spread');
-export type AnyObjProperty = typeof AnyObjProperty['__type'];
+export type AnyObjProperty = (typeof AnyObjProperty)['__type'];
 
 const AnyComment = combine('LineComment', 'BlockComment');
-export type AnyComment = typeof AnyComment['__type'];
+export type AnyComment = (typeof AnyComment)['__type'];
 
 const Child = combine('Whitespace', 'Inject', 'Text', ...AnyComment.kinds, ...AnyElement.kinds);
-export type Child = typeof Child['__type'];
+export type Child = (typeof Child)['__type'];
 
 // Expression you can access properties / call functions on
 const ChainableExpression = combine(
@@ -314,10 +314,10 @@ const ChainableExpression = combine(
   'Parenthesis',
   'Identifier'
 );
-export type ChainableExpression = typeof ChainableExpression['__type'];
+export type ChainableExpression = (typeof ChainableExpression)['__type'];
 
 const Expression = combine(...Primitive.kinds, ...ObjOrArr.kinds, ...ChainableExpression.kinds);
-export type Expression = typeof Expression['__type'];
+export type Expression = (typeof Expression)['__type'];
 
 // NodeIs
 

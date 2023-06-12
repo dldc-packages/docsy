@@ -1,4 +1,5 @@
-import { resolve, parseDocument, parseExpression } from '../src/mod';
+import { expect, test } from 'vitest';
+import { parseDocument, parseExpression, resolve } from '../src/mod';
 
 test('Resolve simple text', () => {
   const node = parseDocument('Hello', 'source.docsy');

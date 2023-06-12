@@ -1,8 +1,6 @@
-import { parseExpression, parseDocument, DocsyError } from '../src/mod';
+import { expect, test } from 'vitest';
+import { DocsyError, parseDocument, parseExpression } from '../src/mod';
 import { readFile } from './utils';
-// @ts-ignore unused but fine
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { debugNode } from './utils';
 
 test(`Parse Empty Document`, () => {
   const file = '';

@@ -21,6 +21,7 @@ export class LinkedList<T> {
 
   public toArray(): Array<T> {
     const result: Array<T> = [];
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     let current: LinkedList<T> | null = this;
     while (current.internal !== null) {
       result.unshift(current.internal.value);
