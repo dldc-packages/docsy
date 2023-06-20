@@ -65,7 +65,10 @@
   },
   "release-it": {
     "hooks": {
-      "before:init": "pnpm test"
+      "before:init": [
+        "pnpm run build",
+        "pnpm test"
+      ]
     },
     "npm": {
       "publish": true
