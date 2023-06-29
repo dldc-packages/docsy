@@ -1,15 +1,15 @@
 {
-  "name": "docsy",
+  "name": "@dldc/docsy",
   "version": "1.0.0-35",
   "description": "A syntax for Component based documents",
   "keywords": [],
-  "homepage": "https://github.com/etienne-dldc/docsy#readme",
+  "homepage": "https://github.com/dldc-packages/docsy#readme",
   "bugs": {
-    "url": "https://github.com/etienne-dldc/docsy/issues"
+    "url": "https://github.com/dldc-packages/docsy/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/etienne-dldc/docsy.git"
+    "url": "git+https://github.com/dldc-packages/docsy.git"
   },
   "license": "MIT",
   "author": "Etienne Dldc <e.deladonchamps@gmail.com>",
