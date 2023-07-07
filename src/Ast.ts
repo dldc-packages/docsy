@@ -312,7 +312,7 @@ const ChainableExpression = combine(
   'ComputedMemberExpression',
   'MemberExpression',
   'Parenthesis',
-  'Identifier'
+  'Identifier',
 );
 export type ChainableExpression = (typeof ChainableExpression)['__type'];
 
@@ -328,7 +328,7 @@ const NodeIsInternal: { oneOf: typeof nodeIsOneOf } & {
     acc[key] = (node: Node) => node.kind === key;
     return acc;
   },
-  { oneOf: nodeIsOneOf }
+  { oneOf: nodeIsOneOf },
 );
 
 function isWhitespaceLike(node: Node | NonEmptyArray<Node> | Array<Node>): node is WhitespaceLike {

@@ -91,15 +91,15 @@ export const blockCommentContent = regexp(`(${NEGATIVE_BLOCK_COMMENT_END}${ANYTH
 export const number = regexp(`[+-]?(${NUM_VARIANT_1}|${NUM_VARIANT_2})`, 'number');
 export const singleQuoteStringContent = regexp(
   `((${ESCAPE_SINGLE_QUOTE})|${NOT_SINGLE_QUOTE_END})+`,
-  'singleQuoteStringContent'
+  'singleQuoteStringContent',
 );
 export const doubleQuoteStringContent = regexp(
   `((${ESCAPE_DOUBLE_QUOTE})|${NOT_DOUBLE_QUOTE_END})+`,
-  'doubleQuoteStringContent'
+  'doubleQuoteStringContent',
 );
 export const backtickStringContent = regexp(
   `((${ESCAPE_BACKTICK_QUOTE})|${NOT_BACKTICK_QUOTE_END})+`,
-  'backtickStringContent'
+  'backtickStringContent',
 );
 export const identifier = regexp(IDENTIFIER, 'identifier');
 export const textContent = regexp(`${ANYTHING}*?(?=$|${ANY_ELEM})`, 'textContent');

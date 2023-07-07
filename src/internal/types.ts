@@ -47,7 +47,7 @@ export type ParserFn<T, Ctx> = (
   path: LinkedList<string>,
   input: StringReader,
   skip: Array<Parser<any, Ctx>>,
-  ctx: Ctx
+  ctx: Ctx,
 ) => ParseResult<T>;
 
 export type Parser<T, Ctx> = {

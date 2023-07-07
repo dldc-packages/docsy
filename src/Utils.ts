@@ -196,7 +196,7 @@ function createNodeFromValue(value: unknown): Ast.Expression {
               item: createNodeFromValue(v),
               whitespaceBefore: i === 0 ? undefined : Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }),
             });
-          })
+          }),
         ),
       }),
     });

@@ -29,7 +29,7 @@ export function many<T, Ctx>(parser: Parser<T, Ctx>, { allowEmpty = true }: Many
         input.position,
         parentPath,
         () => 'No element found and allowEmpty === false',
-        tracker.getFailure()
+        tracker.getFailure(),
       );
     }
     return ParseSuccess(input.position, nextInput, items, tracker.getFailure());
@@ -50,7 +50,7 @@ export type ManySepByOptions = {
 export function manySepBy<T, Sep, Ctx>(
   itemParser: Parser<T, Ctx>,
   sepParser: Parser<Sep, Ctx>,
-  { allowTrailing = false, allowEmpty = true }: ManySepByOptions = {}
+  { allowTrailing = false, allowEmpty = true }: ManySepByOptions = {},
 ): Parser<ManySepByResult<T, Sep>, Ctx> {
   return {
     parse(parentPath, input, parent, ctx) {
@@ -86,14 +86,14 @@ export function manySepBy<T, Sep, Ctx>(
               input.position,
               nextSep.rest,
               { head: result.head, tail: result.tail, trailing: nextSep.value },
-              tracker.getFailure()
+              tracker.getFailure(),
             );
           }
           return ParseFailure(
             nextItem.pos,
             path,
             () => `Sep matched but item did not and trailing separator is not allowed`,
-            tracker.getFailure()
+            tracker.getFailure(),
           );
         } else {
           result.tail.push({ sep: nextSep.value, item: nextItem.value });
@@ -188,7 +188,7 @@ export function oneOf<V, Ctx>(...parsers: Array<Parser<V, Ctx>>): Parser<V, Ctx>
 
 export function apply<T, U, Ctx>(
   parser: Parser<T, Ctx>,
-  transformer: (val: T, start: number, end: number, ctx: Ctx) => U
+  transformer: (val: T, start: number, end: number, ctx: Ctx) => U,
 ): Parser<U, Ctx> {
   return {
     parse(parentPath, input, skip, ctx) {
@@ -204,14 +204,14 @@ export function apply<T, U, Ctx>(
 export function applyNamed<T, U, Ctx>(
   name: string,
   parser: Parser<T, Ctx>,
-  transformer: (val: T, start: number, end: number, ctx: Ctx) => U
+  transformer: (val: T, start: number, end: number, ctx: Ctx) => U,
 ): Parser<U, Ctx> {
   return named(name, apply(parser, transformer));
 }
 
 export function transform<T, U, Ctx>(
   parser: Parser<T, Ctx>,
-  transformer: (result: ParseResult<T>, parentPath: LinkedList<string>, ctx: Ctx) => ParseResult<U>
+  transformer: (result: ParseResult<T>, parentPath: LinkedList<string>, ctx: Ctx) => ParseResult<U>,
 ): Parser<U, Ctx> {
   return {
     parse(parentPath, input, skip, ctx) {
@@ -223,7 +223,7 @@ export function transform<T, U, Ctx>(
 
 export function transformSuccess<T, U, Ctx>(
   parser: Parser<T, Ctx>,
-  transformer: (result: ParseResultSuccess<T>, parentPath: LinkedList<string>, ctx: Ctx) => ParseResult<U>
+  transformer: (result: ParseResultSuccess<T>, parentPath: LinkedList<string>, ctx: Ctx) => ParseResult<U>,
 ): Parser<U, Ctx> {
   return {
     parse(parentPath, input, skip, ctx) {
@@ -293,7 +293,7 @@ export function exact<T extends string, Ctx>(str: T): Parser<T, Ctx> {
         return ParseFailure(
           input.position,
           parentPath.add(name),
-          () => `'${printString(peek)}' is not equal to '${printString(str)}'`
+          () => `'${printString(peek)}' is not equal to '${printString(str)}'`,
         );
       }
       const nextInput = input.skip(str.length);
@@ -312,7 +312,7 @@ export function eof<Ctx>(): Parser<null, Ctx> {
       return ParseFailure(
         input.position,
         path,
-        () => `End of file not reached (${input.peek(Infinity).length} chars remaining)`
+        () => `End of file not reached (${input.peek(Infinity).length} chars remaining)`,
       );
     },
   };
@@ -399,7 +399,7 @@ export function pipeResults<V, Ctx>(...parsers: Array<Parser<V, Ctx>>): Parser<A
             current.position,
             currentPath,
             () => `Parser at index ${i} did not match`,
-            tracker.getFailure()
+            tracker.getFailure(),
           );
         } else {
           current = next.rest;
@@ -490,7 +490,7 @@ export function pipe<V, Ctx>(...parsers: Array<Parser<V, Ctx>>): Parser<Array<V>
             current.position,
             currentPath,
             () => `Parser at index ${i} did not match`,
-            tracker.getFailure()
+            tracker.getFailure(),
           );
         } else {
           current = next.rest;
@@ -554,11 +554,11 @@ export function applyPipe<R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12,
 // Impl
 export function applyPipe<V, Out, Ctx>(
   parsers: Array<Parser<V, Ctx>>,
-  transformer: Transformer<Array<V>, Out, Ctx>
+  transformer: Transformer<Array<V>, Out, Ctx>,
 ): Parser<Out, Ctx>;
 export function applyPipe<V, Out, Ctx>(
   parsers: Array<Parser<V, Ctx>>,
-  transformer: Transformer<any, Out, Ctx>
+  transformer: Transformer<any, Out, Ctx>,
 ): Parser<Out, Ctx> {
   return apply(pipe(...parsers), transformer);
 }
@@ -576,8 +576,8 @@ export function reduceRight<I, C, O, Ctx>(
     result: ParseResultSuccess<I | O>,
     right: ParseResultSuccess<C>,
     path: LinkedList<string>,
-    ctx: Ctx
-  ) => ParseResult<O>
+    ctx: Ctx,
+  ) => ParseResult<O>,
 ): Parser<O, Ctx> {
   return {
     parse(parentPath, input, skip, ctx) {

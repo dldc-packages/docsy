@@ -548,7 +548,7 @@ test(`Parse block comment`, () => {
   expect(result.children.length).toBe(1);
   expect(result.children[0].kind).toBe('BlockComment');
   expect(result.children[0].content).toBe(
-    ['', 'More comments !', '</Title bold>Hello world !/>', '', '*', ''].join('\n')
+    ['', 'More comments !', '</Title bold>Hello world !/>', '', '*', ''].join('\n'),
   );
 });
 

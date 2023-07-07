@@ -116,8 +116,8 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
         options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
-          item
-        )}')`
+          item,
+        )}')`,
       );
     }
     return target[item.property.name];
@@ -129,8 +129,8 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
         options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
-          item
-        )}')`
+          item,
+        )}')`,
       );
     }
     const property = resolveNode(item.property, options);
@@ -138,7 +138,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
       throw new DocsyError.TypeError(
         options.file,
         item.property,
-        `${printValueType(property)} is not valid as a computed property name (reading '${serialize(item)})`
+        `${printValueType(property)} is not valid as a computed property name (reading '${serialize(item)})`,
       );
     }
     return target[property];
@@ -225,7 +225,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
       throw new DocsyError.TypeError(
         options.file,
         item.target,
-        `Cannot call "${serialize(item.target)}" as it is not a function`
+        `Cannot call "${serialize(item.target)}" as it is not a function`,
       );
     }
     const args = resolveArguments(item.arguments, options);
@@ -253,8 +253,8 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
         options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
-          item
-        )}')`
+          item,
+        )}')`,
       );
     }
     return target[item.property.name];
@@ -269,7 +269,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
  */
 export function resolveElementChildren(
   items: ReadonlyArray<Ast.Child>,
-  options: ResolveOptions = {}
+  options: ResolveOptions = {},
 ): Array<any> | any | undefined {
   const result: Array<any> = [];
   items.forEach((child) => {
@@ -304,7 +304,7 @@ function unwrapIntermediate<T>(val: IntermediateResolvedValue<T>): T {
     return val[INTERNAL];
   }
   throw new DocsyError.UnexpectedError(
-    `Interbal: Expecting IntermediateResolvedValue but received ${printValueType(val)}`
+    `Interbal: Expecting IntermediateResolvedValue but received ${printValueType(val)}`,
   );
 }
 
@@ -378,7 +378,7 @@ function resolveListItems(items: Array<Ast.ResolveListItem>): Array<any> {
 
 export function resolveArguments(
   args?: Ast.WhitespaceLike | Ast.ListItems | undefined,
-  options: ResolveOptions = {}
+  options: ResolveOptions = {},
 ): Array<any> {
   if (args === undefined || Ast.NodeIs.WhitespaceLike(args)) {
     return [];

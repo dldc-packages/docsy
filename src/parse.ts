@@ -91,7 +91,7 @@ const ChainableExpressionBaseParser = rule<ChainableExpressionBase>('ChainableEx
 const ChainableExpressionItemParser = rule<ChainableExpressionItem>('ChainableExpressionItem');
 const ChainableMemberExpressionParser = rule<ChainableMemberExpression>('ChainableMemberExpression');
 const ChainableComputedMemberExpressionParser = rule<ChainableComputedMemberExpression>(
-  'ChainableComputedMemberExpression'
+  'ChainableComputedMemberExpression',
 );
 const ChainableCallExpressionParser = rule<ChainableCallExpression>('ChainableCallExpression');
 const IdentifierParser = rule<Ast.Node<'Identifier'>>('Identifier');
@@ -125,23 +125,23 @@ ExpressionDocumentParser.setParser(
       p.apply(t.eof, () => ({})), // empty
       p.apply(
         p.pipe(p.maybe(WhitespaceLikeParser), p.maybe(ExpressionParser), p.maybe(WhitespaceLikeParser)),
-        ([before, value, after]) => ({ value, before, after })
-      )
-    )
-  )
+        ([before, value, after]) => ({ value, before, after }),
+      ),
+    ),
+  ),
 );
 
 DocumentParser.setParser(
   nodeParser(
     'Document',
-    p.applyPipe([p.many(ChildParser), t.eof], ([children]) => ({ children }))
-  )
+    p.applyPipe([p.many(ChildParser), t.eof], ([children]) => ({ children })),
+  ),
 );
 
 ChildParser.setParser(p.oneOf(AnyElementParser, AnyCommentParser, InjectParser, WhitespaceParser, TextParser));
 
 LineChildParser.setParser(
-  p.oneOf(AnyElementParser, AnyCommentParser, InjectParser, LineWhitespaceParser, LineTextParser)
+  p.oneOf(AnyElementParser, AnyCommentParser, InjectParser, LineWhitespaceParser, LineTextParser),
 );
 
 InjectParser.setParser(
@@ -157,23 +157,23 @@ InjectParser.setParser(
       ],
       ([_begin, whitespaceBefore, value, whitespaceAfter]) => {
         return { whitespaceBefore, value, whitespaceAfter };
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 TextParser.setParser(
   nodeParser(
     'Text',
-    p.apply(t.textContent, (content) => ({ content }))
-  )
+    p.apply(t.textContent, (content) => ({ content })),
+  ),
 );
 
 LineTextParser.setParser(
   nodeParser(
     'Text',
-    p.apply(t.lineTextContent, (content) => ({ content }))
-  )
+    p.apply(t.lineTextContent, (content) => ({ content })),
+  ),
 );
 
 AnyElementParser.setParser(
@@ -183,8 +183,8 @@ AnyElementParser.setParser(
     ElementParser,
     RawElementParser,
     SelfClosingElementParser,
-    LineElementParser
-  )
+    LineElementParser,
+  ),
 );
 
 ElementParser.setParser(
@@ -196,7 +196,7 @@ ElementParser.setParser(
       p.maybe(WhitespaceLikeParser),
       t.greaterThan,
       p.many(ChildParser),
-      p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd))
+      p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd)),
     ),
     (result, path, ctx): ParseResult<Ast.Element> => {
       const [_begin, elementName, attributes, whitespaceAfterAttributes, _end, children, close] = result.value;
@@ -218,8 +218,8 @@ ElementParser.setParser(
         ...result,
         value: node,
       };
-    }
-  )
+    },
+  ),
 );
 
 ElementNameParser.setParser(p.apply(t.elemName, (res, start, end, ctx) => parseElementName(res, start, end, ctx)));
@@ -233,7 +233,7 @@ RawElementParser.setParser(
       p.maybe(WhitespaceLikeParser),
       t.greaterThan,
       t.rawTextContent,
-      p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd))
+      p.oneOf(t.elementCloseShortcut, p.pipe(t.lessThan, ElementNameParser, t.elementCloseEnd)),
     ),
     (result, path, ctx): ParseResult<Ast.RawElement> => {
       const [_begin, elementName, attributes, whitespaceAfterAttributes, _end, content, close] = result.value;
@@ -259,8 +259,8 @@ RawElementParser.setParser(
         ifError: result.ifError,
         value: node,
       };
-    }
-  )
+    },
+  ),
 );
 
 SelfClosingElementParser.setParser(
@@ -276,9 +276,9 @@ SelfClosingElementParser.setParser(
       ],
       ([_begin, elementName, attributes, whitespaceAfterAttributes, _tagEnd]) => {
         return { name: elementName, attributes, whitespaceAfterAttributes };
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 LineElementParser.setParser(
@@ -295,23 +295,23 @@ LineElementParser.setParser(
       ],
       ([_begin, elementName, attributes, whitespaceAfterAttributes, _end, children]) => {
         return { name: elementName, attributes, children, whitespaceAfterAttributes };
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 FragmentParser.setParser(
   nodeParser(
     'Fragment',
-    p.applyPipe([t.fragmentToken, p.many(ChildParser), t.elementCloseShortcut], ([_open, children]) => ({ children }))
-  )
+    p.applyPipe([t.fragmentToken, p.many(ChildParser), t.elementCloseShortcut], ([_open, children]) => ({ children })),
+  ),
 );
 
 RawFragmentParser.setParser(
   nodeParser(
     'RawFragment',
-    p.applyPipe([t.rawFragmentToken, t.rawTextContent, t.elementCloseShortcut], ([_open, content]) => ({ content }))
-  )
+    p.applyPipe([t.rawFragmentToken, t.rawTextContent, t.elementCloseShortcut], ([_open, content]) => ({ content })),
+  ),
 );
 
 AttributesParser.setParser(p.many(AttributeParser));
@@ -321,16 +321,17 @@ AttributeParser.setParser(
     'Attribute',
     p.applyPipe(
       [WhitespaceLikeParser, IdentifierParser, p.maybe(p.pipe(t.equal, ExpressionParser))],
-      ([whitespaceBefore, name, val]) => ({ whitespaceBefore, name, value: val ? val[1] : undefined })
-    )
-  )
+      ([whitespaceBefore, name, val]) => ({ whitespaceBefore, name, value: val ? val[1] : undefined }),
+    ),
+  ),
 );
 
 WhitespaceLikeParser.setParser(
   p.apply(
     p.many(p.oneOf(AnyCommentParser, WhitespaceParser), { allowEmpty: false }),
-    (whitespaces): Ast.WhitespaceLike => (whitespaces.length === 1 ? whitespaces[0] : whitespaces) as Ast.WhitespaceLike
-  )
+    (whitespaces): Ast.WhitespaceLike =>
+      (whitespaces.length === 1 ? whitespaces[0] : whitespaces) as Ast.WhitespaceLike,
+  ),
 );
 
 WhitespaceParser.setParser(
@@ -339,8 +340,8 @@ WhitespaceParser.setParser(
     p.apply(t.whitespace, (content) => {
       const hasNewLine = content.indexOf('\n') >= 0;
       return { content, hasNewLine };
-    })
-  )
+    }),
+  ),
 );
 
 LineWhitespaceParser.setParser(
@@ -349,8 +350,8 @@ LineWhitespaceParser.setParser(
     p.apply(t.lineWhitespace, (content) => {
       const hasNewLine = content.indexOf('\n') >= 0;
       return { content, hasNewLine };
-    })
-  )
+    }),
+  ),
 );
 
 AnyCommentParser.setParser(p.oneOf(LineCommentParser, BlockCommentParser));
@@ -360,8 +361,8 @@ LineCommentParser.setParser(
     'LineComment',
     p.applyPipe([t.lineCommentStart, p.maybe(t.lineCommentContent)], ([_start, content]) => ({
       content: content || '',
-    }))
-  )
+    })),
+  ),
 );
 
 BlockCommentParser.setParser(
@@ -369,9 +370,9 @@ BlockCommentParser.setParser(
     'BlockComment',
     p.applyPipe(
       [t.blockCommentStart, p.maybe(t.blockCommentContent), p.oneOf(t.blockCommentEnd, t.eof)],
-      ([_start, content]) => ({ content: content || '' })
-    )
-  )
+      ([_start, content]) => ({ content: content || '' }),
+    ),
+  ),
 );
 
 ExpressionParser.setParser(p.oneOf(PrimitiveParser, ObjOrArrParser, ChainableExpressionParser));
@@ -381,29 +382,29 @@ PrimitiveParser.setParser(p.oneOf(NumParser, BoolParser, NullParser, UndefinedPa
 NumParser.setParser(
   nodeParser(
     'Num',
-    p.apply(t.number, (rawValue) => ({ value: parseFloat(rawValue), rawValue }))
-  )
+    p.apply(t.number, (rawValue) => ({ value: parseFloat(rawValue), rawValue })),
+  ),
 );
 
 BoolParser.setParser(
   nodeParser(
     'Bool',
-    p.apply(p.oneOf(t.trueToken, t.falseToken), (val) => ({ value: val === 'true' ? true : false }))
-  )
+    p.apply(p.oneOf(t.trueToken, t.falseToken), (val) => ({ value: val === 'true' ? true : false })),
+  ),
 );
 
 NullParser.setParser(
   nodeParser(
     'Null',
-    p.apply(t.nullToken, () => ({}))
-  )
+    p.apply(t.nullToken, () => ({})),
+  ),
 );
 
 UndefinedParser.setParser(
   nodeParser(
     'Undefined',
-    p.apply(t.undefinedToken, () => ({}))
-  )
+    p.apply(t.undefinedToken, () => ({})),
+  ),
 );
 
 StrParser.setParser(
@@ -413,15 +414,15 @@ StrParser.setParser(
       p.oneOf(
         p.pipe(t.singleQuote, p.maybe(t.singleQuoteStringContent), t.singleQuote),
         p.pipe(t.doubleQuote, p.maybe(t.doubleQuoteStringContent), t.doubleQuote),
-        p.pipe(t.backtick, p.maybe(t.backtickStringContent), t.backtick)
+        p.pipe(t.backtick, p.maybe(t.backtickStringContent), t.backtick),
       ),
       ([rawQuote, content]) => {
         const quote: Ast.QuoteType =
           rawQuote === t.SINGLE_QUOTE ? 'Single' : rawQuote === t.DOUBLE_QUOTE ? 'Double' : 'Backtick';
         return { value: content ?? '', quote };
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 ObjOrArrParser.setParser(p.oneOf(ArrParser, ObjParser));
@@ -431,9 +432,9 @@ ArrParser.setParser(
     'Arr',
     p.applyPipe(
       [t.squareBracketOpen, p.maybe(p.oneOf(ListItemsParser, WhitespaceLikeParser)), t.squareBracketClose],
-      ([_open, items, _close]) => ({ items })
-    )
-  )
+      ([_open, items, _close]) => ({ items }),
+    ),
+  ),
 );
 
 ListItemsParser.setParser(
@@ -441,9 +442,9 @@ ListItemsParser.setParser(
     'ListItems',
     p.applyPipe(
       [p.manySepBy(ListItemParser, t.comma, { allowEmpty: false }), p.maybe(TrailingCommaParser)],
-      ([items, trailingComma]) => ({ items: nonEmptyArray(flattenManySepBy(items)), trailingComma })
-    )
-  )
+      ([items, trailingComma]) => ({ items: nonEmptyArray(flattenManySepBy(items)), trailingComma }),
+    ),
+  ),
 );
 
 ListItemParser.setParser(
@@ -451,9 +452,9 @@ ListItemParser.setParser(
     'ListItem',
     p.applyPipe(
       [p.maybe(WhitespaceLikeParser), ExpressionParser, p.maybe(WhitespaceLikeParser)],
-      ([whitespaceBefore, item, whitespaceAfter]) => ({ whitespaceBefore, item, whitespaceAfter })
-    )
-  )
+      ([whitespaceBefore, item, whitespaceAfter]) => ({ whitespaceBefore, item, whitespaceAfter }),
+    ),
+  ),
 );
 
 ObjParser.setParser(
@@ -463,9 +464,9 @@ ObjParser.setParser(
       [t.curlyBracketOpen, p.maybe(p.oneOf(ObjItemsParser, WhitespaceLikeParser)), t.curlyBracketClose],
       ([_open, items, _close]) => {
         return { items };
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 ObjItemsParser.setParser(
@@ -473,9 +474,9 @@ ObjItemsParser.setParser(
     'ObjItems',
     p.applyPipe(
       [p.manySepBy(ObjItemParser, t.comma, { allowEmpty: false, allowTrailing: false }), p.maybe(TrailingCommaParser)],
-      ([properties, trailingComma]) => ({ properties: nonEmptyArray(flattenManySepBy(properties)), trailingComma })
-    )
-  )
+      ([properties, trailingComma]) => ({ properties: nonEmptyArray(flattenManySepBy(properties)), trailingComma }),
+    ),
+  ),
 );
 
 TrailingCommaParser.setParser(
@@ -483,8 +484,8 @@ TrailingCommaParser.setParser(
     'TrailingComma',
     p.applyPipe([t.comma, p.maybe(WhitespaceLikeParser)], ([_comma, whitespaceAfter]) => ({
       whitespaceAfter,
-    }))
-  )
+    })),
+  ),
 );
 
 ObjItemParser.setParser(
@@ -492,13 +493,13 @@ ObjItemParser.setParser(
     'ObjItem',
     p.applyPipe(
       [p.maybe(WhitespaceLikeParser), AnyObjPropertyParser, p.maybe(WhitespaceLikeParser)],
-      ([whitespaceBefore, property, whitespaceAfter]) => ({ whitespaceBefore, property, whitespaceAfter })
-    )
-  )
+      ([whitespaceBefore, property, whitespaceAfter]) => ({ whitespaceBefore, property, whitespaceAfter }),
+    ),
+  ),
 );
 
 AnyObjPropertyParser.setParser(
-  p.oneOf(ObjPropertyParser, ObjComputedPropertyParser, ObjPropertyShorthandParser, SpreadParser)
+  p.oneOf(ObjPropertyParser, ObjComputedPropertyParser, ObjPropertyShorthandParser, SpreadParser),
 );
 
 ObjPropertyParser.setParser(
@@ -517,9 +518,9 @@ ObjPropertyParser.setParser(
         value,
         whitespaceAfterColon,
         whitespaceBeforeColon,
-      })
-    )
-  )
+      }),
+    ),
+  ),
 );
 
 ObjComputedPropertyParser.setParser(
@@ -556,9 +557,9 @@ ObjComputedPropertyParser.setParser(
           whitespaceAfterColon,
           value,
         };
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 ObjPropertyShorthandParser.setParser(
@@ -566,16 +567,16 @@ ObjPropertyShorthandParser.setParser(
     'ObjPropertyShorthand',
     p.applyPipe(
       [p.maybe(WhitespaceLikeParser), IdentifierParser, p.maybe(WhitespaceLikeParser)],
-      ([whitespaceBefore, name, whitespaceAfter]) => ({ whitespaceBefore, name, whitespaceAfter })
-    )
-  )
+      ([whitespaceBefore, name, whitespaceAfter]) => ({ whitespaceBefore, name, whitespaceAfter }),
+    ),
+  ),
 );
 
 SpreadParser.setParser(
   nodeParser(
     'Spread',
-    p.applyPipe([t.spreadOperator, ExpressionParser], ([_op, target]) => ({ target }))
-  )
+    p.applyPipe([t.spreadOperator, ExpressionParser], ([_op, target]) => ({ target })),
+  ),
 );
 
 ChainableExpressionParser.setParser(
@@ -593,27 +594,27 @@ ChainableExpressionParser.setParser(
           return ParseSuccess(
             start,
             right.rest,
-            ctx.createNode('MemberExpression', start, end, { target, property: item.indentifier })
+            ctx.createNode('MemberExpression', start, end, { target, property: item.indentifier }),
           );
         }
         if (item.type === 'ChainableComputedMemberExpression') {
           return ParseSuccess(
             start,
             right.rest,
-            ctx.createNode('ComputedMemberExpression', start, end, { target, property: item.value })
+            ctx.createNode('ComputedMemberExpression', start, end, { target, property: item.value }),
           );
         }
         if (item.type === 'ChainableCallExpression') {
           return ParseSuccess(
             start,
             right.rest,
-            ctx.createNode('CallExpression', start, end, { target, arguments: item.arguments })
+            ctx.createNode('CallExpression', start, end, { target, arguments: item.arguments }),
           );
         }
         throw new DocsyError.UnexpectedError(`Access on invalid type`);
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 ChainableExpressionBaseParser.setParser(p.oneOf(IdentifierParser, ParenthesisParser));
@@ -621,19 +622,19 @@ ChainableExpressionBaseParser.setParser(p.oneOf(IdentifierParser, ParenthesisPar
 IdentifierParser.setParser(
   nodeParser(
     'Identifier',
-    p.apply(t.identifier, (name) => ({ name }))
-  )
+    p.apply(t.identifier, (name) => ({ name })),
+  ),
 );
 
 ParenthesisParser.setParser(
   nodeParser(
     'Parenthesis',
-    p.applyPipe([t.parenthesisOpen, ExpressionParser, t.parenthesisClose], ([_open, value, _close]) => ({ value }))
-  )
+    p.applyPipe([t.parenthesisOpen, ExpressionParser, t.parenthesisClose], ([_open, value, _close]) => ({ value })),
+  ),
 );
 
 ChainableExpressionItemParser.setParser(
-  p.oneOf(ChainableMemberExpressionParser, ChainableComputedMemberExpressionParser, ChainableCallExpressionParser)
+  p.oneOf(ChainableMemberExpressionParser, ChainableComputedMemberExpressionParser, ChainableCallExpressionParser),
 );
 
 ChainableMemberExpressionParser.setParser(
@@ -641,7 +642,7 @@ ChainableMemberExpressionParser.setParser(
     type: 'ChainableMemberExpression',
     indentifier,
     end,
-  }))
+  })),
 );
 
 ChainableComputedMemberExpressionParser.setParser(
@@ -649,7 +650,7 @@ ChainableComputedMemberExpressionParser.setParser(
     type: 'ChainableComputedMemberExpression',
     value,
     end,
-  }))
+  })),
 );
 
 ChainableCallExpressionParser.setParser(
@@ -659,8 +660,8 @@ ChainableCallExpressionParser.setParser(
       type: 'ChainableCallExpression',
       arguments: args,
       end,
-    })
-  )
+    }),
+  ),
 );
 
 // Utils

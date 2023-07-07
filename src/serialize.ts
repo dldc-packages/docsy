@@ -241,7 +241,7 @@ function serializeWhitespaceLike(whitespace: Ast.WhitespaceLike | undefined, opt
 
 function serializeNodeOrWhitespaceLike(
   item: Ast.Node | Ast.WhitespaceLike | undefined,
-  options: SerializeOptions
+  options: SerializeOptions,
 ): string {
   if (item === undefined) {
     return '';

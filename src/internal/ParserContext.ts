@@ -27,7 +27,7 @@ export function createNodeWithRange<K extends Ast.NodeKind>(
   kind: K,
   start: number,
   end: number,
-  content: Ast.NodeContent<K>
+  content: Ast.NodeContent<K>,
 ): Ast.Node<K> {
   const node: Ast.Node<K> = Ast.createNode(kind, content, parsed);
   ranges.set(node, { start, end });

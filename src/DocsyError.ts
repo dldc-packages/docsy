@@ -31,7 +31,11 @@ export class DocsyError extends Error {
 }
 
 class DocsyParsingError extends DocsyError {
-  constructor(public readonly file: string, public readonly source: string, public readonly docsyStack: Stack) {
+  constructor(
+    public readonly file: string,
+    public readonly source: string,
+    public readonly docsyStack: Stack,
+  ) {
     super(`Parsing error:\n${stackToString(docsyStack, 2)}`);
   }
 }
@@ -45,7 +49,7 @@ class DocsyNotEOF extends DocsyError {
           return `"${restText}"`;
         }
         return `"${restText.slice(0, 17)}..."`;
-      })()}`
+      })()}`,
     );
   }
 }
@@ -84,7 +88,7 @@ class DocsyFileError extends DocsyError {
   constructor(
     public readonly file: ParsedBase | undefined,
     public readonly node: Node,
-    public readonly docsyMessage: string
+    public readonly docsyMessage: string,
   ) {
     const errorLocation = (() => {
       if (!file) {
@@ -131,7 +135,7 @@ class DocsyMissingJsxFunction extends DocsyFileError {
     super(
       file,
       node,
-      `Missing global: No JSX function provided, you need a jsx(type, props, key) function to resolve components.`
+      `Missing global: No JSX function provided, you need a jsx(type, props, key) function to resolve components.`,
     );
   }
 }

@@ -7,7 +7,7 @@ export function ParseFailure(
   pos: number,
   path: LinkedList<string>,
   message: () => string,
-  child: ParseResultFailure | null = null
+  child: ParseResultFailure | null = null,
 ): ParseResultFailure {
   return {
     type: 'Failure',
@@ -22,7 +22,7 @@ export function ParseSuccess<T>(
   start: number,
   rest: StringReader,
   value: T,
-  ifError: ParseResultFailure | null = null
+  ifError: ParseResultFailure | null = null,
 ): ParseResultSuccess<T> {
   return {
     type: 'Success',
