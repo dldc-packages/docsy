@@ -38,7 +38,9 @@
     "typecheck": "tsc",
     "typecheck:watch": "tsc --watch"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@dldc/erreur": "^3.0.6"
+  },
   "devDependencies": {
     "@types/fs-extra": "^11.0.1",
     "@types/node": "^20.4.0",

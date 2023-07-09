@@ -1,8 +1,8 @@
 import * as Ast from './Ast';
-import * as t from './internal/tokens';
-import { DocsyError } from './DocsyError';
-import { isReadonlyArray } from './internal/utils';
+import { DocsyErreur } from './DocsyErreur';
 import { Parsed } from './Parsed';
+import * as t from './internal/tokens';
+import { isReadonlyArray } from './internal/utils';
 
 export type SerializeOptions = {
   file?: Parsed;
@@ -39,7 +39,7 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Seria
     if (item.quote === 'Backtick') {
       return t.BACKTICK + item.value.replace(/`/g, '\\`') + t.BACKTICK;
     }
-    throw new DocsyError.UnexpectedError(`Invalid Qutote type on Str`);
+    throw DocsyErreur.UnexpectedError.create(`Invalid Qutote type on Str`);
   },
   Bool(item) {
     return item.value ? 'true' : 'false';
@@ -217,7 +217,7 @@ function serializeNode(item: Ast.Node | undefined | null, options: SerializeOpti
   }
   const serializer = NODE_SERIALIZER[item.kind] as any;
   if (serializer === undefined) {
-    throw new DocsyError.CannotSerializeNode(options.file, item, `Invalid node kind: ${item.kind}`);
+    throw DocsyErreur.CannotSerializeNode.create(options.file, item, `Invalid node kind: ${item.kind}`);
   }
   return serializer(item, options);
 }

@@ -58,3 +58,15 @@ test('Resolve parenthesis', () => {
   const resolved = resolve(node.result);
   expect(resolved).toEqual(42);
 });
+
+test('Resolve boolean', () => {
+  const node = parseExpression(`true`, 'source.docsy');
+  const resolved = resolve(node.result);
+  expect(resolved).toEqual(true);
+});
+
+test('Resolve Object', () => {
+  const node = parseExpression(`{ foo: 'bar', baz: true }`, 'source.docsy');
+  const resolved = resolve(node.result);
+  expect(resolved).toEqual({ foo: 'bar', baz: true });
+});

@@ -1,7 +1,7 @@
-import { DocsyError } from '../DocsyError';
+import { DocsyErreur } from '../DocsyErreur';
 import { LinkedList } from './LinkedList';
 import { ParseFailure, ParseSuccess, resultTracker } from './Parser';
-import { Parser, ParseResult, ParseResultSuccess, ParserFn, Rule } from './types';
+import { ParseResult, ParseResultSuccess, Parser, ParserFn, Rule } from './types';
 
 export type ManyOptions = {
   allowEmpty?: boolean;
@@ -243,10 +243,10 @@ export interface RegexpParser<Ctx> extends Parser<string, Ctx> {
 export function regexp<Ctx>(reg: RegExp, name?: string): RegexpParser<Ctx> {
   const nameResolved = name || `Regexp(${reg})`;
   if (reg.source[0] !== '^') {
-    throw new DocsyError.UnexpectedError(`Regular expression should start with '^': ${nameResolved}`);
+    throw DocsyErreur.UnexpectedError.create(`Regular expression should start with '^': ${nameResolved}`);
   }
   if (!reg.global) {
-    throw new DocsyError.UnexpectedError(`Regular expression should be global: ${nameResolved}`);
+    throw DocsyErreur.UnexpectedError.create(`Regular expression should be global: ${nameResolved}`);
   }
   return {
     regexp: reg,
@@ -262,7 +262,7 @@ export function regexp<Ctx>(reg: RegExp, name?: string): RegexpParser<Ctx> {
         const text = subString.slice(0, reg.lastIndex);
         if (text.length === 0) {
           return ParseFailure(input.position, path, () => `Regexp matched empty string.`);
-          // throw new DocsyError.UnexpectedError(`Regexp ${reg.source} matched empty string`);
+          // throw DocsyErreur.UnexpectedError.create(`Regexp ${reg.source} matched empty string`);
         }
         const next = input.skip(text.length);
         return ParseSuccess(input.position, next, text);
@@ -624,13 +624,13 @@ export function rule<T, Ctx>(name: string): Rule<T, Ctx> {
   return {
     setParser(p) {
       if (parser !== null) {
-        throw new DocsyError.UnexpectedError(`Parser already set !`);
+        throw DocsyErreur.UnexpectedError.create(`Parser already set !`);
       }
       parser = p;
     },
     parse(_parentPath, input, skip, ctx) {
       if (parser === null) {
-        throw new DocsyError.ParserNotImplemented(name);
+        throw DocsyErreur.ParserNotImplemented.create(name);
       }
       return parser.parse(LinkedList.create<string>().add(name), input, skip, ctx);
     },

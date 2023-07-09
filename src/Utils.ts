@@ -1,5 +1,5 @@
 import * as Ast from './Ast';
-import { DocsyError } from './DocsyError';
+import { DocsyErreur } from './DocsyErreur';
 import { TraversePath } from './internal/types';
 import { isReadonlyArray } from './internal/utils';
 
@@ -220,7 +220,7 @@ function createNodeFromValue(value: unknown): Ast.Expression {
 
     return Ast.NodeBuilder.Obj({ items: Ast.NodeBuilder.ObjItems({ properties: nonEmptyArray(properties) }) });
   }
-  throw new DocsyError.CannotTransformValue(value);
+  throw DocsyErreur.CannotTransformValue.create(value);
 }
 
 function isObject(val: any): boolean {
@@ -307,7 +307,7 @@ function updateAtPath(obj: unknown, path: TraversePath, value: unknown) {
 
 export function nonEmptyArray<T>(arr: ReadonlyArray<T>): Ast.NonEmptyArray<T> {
   if (arr.length === 0) {
-    throw new DocsyError.UnexpectedError('Unexpected empty array');
+    throw DocsyErreur.UnexpectedError.create('Unexpected empty array');
   }
   return arr as Ast.NonEmptyArray<T>;
 }

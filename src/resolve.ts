@@ -1,8 +1,8 @@
-import { DocsyError } from './DocsyError';
 import * as Ast from './Ast';
-import { serialize } from './serialize';
+import { DocsyErreur } from './DocsyErreur';
 import { Parsed } from './Parsed';
 import { INTERNAL } from './internal';
+import { serialize } from './serialize';
 
 export type ResolveOptions = {
   file?: Parsed;
@@ -14,7 +14,7 @@ export type ResolveOptions = {
 export function resolve<K extends Ast.NodeKind>(item: Ast.Node<K>, options: ResolveOptions = {}): Ast.NodeResolved<K> {
   const result = resolveNode(item, options) as any;
   if (result instanceof IntermediateResolvedValue) {
-    throw new DocsyError.CannotResolveNode(options.file, item, `The node resolve to an intermediate value`);
+    throw DocsyErreur.CannotResolveNode.create(options.file, item, `The node resolve to an intermediate value`);
   }
   return result;
 }
@@ -22,7 +22,7 @@ export function resolve<K extends Ast.NodeKind>(item: Ast.Node<K>, options: Reso
 function resolveNode<K extends Ast.NodeKind>(item: Ast.Node<K>, options: ResolveOptions): Ast.NodeResolved<K> {
   const resolver = NODE_RESOLVERS[item.kind] as any;
   if (resolver === undefined) {
-    throw new DocsyError.CannotResolveNode(options.file, item, `Invalid node kind: ${item.kind}`);
+    throw DocsyErreur.CannotResolveNode.create(options.file, item, `Invalid node kind: ${item.kind}`);
   }
   return resolver(item, options);
 }
@@ -90,7 +90,11 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
   Identifier(item, config) {
     const { globals: globalsValues = {} } = config;
     if (Object.hasOwn(globalsValues, item.name) === false) {
-      throw new DocsyError.MissingGlobal(config.file, item, `You probably forgot to provide a value for ${item.name}`);
+      throw DocsyErreur.MissingGlobal.create(
+        config.file,
+        item,
+        `You probably forgot to provide a value for ${item.name}`,
+      );
     }
     return globalsValues[item.name];
   },
@@ -112,7 +116,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
   MemberExpression(item, options) {
     const target = resolveNode(item.target, options);
     if (target === undefined || target === null) {
-      throw new DocsyError.TypeError(
+      throw DocsyErreur.TypeError.create(
         options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
@@ -125,7 +129,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
   ComputedMemberExpression(item, options) {
     const target = resolveNode(item.target, options);
     if (target === undefined || target === null) {
-      throw new DocsyError.TypeError(
+      throw DocsyErreur.TypeError.create(
         options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
@@ -135,7 +139,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
     }
     const property = resolveNode(item.property, options);
     if (typeof property !== 'string' && typeof property !== 'number') {
-      throw new DocsyError.TypeError(
+      throw DocsyErreur.TypeError.create(
         options.file,
         item.property,
         `${printValueType(property)} is not valid as a computed property name (reading '${serialize(item)})`,
@@ -159,7 +163,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
         Object.assign(obj, item.target);
         return;
       }
-      throw new DocsyError.UnexpectedError(`Unhanled item in Obj resolver`);
+      throw DocsyErreur.UnexpectedError.create(`Unhanled item in Obj resolver`);
     });
     return obj;
   },
@@ -181,7 +185,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
     return new IntermediateResolvedValue(item.items.map((item) => unwrapIntermediate(resolveNode(item, options))));
   },
   TrailingComma(item, options) {
-    throw new DocsyError.CannotResolveNode(options.file, item, `Cannot resolve trailing comma`);
+    throw DocsyErreur.CannotResolveNode.create(options.file, item, `Cannot resolve trailing comma`);
   },
   ListItem(item, options) {
     if (Ast.NodeIs.Expression(item.item)) {
@@ -222,7 +226,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
   CallExpression(item, options) {
     const target = resolveNode(item.target, options);
     if (typeof target !== 'function') {
-      throw new DocsyError.TypeError(
+      throw DocsyErreur.TypeError.create(
         options.file,
         item.target,
         `Cannot call "${serialize(item.target)}" as it is not a function`,
@@ -235,10 +239,10 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
     return resolveNode(item.value, options);
   },
   LineComment(item, options) {
-    throw new DocsyError.CannotResolveNode(options.file, item, `Cannot resolve line comment`);
+    throw DocsyErreur.CannotResolveNode.create(options.file, item, `Cannot resolve line comment`);
   },
   BlockComment(item, options) {
-    throw new DocsyError.CannotResolveNode(options.file, item, `Cannot resolve block comment`);
+    throw DocsyErreur.CannotResolveNode.create(options.file, item, `Cannot resolve block comment`);
   },
   Attribute(item, options) {
     return new IntermediateResolvedValue({
@@ -249,7 +253,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
   ElementNameMember(item, options) {
     const target = resolveNode(item.target, options);
     if (target === undefined || target === null) {
-      throw new DocsyError.TypeError(
+      throw DocsyErreur.TypeError.create(
         options.file,
         item.target,
         `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
@@ -303,7 +307,7 @@ function unwrapIntermediate<T>(val: IntermediateResolvedValue<T>): T {
   if (val instanceof IntermediateResolvedValue) {
     return val[INTERNAL];
   }
-  throw new DocsyError.UnexpectedError(
+  throw DocsyErreur.UnexpectedError.create(
     `Interbal: Expecting IntermediateResolvedValue but received ${printValueType(val)}`,
   );
 }
@@ -311,7 +315,7 @@ function unwrapIntermediate<T>(val: IntermediateResolvedValue<T>): T {
 function resolveJsx(node: Ast.Node, options: ResolveOptions, type: any, props: any): any {
   const { jsx } = options;
   if (!jsx || typeof jsx !== 'function') {
-    throw new DocsyError.MissingJsxFunction(options.file, node);
+    throw DocsyErreur.MissingJsxFunction.create(options.file, node);
   }
   const key = props.key;
   if (props.key) {
@@ -323,7 +327,7 @@ function resolveJsx(node: Ast.Node, options: ResolveOptions, type: any, props: a
 function resolveFragment(node: Ast.Node, options: ResolveOptions): any {
   const { Fragment } = options;
   if (Fragment === null || Fragment === undefined) {
-    throw new DocsyError.MissingFragment(options.file, node);
+    throw DocsyErreur.MissingFragment.create(options.file, node);
   }
   return Fragment;
 }
@@ -371,7 +375,7 @@ function resolveListItems(items: Array<Ast.ResolveListItem>): Array<any> {
       arr.push(...item.target);
       return;
     }
-    throw new DocsyError.UnexpectedError(`Unhanled item in Arr resolver`);
+    throw DocsyErreur.UnexpectedError.create(`Unhanled item in Arr resolver`);
   });
   return arr;
 }

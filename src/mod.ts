@@ -1,23 +1,23 @@
 export * as Ast from './Ast';
-export * from './parse';
-export * from './serialize';
-export * from './resolve';
-export * from './format';
+export * from './DocsyErreur';
 export * from './Parsed';
-export * from './DocsyError';
-export type { NodePath, NodeWithPath } from './Utils';
 export { Utils } from './Utils';
+export type { NodePath, NodeWithPath } from './Utils';
+export * from './format';
 export type {
-  Range,
-  Ranges,
-  ReadonlyMap,
-  ReadonlyRanges,
   ParseResult,
   ParseResultFailure,
   ParseResultSuccess,
   Parser,
+  Range,
+  Ranges,
+  ReadonlyMap,
+  ReadonlyRanges,
   Rule,
   Stack,
   StackItem,
   TraversePath,
 } from './internal/types';
+export * from './parse';
+export * from './resolve';
+export * from './serialize';

@@ -1,21 +1,21 @@
 import * as Ast from './Ast';
+import { DocsyErreur } from './DocsyErreur';
+import { Parsed } from './Parsed';
+import { nonEmptyArray } from './Utils';
+import { INTERNAL } from './internal';
+import { ParseFailure, ParseSuccess, executeParser, failureToStack } from './internal/Parser';
+import { ParserContext, createContext, nodeParser, rule } from './internal/ParserContext';
+import { StringReader } from './internal/StringReader';
 import * as p from './internal/parsers';
 import * as t from './internal/tokens';
-import { StringReader } from './internal/StringReader';
-import { DocsyError } from './DocsyError';
-import { executeParser, failureToStack, ParseSuccess, ParseFailure } from './internal/Parser';
-import { createContext, rule, nodeParser, ParserContext } from './internal/ParserContext';
-import { Parser, ParseResult } from './internal/types';
-import { Parsed } from './Parsed';
-import { INTERNAL } from './internal';
-import { nonEmptyArray } from './Utils';
+import { ParseResult, Parser } from './internal/types';
 
 function runParser<T extends Ast.Node>(parser: Parser<T, ParserContext<T>>, source: string, file: string): Parsed<T> {
   const ctx = createContext<T>(file, source);
   const input = StringReader(source);
   const result = executeParser(parser, input, ctx);
   if (result.type === 'Failure') {
-    throw new DocsyError.ParsingError(file, source, failureToStack(result));
+    throw DocsyErreur.ParsingError.create(file, source, failureToStack(result));
   }
   ctx.parsed[INTERNAL].setResult(result.value);
   return ctx.parsed;
@@ -611,7 +611,7 @@ ChainableExpressionParser.setParser(
             ctx.createNode('CallExpression', start, end, { target, arguments: item.arguments }),
           );
         }
-        throw new DocsyError.UnexpectedError(`Access on invalid type`);
+        throw DocsyErreur.UnexpectedError.create(`Access on invalid type`);
       },
     ),
   ),

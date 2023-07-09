@@ -1,7 +1,7 @@
 import * as Ast from './Ast';
-import { Ranges, ReadonlyRanges } from './internal/types';
-import { DocsyError } from './DocsyError';
+import { DocsyErreur } from './DocsyErreur';
 import { INTERNAL } from './internal';
+import { Ranges, ReadonlyRanges } from './internal/types';
 
 export interface ParsedBase {
   readonly ranges: ReadonlyRanges;
@@ -31,12 +31,12 @@ export class Parsed<T extends Ast.Node = Ast.Node> implements ParsedBase {
 
   public get result(): T {
     if (!this._result) {
-      throw new DocsyError.ParsedNotReady(this.filename);
+      throw DocsyErreur.ParsedNotReady.create(this.filename);
     }
     return this._result;
   }
 
   throw(node: Ast.Node, message: string): never {
-    throw new DocsyError.FileError(this, node, message);
+    throw DocsyErreur.FileError.create(this, node, message);
   }
 }

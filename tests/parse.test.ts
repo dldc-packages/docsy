@@ -1,5 +1,6 @@
+import { Erreur } from '@dldc/erreur';
 import { expect, test } from 'vitest';
-import { DocsyError, parseDocument, parseExpression } from '../src/mod';
+import { DocsyErreur, parseDocument, parseExpression } from '../src/mod';
 import { readFile } from './utils';
 
 test(`Parse Empty Document`, () => {
@@ -376,13 +377,17 @@ test(`Parse simple element with no content`, () => {
 
 test(`Throw when you close the wrong tag`, () => {
   const file = `<|Demo>Something<Yolo/>`;
-  expect(() => parseDocument(file, 'source.docsy')).toThrow(DocsyError.ParsingError);
+  expect(() => parseDocument(file, 'source.docsy')).toThrow(Erreur);
+  const error = Erreur.resolve(() => parseDocument(file, 'source.docsy'));
+  expect((error as Erreur).has(DocsyErreur.ParsingError.Consumer)).toBe(true);
 });
 
 test(`Throw when you invalid tag`, () => {
   const file = `<|Demo>Something<Demo`;
-  expect(() => parseDocument(file, 'source.docsy')).toThrow(DocsyError.ParsingError);
+  expect(() => parseDocument(file, 'source.docsy')).toThrow(Erreur);
   expect(() => parseDocument(file, 'source.docsy')).toThrow('21 EOF reached');
+  const error = Erreur.resolve(() => parseDocument(file, 'source.docsy'));
+  expect((error as Erreur).has(DocsyErreur.ParsingError.Consumer)).toBe(true);
 });
 
 test(`Parse function call`, () => {
