@@ -38,9 +38,7 @@
     "typecheck": "tsc",
     "typecheck:watch": "tsc --watch"
   },
-  "dependencies": {
-    "tslib": "^2.4.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/fs-extra": "^11.0.1",
     "@types/node": "^20.4.0",
