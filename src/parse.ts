@@ -1,14 +1,15 @@
 import * as Ast from './Ast';
 import { DocsyErreur } from './DocsyErreur';
-import { Parsed } from './Parsed';
+import type { Parsed } from './Parsed';
 import { nonEmptyArray } from './Utils';
 import { INTERNAL } from './internal';
 import { ParseFailure, ParseSuccess, executeParser, failureToStack } from './internal/Parser';
-import { ParserContext, createContext, nodeParser, rule } from './internal/ParserContext';
+import type { ParserContext } from './internal/ParserContext';
+import { createContext, nodeParser, rule } from './internal/ParserContext';
 import { StringReader } from './internal/StringReader';
 import * as p from './internal/parsers';
 import * as t from './internal/tokens';
-import { ParseResult, Parser } from './internal/types';
+import type { ParseResult, Parser } from './internal/types';
 
 function runParser<T extends Ast.Node>(parser: Parser<T, ParserContext<T>>, source: string, file: string): Parsed<T> {
   const ctx = createContext<T>(file, source);

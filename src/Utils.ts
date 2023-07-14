@@ -1,6 +1,6 @@
 import * as Ast from './Ast';
 import { DocsyErreur } from './DocsyErreur';
-import { TraversePath } from './internal/types';
+import type { TraversePath } from './internal/types';
 import { isReadonlyArray } from './internal/utils';
 
 export const Utils = {
@@ -243,7 +243,7 @@ function isPlainObject(o: any): o is Record<string, any> {
   if (isObjectObject(prot) === false) return false;
 
   // If constructor does not have an Object-specific method
-  // eslint-disable-next-line no-prototype-builtins
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   if (prot.hasOwnProperty('isPrototypeOf') === false) {
     return false;
   }

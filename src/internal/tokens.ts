@@ -1,6 +1,6 @@
 import * as p from './parsers';
-import { ParserContext as Ctx } from './ParserContext';
-import { Parser } from './types';
+import type { ParserContext as Ctx } from './ParserContext';
+import type { Parser } from './types';
 
 export const eof = p.eof<Ctx>();
 

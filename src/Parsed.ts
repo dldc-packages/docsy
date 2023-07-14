@@ -1,7 +1,7 @@
-import * as Ast from './Ast';
+import type * as Ast from './Ast';
 import { DocsyErreur } from './DocsyErreur';
 import { INTERNAL } from './internal';
-import { Ranges, ReadonlyRanges } from './internal/types';
+import type { Ranges, ReadonlyRanges } from './internal/types';
 
 export interface ParsedBase {
   readonly ranges: ReadonlyRanges;

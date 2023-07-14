@@ -1,7 +1,7 @@
 import { DocsyErreur } from '../DocsyErreur';
 import { LinkedList } from './LinkedList';
-import { StringReader } from './StringReader';
-import { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types';
+import type { StringReader } from './StringReader';
+import type { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types';
 
 export function ParseFailure(
   pos: number,

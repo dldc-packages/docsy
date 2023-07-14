@@ -1,4 +1,4 @@
-import { Position } from './types';
+import type { Position } from './types';
 
 export function isReadonlyArray(item: any): item is ReadonlyArray<any> {
   return Array.isArray(item);

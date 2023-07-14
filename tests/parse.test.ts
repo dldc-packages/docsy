@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import { Erreur } from '@dldc/erreur';
 import { expect, test } from 'vitest';
 import { DocsyErreur, parseDocument, parseExpression } from '../src/mod';

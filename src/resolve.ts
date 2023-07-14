@@ -1,6 +1,6 @@
 import * as Ast from './Ast';
 import { DocsyErreur } from './DocsyErreur';
-import { Parsed } from './Parsed';
+import type { Parsed } from './Parsed';
 import { INTERNAL } from './internal';
 import { serialize } from './serialize';
 
@@ -20,7 +20,7 @@ export function resolve<K extends Ast.NodeKind>(item: Ast.Node<K>, options: Reso
 }
 
 function resolveNode<K extends Ast.NodeKind>(item: Ast.Node<K>, options: ResolveOptions): Ast.NodeResolved<K> {
-  const resolver = NODE_RESOLVERS[item.kind] as any;
+  const resolver = NODE_RESOLVERS[item.kind];
   if (resolver === undefined) {
     throw DocsyErreur.CannotResolveNode.create(options.file, item, `Invalid node kind: ${item.kind}`);
   }
@@ -41,11 +41,16 @@ export class IntermediateResolvedValue<T = any> {
 const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ResolveOptions) => Ast.NodeResolved<K> } = {
   Document(item, options) {
     const result = resolveElementChildren(item.children, options);
-    if (result.length === 0) {
+    if (result === undefined) {
       return '';
     }
-    if (result.length === 1) {
-      return result[0];
+    if (Array.isArray(result)) {
+      if (result.length === 0) {
+        return '';
+      }
+      if (result.length === 1) {
+        return result[0];
+      }
     }
     return result;
   },
@@ -233,6 +238,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
       );
     }
     const args = resolveArguments(item.arguments, options);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     return target(...args);
   },
   Parenthesis(item, options) {
@@ -271,10 +277,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
  * Join consecutive whitespace / text
  * Return resolved array / single item / undefined
  */
-export function resolveElementChildren(
-  items: ReadonlyArray<Ast.Child>,
-  options: ResolveOptions = {},
-): Array<any> | any | undefined {
+export function resolveElementChildren(items: ReadonlyArray<Ast.Child>, options: ResolveOptions = {}): unknown {
   const result: Array<any> = [];
   items.forEach((child) => {
     const next = resolveNode(child, options);

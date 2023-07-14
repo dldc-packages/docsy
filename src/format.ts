@@ -1,4 +1,5 @@
-import { Node, NodeContent, NodeIs, NodeKind } from './Ast';
+import type { Node, NodeContent, NodeKind } from './Ast';
+import { NodeIs } from './Ast';
 import * as t from './internal/tokens';
 
 export function format(node: Node): Node {

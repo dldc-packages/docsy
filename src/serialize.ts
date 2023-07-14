@@ -1,6 +1,6 @@
 import * as Ast from './Ast';
 import { DocsyErreur } from './DocsyErreur';
-import { Parsed } from './Parsed';
+import type { Parsed } from './Parsed';
 import * as t from './internal/tokens';
 import { isReadonlyArray } from './internal/utils';
 
@@ -215,11 +215,11 @@ function serializeNode(item: Ast.Node | undefined | null, options: SerializeOpti
   if (item === undefined || item === null) {
     return '';
   }
-  const serializer = NODE_SERIALIZER[item.kind] as any;
+  const serializer = NODE_SERIALIZER[item.kind];
   if (serializer === undefined) {
     throw DocsyErreur.CannotSerializeNode.create(options.file, item, `Invalid node kind: ${item.kind}`);
   }
-  return serializer(item, options);
+  return serializer(item as any, options);
 }
 
 function serializeNodes(items: null | ReadonlyArray<Ast.Node>, options: SerializeOptions, joiner: string = ''): string {

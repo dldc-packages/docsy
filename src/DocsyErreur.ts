@@ -1,9 +1,9 @@
 import { ErreurType } from '@dldc/erreur';
-import { Node } from './Ast';
-import { Parsed, ParsedBase } from './Parsed';
+import type { Node } from './Ast';
+import type { Parsed, ParsedBase } from './Parsed';
 import { stackToString } from './internal/Parser';
-import { StringReader } from './internal/StringReader';
-import { Stack } from './internal/types';
+import type { StringReader } from './internal/StringReader';
+import type { Stack } from './internal/types';
 import { offsetToPosition } from './internal/utils';
 
 const DocsyErreurBase = ErreurType.defineEmpty('DocsyErreur');

@@ -1,5 +1,5 @@
-import { Parsed } from './Parsed';
-import { IntermediateResolvedValue as IRV } from './resolve';
+import type { Parsed } from './Parsed';
+import type { IntermediateResolvedValue as IRV } from './resolve';
 
 export type QuoteType = 'Single' | 'Double' | 'Backtick';
 
@@ -19,6 +19,7 @@ type CreateNodes<Nodes extends { [key: string]: NodeDataBase }> = Nodes;
 
 export type JsxElement = any;
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type JsxElements = Array<JsxElement> | JsxElement | undefined;
 
 // Is this anoying ?

@@ -1,7 +1,7 @@
 import { DocsyErreur } from '../DocsyErreur';
 import { LinkedList } from './LinkedList';
 import { ParseFailure, ParseSuccess, resultTracker } from './Parser';
-import { ParseResult, ParseResultSuccess, Parser, ParserFn, Rule } from './types';
+import type { ParseResult, ParseResultSuccess, Parser, ParserFn, Rule } from './types';
 
 export type ManyOptions = {
   allowEmpty?: boolean;

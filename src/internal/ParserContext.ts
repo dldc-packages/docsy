@@ -1,7 +1,7 @@
 import * as Ast from '../Ast';
 import { Parsed } from '../Parsed';
 import * as p from './parsers';
-import { Parser, Ranges } from './types';
+import type { Parser, Ranges } from './types';
 
 export type ParserContext<T extends Ast.Node = any> = {
   ranges: Ranges;

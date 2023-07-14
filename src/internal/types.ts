@@ -1,6 +1,6 @@
-import { LinkedList } from './LinkedList';
-import { StringReader } from './StringReader';
-import * as Ast from '../Ast';
+import type { LinkedList } from './LinkedList';
+import type { StringReader } from './StringReader';
+import type * as Ast from '../Ast';
 
 export type Position = {
   readonly line: number;
