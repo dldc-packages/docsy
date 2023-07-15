@@ -4,14 +4,14 @@ import type { Parsed } from './Parsed';
 import { INTERNAL } from './internal';
 import { serialize } from './serialize';
 
-export type ResolveOptions = {
+export interface IResolveOptions {
   file?: Parsed;
   jsx?: (type: string, props: any, key?: string | number) => any;
   Fragment?: any;
   globals?: Record<string, any>;
-};
+}
 
-export function resolve<K extends Ast.NodeKind>(item: Ast.Node<K>, options: ResolveOptions = {}): Ast.NodeResolved<K> {
+export function resolve<K extends Ast.NodeKind>(item: Ast.Node<K>, options: IResolveOptions = {}): Ast.NodeResolved<K> {
   const result = resolveNode(item, options) as any;
   if (result instanceof IntermediateResolvedValue) {
     throw DocsyErreur.CannotResolveNode.create(options.file, item, `The node resolve to an intermediate value`);
@@ -19,7 +19,7 @@ export function resolve<K extends Ast.NodeKind>(item: Ast.Node<K>, options: Reso
   return result;
 }
 
-function resolveNode<K extends Ast.NodeKind>(item: Ast.Node<K>, options: ResolveOptions): Ast.NodeResolved<K> {
+function resolveNode<K extends Ast.NodeKind>(item: Ast.Node<K>, options: IResolveOptions): Ast.NodeResolved<K> {
   const resolver = NODE_RESOLVERS[item.kind];
   if (resolver === undefined) {
     throw DocsyErreur.CannotResolveNode.create(options.file, item, `Invalid node kind: ${item.kind}`);
@@ -38,7 +38,7 @@ export class IntermediateResolvedValue<T = any> {
   }
 }
 
-const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ResolveOptions) => Ast.NodeResolved<K> } = {
+const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResolveOptions) => Ast.NodeResolved<K> } = {
   Document(item, options) {
     const result = resolveElementChildren(item.children, options);
     if (result === undefined) {
@@ -277,7 +277,7 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Resolv
  * Join consecutive whitespace / text
  * Return resolved array / single item / undefined
  */
-export function resolveElementChildren(items: ReadonlyArray<Ast.Child>, options: ResolveOptions = {}): unknown {
+export function resolveElementChildren(items: ReadonlyArray<Ast.Child>, options: IResolveOptions = {}): unknown {
   const result: Array<any> = [];
   items.forEach((child) => {
     const next = resolveNode(child, options);
@@ -297,7 +297,7 @@ export function resolveElementChildren(items: ReadonlyArray<Ast.Child>, options:
   return result;
 }
 
-export function resolveAttributes(attrs: ReadonlyArray<Ast.Attribute>, options: ResolveOptions = {}): any {
+export function resolveAttributes(attrs: ReadonlyArray<Ast.Attribute>, options: IResolveOptions = {}): any {
   const obj: any = {};
   attrs.forEach((attr) => {
     const resolved = unwrapIntermediate<{ name: string; value: any }>(resolveNode(attr, options));
@@ -315,7 +315,7 @@ function unwrapIntermediate<T>(val: IntermediateResolvedValue<T>): T {
   );
 }
 
-function resolveJsx(node: Ast.Node, options: ResolveOptions, type: any, props: any): any {
+function resolveJsx(node: Ast.Node, options: IResolveOptions, type: any, props: any): any {
   const { jsx } = options;
   if (!jsx || typeof jsx !== 'function') {
     throw DocsyErreur.MissingJsxFunction.create(options.file, node);
@@ -327,7 +327,7 @@ function resolveJsx(node: Ast.Node, options: ResolveOptions, type: any, props: a
   return jsx(type, props, key);
 }
 
-function resolveFragment(node: Ast.Node, options: ResolveOptions): any {
+function resolveFragment(node: Ast.Node, options: IResolveOptions): any {
   const { Fragment } = options;
   if (Fragment === null || Fragment === undefined) {
     throw DocsyErreur.MissingFragment.create(options.file, node);
@@ -385,7 +385,7 @@ function resolveListItems(items: Array<Ast.ResolveListItem>): Array<any> {
 
 export function resolveArguments(
   args?: Ast.WhitespaceLike | Ast.ListItems | undefined,
-  options: ResolveOptions = {},
+  options: IResolveOptions = {},
 ): Array<any> {
   if (args === undefined || Ast.NodeIs.WhitespaceLike(args)) {
     return [];

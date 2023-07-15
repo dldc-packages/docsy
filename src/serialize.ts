@@ -4,15 +4,15 @@ import type { Parsed } from './Parsed';
 import * as t from './internal/tokens';
 import { isReadonlyArray } from './internal/utils';
 
-export type SerializeOptions = {
+export interface ISerializeOptions {
   file?: Parsed;
-};
+}
 
-export function serialize(item: Ast.Node, options: SerializeOptions = {}): any {
+export function serialize(item: Ast.Node, options: ISerializeOptions = {}): any {
   return serializeNode(item, options);
 }
 
-const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: SerializeOptions) => string } = {
+const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISerializeOptions) => string } = {
   Document(item, options) {
     return serializeNodes(item.children, options);
   },
@@ -211,7 +211,7 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: Seria
 
 // -- Utils
 
-function serializeNode(item: Ast.Node | undefined | null, options: SerializeOptions): any {
+function serializeNode(item: Ast.Node | undefined | null, options: ISerializeOptions): any {
   if (item === undefined || item === null) {
     return '';
   }
@@ -222,14 +222,18 @@ function serializeNode(item: Ast.Node | undefined | null, options: SerializeOpti
   return serializer(item as any, options);
 }
 
-function serializeNodes(items: null | ReadonlyArray<Ast.Node>, options: SerializeOptions, joiner: string = ''): string {
+function serializeNodes(
+  items: null | ReadonlyArray<Ast.Node>,
+  options: ISerializeOptions,
+  joiner: string = '',
+): string {
   if (!items || items.length === 0) {
     return '';
   }
   return items.map((sub) => serializeNode(sub, options)).join(joiner);
 }
 
-function serializeWhitespaceLike(whitespace: Ast.WhitespaceLike | undefined, options: SerializeOptions): string {
+function serializeWhitespaceLike(whitespace: Ast.WhitespaceLike | undefined, options: ISerializeOptions): string {
   if (whitespace === undefined) {
     return '';
   }
@@ -241,7 +245,7 @@ function serializeWhitespaceLike(whitespace: Ast.WhitespaceLike | undefined, opt
 
 function serializeNodeOrWhitespaceLike(
   item: Ast.Node | Ast.WhitespaceLike | undefined,
-  options: SerializeOptions,
+  options: ISerializeOptions,
 ): string {
   if (item === undefined) {
     return '';

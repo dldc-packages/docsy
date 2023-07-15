@@ -1,9 +1,9 @@
 export * as Ast from './Ast';
-export * from './DocsyErreur';
-export * from './Parsed';
+export { DocsyErreur } from './DocsyErreur';
+export { Parsed, type IParsedBase } from './Parsed';
 export { Utils } from './Utils';
 export type { NodePath, NodeWithPath } from './Utils';
-export * from './format';
+export { format } from './format';
 export type {
   ParseResult,
   ParseResultFailure,
@@ -18,6 +18,13 @@ export type {
   StackItem,
   TraversePath,
 } from './internal/types';
-export * from './parse';
-export * from './resolve';
-export * from './serialize';
+export { DocumentParser, ExpressionDocumentParser, parseDocument, parseExpression } from './parse';
+export {
+  IntermediateResolvedValue,
+  resolve,
+  resolveArguments,
+  resolveAttributes,
+  resolveElementChildren,
+  type IResolveOptions,
+} from './resolve';
+export { serialize, type ISerializeOptions } from './serialize';

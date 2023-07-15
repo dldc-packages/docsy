@@ -3,13 +3,13 @@ import { DocsyErreur } from './DocsyErreur';
 import { INTERNAL } from './internal';
 import type { Ranges, ReadonlyRanges } from './internal/types';
 
-export interface ParsedBase {
+export interface IParsedBase {
   readonly ranges: ReadonlyRanges;
   readonly filename: string;
   readonly source: string;
 }
 
-export class Parsed<T extends Ast.Node = Ast.Node> implements ParsedBase {
+export class Parsed<T extends Ast.Node = Ast.Node> implements IParsedBase {
   public readonly ranges: ReadonlyRanges;
   public readonly filename: string;
   public readonly source: string;

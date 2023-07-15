@@ -1,6 +1,6 @@
 import { ErreurType } from '@dldc/erreur';
 import type { Node } from './Ast';
-import type { Parsed, ParsedBase } from './Parsed';
+import type { IParsedBase, Parsed } from './Parsed';
 import { stackToString } from './internal/Parser';
 import type { StringReader } from './internal/StringReader';
 import type { Stack } from './internal/types';
@@ -10,7 +10,7 @@ const DocsyErreurBase = ErreurType.defineEmpty('DocsyErreur');
 
 const DocsyFileError = ErreurType.defineWithTransform(
   'FileError',
-  (file: ParsedBase | undefined, node: Node, message: string) => {
+  (file: IParsedBase | undefined, node: Node, message: string) => {
     const errorLocation = (() => {
       if (!file) {
         return ``;

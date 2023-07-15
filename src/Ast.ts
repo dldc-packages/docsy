@@ -379,14 +379,14 @@ export function isValidNodeKind(kind: unknown): boolean {
   return Boolean(kind && typeof kind === 'string' && NODES.includes(kind as any));
 }
 
-type NodeTypeFromArray<T extends ReadonlyArray<NodeKind>> = Node<T[number]>;
+export type TNodeTypeFromArray<T extends ReadonlyArray<NodeKind>> = Node<T[number]>;
 
 function combine<T extends ReadonlyArray<NodeKind>>(
   ...kinds: T
 ): {
-  (node: Node): node is NodeTypeFromArray<T>;
+  (node: Node): node is TNodeTypeFromArray<T>;
   kinds: T;
-  __type: NodeTypeFromArray<T>;
+  __type: TNodeTypeFromArray<T>;
 } {
   const fn = ((node: Node) => kinds.includes(node.kind)) as any;
   fn.kinds = kinds;
