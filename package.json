@@ -40,12 +40,6 @@
     "typecheck": "tsc",
     "typecheck:watch": "tsc --watch"
   },
-  "dldc": {
-    "additionalDevDependencies": [
-      "@types/fs-extra",
-      "fs-extra"
-    ]
-  },
   "prettier": {
     "printWidth": 120,
     "singleQuote": true,
@@ -110,6 +104,12 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
+  },
+  "dldc": {
+    "additionalDevDependencies": [
+      "@types/fs-extra",
+      "fs-extra"
+    ]
   },
   "release-it": {
     "hooks": {
