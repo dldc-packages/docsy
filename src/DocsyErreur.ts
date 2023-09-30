@@ -1,4 +1,4 @@
-import type { IKey } from '@dldc/erreur';
+import type { TKey, TVoidKey } from '@dldc/erreur';
 import { Erreur, Key } from '@dldc/erreur';
 import type { Node } from './Ast';
 import type { IParsedBase, Parsed } from './Parsed';
@@ -21,24 +21,24 @@ export interface ParsingErrorData {
 }
 
 export const DocsyErreur = (() => {
-  const DocsyErreurBaseKey: IKey<undefined, false, []> = Key.createEmpty('DocsyErreur');
+  const DocsyErreurBaseKey: TVoidKey = Key.createEmpty('DocsyErreur');
 
-  const ParsingErrorKey: IKey<ParsingErrorData, false> = Key.create('ParsingError');
-  const NotEOFKey: IKey<{ rest: StringReader }, false> = Key.create('NotEOF');
-  const CannotTransformValueKey: IKey<{ value: unknown }, false> = Key.create('CannotTransformValue');
-  const UnexpectedErrorKey: IKey<{ message: string }, false> = Key.create('UnexpectedError');
-  const ParserNotImplementedKey: IKey<{ parserName: string }, false> = Key.create('ParserNotImplemented');
-  const ResolverNotImplementedKey: IKey<{ resolverName: string }, false> = Key.create('ResolverNotImplemented');
-  const ParsedNotReadyKey: IKey<{ fileName: string }, false> = Key.create('ParsedNotReady');
+  const ParsingErrorKey: TKey<ParsingErrorData, false> = Key.create('ParsingError');
+  const NotEOFKey: TKey<{ rest: StringReader }, false> = Key.create('NotEOF');
+  const CannotTransformValueKey: TKey<{ value: unknown }, false> = Key.create('CannotTransformValue');
+  const UnexpectedErrorKey: TKey<{ message: string }, false> = Key.create('UnexpectedError');
+  const ParserNotImplementedKey: TKey<{ parserName: string }, false> = Key.create('ParserNotImplemented');
+  const ResolverNotImplementedKey: TKey<{ resolverName: string }, false> = Key.create('ResolverNotImplemented');
+  const ParsedNotReadyKey: TKey<{ fileName: string }, false> = Key.create('ParsedNotReady');
 
-  const FileErrorKey: IKey<FileErrorData, false> = Key.create('FileError');
-  const MissingGlobalKey: IKey<undefined, false, []> = Key.createEmpty('MissingGlobal');
-  const TypeErrorKey: IKey<undefined, false, []> = Key.createEmpty('TypeError');
-  const CannotResolveNodeKey: IKey<undefined, false, []> = Key.createEmpty('CannotResolveNode');
-  const CannotResolveInjectKey: IKey<undefined, false, []> = Key.createEmpty('CannotResolveInject');
-  const MissingJsxFunctionKey: IKey<undefined, false, []> = Key.createEmpty('MissingJsxFunction');
-  const MissingFragmentKey: IKey<undefined, false, []> = Key.createEmpty('MissingFragment');
-  const CannotSerializeNodeKey: IKey<undefined, false, []> = Key.createEmpty('CannotSerializeNode');
+  const FileErrorKey: TKey<FileErrorData, false> = Key.create('FileError');
+  const MissingGlobalKey: TVoidKey = Key.createEmpty('MissingGlobal');
+  const TypeErrorKey: TVoidKey = Key.createEmpty('TypeError');
+  const CannotResolveNodeKey: TVoidKey = Key.createEmpty('CannotResolveNode');
+  const CannotResolveInjectKey: TVoidKey = Key.createEmpty('CannotResolveInject');
+  const MissingJsxFunctionKey: TVoidKey = Key.createEmpty('MissingJsxFunction');
+  const MissingFragmentKey: TVoidKey = Key.createEmpty('MissingFragment');
+  const CannotSerializeNodeKey: TVoidKey = Key.createEmpty('CannotSerializeNode');
 
   return {
     ParsingError: {
