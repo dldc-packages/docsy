@@ -37,6 +37,6 @@ export class Parsed<T extends Ast.Node = Ast.Node> implements IParsedBase {
   }
 
   throw(node: Ast.Node, message: string): never {
-    throw DocsyErreur.FileError.create(this, node, message);
+    throw DocsyErreur.FileError.create(new Error(message), this, node);
   }
 }
