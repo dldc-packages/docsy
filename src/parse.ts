@@ -1,5 +1,5 @@
 import * as Ast from './Ast';
-import { DocsyErreur } from './DocsyErreur';
+import { createParsingError, createUnexpectedError } from './DocsyErreur';
 import type { Parsed } from './Parsed';
 import { nonEmptyArray } from './Utils';
 import { INTERNAL } from './internal';
@@ -16,7 +16,7 @@ function runParser<T extends Ast.Node>(parser: Parser<T, ParserContext<T>>, sour
   const input = StringReader(source);
   const result = executeParser(parser, input, ctx);
   if (result.type === 'Failure') {
-    throw DocsyErreur.ParsingError.create(file, source, failureToStack(result));
+    throw createParsingError(file, source, failureToStack(result));
   }
   ctx.parsed[INTERNAL].setResult(result.value);
   return ctx.parsed;
@@ -612,7 +612,7 @@ ChainableExpressionParser.setParser(
             ctx.createNode('CallExpression', start, end, { target, arguments: item.arguments }),
           );
         }
-        throw DocsyErreur.UnexpectedError.create(`Access on invalid type`);
+        throw createUnexpectedError(`Access on invalid type`);
       },
     ),
   ),

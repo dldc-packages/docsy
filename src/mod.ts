@@ -1,5 +1,5 @@
 export * as Ast from './Ast';
-export { DocsyErreur } from './DocsyErreur';
+export { DocsyErreur, DocsyFileErreur, type TDocsyErreurData, type TDocsyFileErreurData } from './DocsyErreur';
 export { Parsed, type IParsedBase } from './Parsed';
 export { Utils } from './Utils';
 export type { NodePath, NodeWithPath } from './Utils';

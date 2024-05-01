@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
-import { Erreur } from '@dldc/erreur';
 import { expect, test } from 'vitest';
 import { DocsyErreur, parseDocument, parseExpression } from '../src/mod';
 import { readFile } from './utils';
+import { getError } from './utils/errors';
 
 test(`Parse Empty Document`, () => {
   const file = '';
@@ -379,17 +379,35 @@ test(`Parse simple element with no content`, () => {
 
 test(`Throw when you close the wrong tag`, () => {
   const file = `<|Demo>Something<Yolo/>`;
-  expect(() => parseDocument(file, 'source.docsy')).toThrow(Erreur);
-  const error = Erreur.resolve(() => parseDocument(file, 'source.docsy'));
-  expect((error as Erreur).has(DocsyErreur.ParsingError.Key.Consumer)).toBe(true);
+  expect(() => parseDocument(file, 'source.docsy')).toThrow(Error);
+  const error = getError(() => parseDocument(file, 'source.docsy'));
+  expect(DocsyErreur.get(error)).toEqual({
+    docsyStack: [
+      { message: 'Invalid close tag: wrong component', name: 'Element', position: 21 },
+      { message: 'Parser at index 1 did not match', name: 'Document.1', position: 0 },
+    ],
+    file: 'source.docsy',
+    kind: 'ParsingError',
+    source: '<|Demo>Something<Yolo/>',
+  });
 });
 
 test(`Throw when you invalid tag`, () => {
   const file = `<|Demo>Something<Demo`;
-  expect(() => parseDocument(file, 'source.docsy')).toThrow(Erreur);
+  expect(() => parseDocument(file, 'source.docsy')).toThrow(Error);
   expect(() => parseDocument(file, 'source.docsy')).toThrow('21 EOF reached');
-  const error = Erreur.resolve(() => parseDocument(file, 'source.docsy'));
-  expect((error as Erreur).has(DocsyErreur.ParsingError.Key.Consumer)).toBe(true);
+  const error = getError(() => parseDocument(file, 'source.docsy'));
+  expect(DocsyErreur.get(error)).toEqual({
+    docsyStack: [
+      { message: 'EOF reached', name: "LineElement.4.Exact('>')", position: 21 },
+      { message: 'Parser at index 4 did not match', name: 'LineElement.4', position: 21 },
+      { message: 'Parser at index 6 did not match', name: 'Element.6', position: 16 },
+      { message: 'Parser at index 1 did not match', name: 'Document.1', position: 0 },
+    ],
+    file: 'source.docsy',
+    kind: 'ParsingError',
+    source: '<|Demo>Something<Demo',
+  });
 });
 
 test(`Parse function call`, () => {

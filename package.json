@@ -82,7 +82,7 @@
     "root": true
   },
   "dependencies": {
-    "@dldc/erreur": "^7.0.1"
+    "@dldc/erreur": "^7.1.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",

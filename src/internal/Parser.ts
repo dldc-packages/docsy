@@ -1,4 +1,4 @@
-import { DocsyErreur } from '../DocsyErreur';
+import { createNotEOF, createUnexpectedError } from '../DocsyErreur';
 import { LinkedList } from './LinkedList';
 import type { StringReader } from './StringReader';
 import type { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types';
@@ -71,7 +71,7 @@ class ResultTrackerImpl<T> implements ResultTracker<T> {
     if (this.selectedError) {
       return this.selectedError.error;
     }
-    throw DocsyErreur.UnexpectedError.create(`Tracker did not receive result`);
+    throw createUnexpectedError(`Tracker did not receive result`);
   }
   getFailure() {
     if (this.selectedError) {
@@ -88,7 +88,7 @@ export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReade
 export function expectEOF<T>(result: ParseResult<T>): ParseResult<T> {
   if (result.type === 'Success') {
     if (result.rest.empty === false) {
-      throw DocsyErreur.NotEOF.create(result.rest);
+      throw createNotEOF(result.rest);
     }
   }
   return result;

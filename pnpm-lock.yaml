@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@dldc/erreur':
-    specifier: ^7.0.1
-    version: 7.0.1
+    specifier: ^7.1.0
+    version: 7.1.0
 
 devDependencies:
   '@types/fs-extra':
@@ -120,8 +120,8 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@dldc/erreur@7.0.1:
-    resolution: {integrity: sha512-whJBmayFsOnwHZl9xVQuSJXb6DgtDmMNKgiawDr+BvhjCGEiKxAkJXWrqN95Yz3DOeqdD6fpzD1l9l68iKu1MQ==}
+  /@dldc/erreur@7.1.0:
+    resolution: {integrity: sha512-vr4QJwA2OrVPAq/S786mCYy9BAhF5c9F/j91PqfRG+g3C9BlPHapZjyai4twqd3CjszoA5MyDs0vebd6eQkSAg==}
     dev: false
 
   /@esbuild/aix-ppc64@0.19.12:

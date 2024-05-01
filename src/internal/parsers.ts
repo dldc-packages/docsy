@@ -1,4 +1,4 @@
-import { DocsyErreur } from '../DocsyErreur';
+import { createParserNotImplemented, createUnexpectedError } from '../DocsyErreur';
 import { LinkedList } from './LinkedList';
 import { ParseFailure, ParseSuccess, resultTracker } from './Parser';
 import type { ParseResult, ParseResultSuccess, Parser, ParserFn, Rule } from './types';
@@ -243,10 +243,10 @@ export interface RegexpParser<Ctx> extends Parser<string, Ctx> {
 export function regexp<Ctx>(reg: RegExp, name?: string): RegexpParser<Ctx> {
   const nameResolved = name || `Regexp(${reg})`;
   if (reg.source[0] !== '^') {
-    throw DocsyErreur.UnexpectedError.create(`Regular expression should start with '^': ${nameResolved}`);
+    throw createUnexpectedError(`Regular expression should start with '^': ${nameResolved}`);
   }
   if (!reg.global) {
-    throw DocsyErreur.UnexpectedError.create(`Regular expression should be global: ${nameResolved}`);
+    throw createUnexpectedError(`Regular expression should be global: ${nameResolved}`);
   }
   return {
     regexp: reg,
@@ -262,7 +262,7 @@ export function regexp<Ctx>(reg: RegExp, name?: string): RegexpParser<Ctx> {
         const text = subString.slice(0, reg.lastIndex);
         if (text.length === 0) {
           return ParseFailure(input.position, path, () => `Regexp matched empty string.`);
-          // throw DocsyErreur.UnexpectedError.create(`Regexp ${reg.source} matched empty string`);
+          // throw createUnexpectedError(`Regexp ${reg.source} matched empty string`);
         }
         const next = input.skip(text.length);
         return ParseSuccess(input.position, next, text);
@@ -624,13 +624,13 @@ export function rule<T, Ctx>(name: string): Rule<T, Ctx> {
   return {
     setParser(p) {
       if (parser !== null) {
-        throw DocsyErreur.UnexpectedError.create(`Parser already set !`);
+        throw createUnexpectedError(`Parser already set !`);
       }
       parser = p;
     },
     parse(_parentPath, input, skip, ctx) {
       if (parser === null) {
-        throw DocsyErreur.ParserNotImplemented.create(name);
+        throw createParserNotImplemented(name);
       }
       return parser.parse(LinkedList.create<string>().add(name), input, skip, ctx);
     },

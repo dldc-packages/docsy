@@ -1,5 +1,5 @@
 import type * as Ast from './Ast';
-import { DocsyErreur } from './DocsyErreur';
+import { createFileError, createParsedNotReady } from './DocsyErreur';
 import { INTERNAL } from './internal';
 import type { Ranges, ReadonlyRanges } from './internal/types';
 
@@ -31,12 +31,12 @@ export class Parsed<T extends Ast.Node = Ast.Node> implements IParsedBase {
 
   public get result(): T {
     if (!this._result) {
-      throw DocsyErreur.ParsedNotReady.create(this.filename);
+      throw createParsedNotReady(this.filename);
     }
     return this._result;
   }
 
   throw(node: Ast.Node, message: string): never {
-    throw DocsyErreur.FileError.create(new Error(message), this, node);
+    throw createFileError(message, this, node);
   }
 }

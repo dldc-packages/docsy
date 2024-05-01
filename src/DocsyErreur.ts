@@ -1,5 +1,4 @@
-import type { TKey, TVoidKey } from '@dldc/erreur';
-import { Erreur, Key } from '@dldc/erreur';
+import { createErreurStore } from '@dldc/erreur';
 import type { Node } from './Ast';
 import type { IParsedBase, Parsed } from './Parsed';
 import { stackToString } from './internal/Parser';
@@ -7,191 +6,155 @@ import type { StringReader } from './internal/StringReader';
 import type { Stack } from './internal/types';
 import { offsetToPosition } from './internal/utils';
 
-export interface FileErrorData {
-  file: IParsedBase | undefined;
-  node: Node;
-  message: string;
-  errorLocation: string;
+export type TDocsyErreurData =
+  | { kind: 'ParsingError'; file: string; source: string; docsyStack: Stack }
+  | { kind: 'NotEOF'; rest: StringReader }
+  | { kind: 'CannotTransformValue'; value: unknown }
+  | { kind: 'UnexpectedError'; message: string }
+  | { kind: 'ParserNotImplemented'; parserName: string }
+  | { kind: 'ResolverNotImplemented'; resolverName: string }
+  | { kind: 'ParsedNotReady'; fileName: string }
+  | { kind: 'FileError'; file: IParsedBase | undefined; node: Node; errorLocation: string };
+
+const DocsyErreurInternal = createErreurStore<TDocsyErreurData>();
+
+export const DocsyErreur = DocsyErreurInternal.asReadonly;
+
+export type TDocsyFileErreurData =
+  | { kind: 'MissingGlobal' }
+  | { kind: 'TypeError' }
+  | { kind: 'CannotResolveNode' }
+  | { kind: 'CannotResolveInject' }
+  | { kind: 'MissingJsxFunction' }
+  | { kind: 'MissingFragment' }
+  | { kind: 'CannotSerializeNode' };
+
+const DocsyFileErreurInternal = createErreurStore<TDocsyFileErreurData>();
+
+export const DocsyFileErreur = DocsyFileErreurInternal.asReadonly;
+
+export function createParsingError(file: string, source: string, docsyStack: Stack) {
+  return DocsyErreurInternal.setAndReturn(`Parsing error:\n${stackToString(docsyStack, 2)}`, {
+    kind: 'ParsingError',
+    file,
+    source,
+    docsyStack,
+  });
 }
 
-export interface ParsingErrorData {
-  file: string;
-  source: string;
-  docsyStack: Stack;
+export function createNotEOF(rest: StringReader) {
+  const restText = (() => {
+    const restText = rest.peek(Infinity);
+    if (restText.length < 20) {
+      return `"${restText}"`;
+    }
+    return `"${restText.slice(0, 17)}..."`;
+  })();
+
+  return DocsyErreurInternal.setAndReturn(`Expecting EOF but rest: "${restText}"`, { kind: 'NotEOF', rest });
 }
 
-export const DocsyErreur = (() => {
-  const DocsyErreurBaseKey: TVoidKey = Key.createEmpty('DocsyErreur');
+export function createCannotTransformValue(value: unknown) {
+  return DocsyErreurInternal.setAndReturn(`Cannot transform value of type: ${typeof value}`, {
+    kind: 'CannotTransformValue',
+    value,
+  });
+}
 
-  const ParsingErrorKey: TKey<ParsingErrorData, false> = Key.create('ParsingError');
-  const NotEOFKey: TKey<{ rest: StringReader }, false> = Key.create('NotEOF');
-  const CannotTransformValueKey: TKey<{ value: unknown }, false> = Key.create('CannotTransformValue');
-  const UnexpectedErrorKey: TKey<{ message: string }, false> = Key.create('UnexpectedError');
-  const ParserNotImplementedKey: TKey<{ parserName: string }, false> = Key.create('ParserNotImplemented');
-  const ResolverNotImplementedKey: TKey<{ resolverName: string }, false> = Key.create('ResolverNotImplemented');
-  const ParsedNotReadyKey: TKey<{ fileName: string }, false> = Key.create('ParsedNotReady');
+export function createUnexpectedError(message: string) {
+  return DocsyErreurInternal.setAndReturn(message, { kind: 'UnexpectedError', message });
+}
 
-  const FileErrorKey: TKey<FileErrorData, false> = Key.create('FileError');
-  const MissingGlobalKey: TVoidKey = Key.createEmpty('MissingGlobal');
-  const TypeErrorKey: TVoidKey = Key.createEmpty('TypeError');
-  const CannotResolveNodeKey: TVoidKey = Key.createEmpty('CannotResolveNode');
-  const CannotResolveInjectKey: TVoidKey = Key.createEmpty('CannotResolveInject');
-  const MissingJsxFunctionKey: TVoidKey = Key.createEmpty('MissingJsxFunction');
-  const MissingFragmentKey: TVoidKey = Key.createEmpty('MissingFragment');
-  const CannotSerializeNodeKey: TVoidKey = Key.createEmpty('CannotSerializeNode');
+export function createParserNotImplemented(parserName: string) {
+  return DocsyErreurInternal.setAndReturn(`Cannot get parser rule "${parserName}": no parser defined !`, {
+    kind: 'ParserNotImplemented',
+    parserName,
+  });
+}
 
-  return {
-    ParsingError: {
-      Key: ParsingErrorKey,
-      create(file: string, source: string, docsyStack: Stack) {
-        return createBase(new Error(`Parsing error:\n${stackToString(docsyStack, 2)}`)).with(
-          ParsingErrorKey.Provider({ file, source, docsyStack }),
-        );
-      },
-    },
-    NotEOF: {
-      Key: NotEOFKey,
-      create(rest: StringReader) {
-        const restText = (() => {
-          const restText = rest.peek(Infinity);
-          if (restText.length < 20) {
-            return `"${restText}"`;
-          }
-          return `"${restText.slice(0, 17)}..."`;
-        })();
+export function createResolverNotImplemented(resolverName: string) {
+  return DocsyErreurInternal.setAndReturn(`Cannot get resolver rule "${resolverName}": no resolver defined !`, {
+    kind: 'ResolverNotImplemented',
+    resolverName,
+  });
+}
 
-        return createBase(new Error(`Expecting EOF but rest: "${restText}"`)).with(NotEOFKey.Provider({ rest }));
-      },
-    },
-    CannotTransformValue: {
-      Key: CannotTransformValueKey,
-      create(value: unknown) {
-        return createBase(new Error())
-          .with(CannotTransformValueKey.Provider({ value }))
-          .withMessage(`Cannot transform value of type: ${typeof value}`);
-      },
-    },
-    UnexpectedError: {
-      Key: UnexpectedErrorKey,
-      create(message: string) {
-        return createBase(new Error())
-          .with(UnexpectedErrorKey.Provider({ message }))
-          .withMessage(`Unexpected: ${message}`);
-      },
-    },
-    ParserNotImplemented: {
-      Key: ParserNotImplementedKey,
-      create(parserName: string) {
-        return createBase(new Error(`Cannot get parser rule "${parserName}": no parser defined !`)).with(
-          ParserNotImplementedKey.Provider({ parserName }),
-        );
-      },
-    },
-    ResolverNotImplemented: {
-      Key: ResolverNotImplementedKey,
-      create(resolverName: string) {
-        return createBase(new Error(`Cannot get resolver rule "${resolverName}": no resolver defined !`)).with(
-          ResolverNotImplementedKey.Provider({ resolverName }),
-        );
-      },
-    },
-    ParsedNotReady: {
-      Key: ParsedNotReadyKey,
-      create(fileName: string) {
-        return createBase(
-          new Error(
-            `Parsed not ready for file "${fileName}", did you try to access parsed.result before parsing is done ?`,
-          ),
-        ).with(ParsedNotReadyKey.Provider({ fileName }));
-      },
-    },
+export function createParsedNotReady(fileName: string) {
+  return DocsyErreurInternal.setAndReturn(
+    `Parsed not ready for file "${fileName}", did you try to access parsed.result before parsing is done ?`,
+    { kind: 'ParsedNotReady', fileName },
+  );
+}
 
-    FileError: {
-      Key: FileErrorKey,
-      create: createFileError,
-    },
-    MissingGlobal: {
-      Key: MissingGlobalKey,
-      create(file: IParsedBase | undefined, node: Node, message: string) {
-        return createFileError(new Error(`Missing global: ${message}`), file, node).with(MissingGlobalKey.Provider());
-      },
-    },
-    TypeError: {
-      Key: TypeErrorKey,
-      create(file: Parsed | undefined, node: Node, message: string) {
-        return createFileError(new Error(`TypeError: ${message}`), file, node).with(TypeErrorKey.Provider());
-      },
-    },
-    CannotResolveNode: {
-      Key: CannotResolveNodeKey,
-      create(file: Parsed | undefined, node: Node, message: string) {
-        return createFileError(
-          new Error(`Cannot resolve node ${node.kind}${message ? ': ' + message : ''}`),
-          file,
-          node,
-        ).with(CannotResolveNodeKey.Provider());
-      },
-    },
-    CannotResolveInject: {
-      Key: CannotResolveInjectKey,
-      create(file: Parsed | undefined, node: Node) {
-        return createFileError(new Error(`Inject content should resolve to string`), file, node).with(
-          CannotResolveInjectKey.Provider(),
-        );
-      },
-    },
-    MissingJsxFunction: {
-      Key: MissingJsxFunctionKey,
-      create(file: Parsed | undefined, node: Node) {
-        return createFileError(
-          new Error(
-            `Missing global: No JSX function provided, you need a jsx(type, props, key) function to resolve components.`,
-          ),
-          file,
-          node,
-        ).with(MissingJsxFunctionKey.Provider());
-      },
-    },
-    MissingFragment: {
-      Key: MissingFragmentKey,
-      create(file: Parsed | undefined, node: Node) {
-        return createFileError(new Error(`Missing global: No Fragment provided.`), file, node).with(
-          MissingFragmentKey.Provider(),
-        );
-      },
-    },
-    CannotSerializeNode: {
-      Key: CannotSerializeNodeKey,
-      create(file: Parsed | undefined, node: Node, message?: string) {
-        return createFileError(
-          new Error(`Cannot serialize node ${node.kind}${message ? ': ' + message : ''}`),
-          file,
-          node,
-        ).with(CannotSerializeNodeKey.Provider());
-      },
-    },
-  };
+export function createFileError(data: Error | string, file: IParsedBase | undefined, node: Node) {
+  const errorLocation = getErrorLocation(file, node);
+  const error = data instanceof Error ? data : new Error(data + `\nin file ${errorLocation}`);
+  return DocsyErreurInternal.setAndReturn(error, { kind: 'FileError', file, node, errorLocation });
+}
 
-  function createFileError(cause: Error, file: IParsedBase | undefined, node: Node) {
-    const errorLocation = getErrorLocation(file, node);
-    return createBase(cause)
-      .with(FileErrorKey.Provider({ file, node, message: cause.message, errorLocation }))
-      .withMessage(`Error in Docsy file: ${cause.message}${errorLocation}`);
+export function createMissingGlobal(file: IParsedBase | undefined, node: Node, message: string) {
+  return DocsyFileErreurInternal.setAndReturn(createFileError(`Missing global: ${message}`, file, node), {
+    kind: 'MissingGlobal',
+  });
+}
+
+export function createTypeError(file: IParsedBase | undefined, node: Node, message: string) {
+  return DocsyFileErreurInternal.setAndReturn(createFileError(`Type error: ${message}`, file, node), {
+    kind: 'TypeError',
+  });
+}
+
+export function createCannotResolveNode(file: Parsed | undefined, node: Node, message: string) {
+  return DocsyFileErreurInternal.setAndReturn(
+    createFileError(`Cannot resolve node ${node.kind}${message ? ': ' + message : ''}`, file, node),
+    {
+      kind: 'CannotResolveNode',
+    },
+  );
+}
+
+export function createCannotResolveInject(file: Parsed | undefined, node: Node) {
+  return DocsyFileErreurInternal.setAndReturn(createFileError(`Inject content should resolve to string`, file, node), {
+    kind: 'CannotResolveInject',
+  });
+}
+
+export function createMissingJsxFunction(file: Parsed | undefined, node: Node) {
+  return DocsyFileErreurInternal.setAndReturn(
+    createFileError(
+      `Missing global: No JSX function provided, you need a jsx(type, props, key) function to resolve components.`,
+      file,
+      node,
+    ),
+    {
+      kind: 'MissingJsxFunction',
+    },
+  );
+}
+
+export function createMissingFragment(file: Parsed | undefined, node: Node) {
+  return DocsyFileErreurInternal.setAndReturn(createFileError(`Missing global: No Fragment provided.`, file, node), {
+    kind: 'MissingFragment',
+  });
+}
+
+export function createCannotSerializeNode(file: Parsed | undefined, node: Node, message?: string) {
+  return DocsyFileErreurInternal.setAndReturn(
+    createFileError(`Cannot serialize node ${node.kind}${message ? ': ' + message : ''}`, file, node),
+    {
+      kind: 'CannotSerializeNode',
+    },
+  );
+}
+
+function getErrorLocation(file: IParsedBase | undefined, node: Node) {
+  if (!file) {
+    return ``;
   }
-
-  function createBase(cause: Error) {
-    return Erreur.create(cause).with(DocsyErreurBaseKey.Provider()).withName('DocsyErreur');
+  const pos = file.ranges.get(node);
+  if (!pos) {
+    return `\n  ${file.filename}`;
   }
-
-  function getErrorLocation(file: IParsedBase | undefined, node: Node) {
-    if (!file) {
-      return ``;
-    }
-    const pos = file.ranges.get(node);
-    if (!pos) {
-      return `\n  ${file.filename}`;
-    }
-    const { line, column } = offsetToPosition(file.source, pos.start);
-    return `\n  ${file.filename}:${line}:${column}`;
-  }
-})();
+  const { line, column } = offsetToPosition(file.source, pos.start);
+  return `\n  ${file.filename}:${line}:${column}`;
+}
