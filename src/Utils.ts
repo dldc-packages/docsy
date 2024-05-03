@@ -243,8 +243,7 @@ function isPlainObject(o: any): o is Record<string, any> {
   if (isObjectObject(prot) === false) return false;
 
   // If constructor does not have an Object-specific method
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  if (prot.hasOwnProperty('isPrototypeOf') === false) {
+  if (Object.prototype.hasOwnProperty.call(prot, 'isPrototypeOf') === false) {
     return false;
   }
 
