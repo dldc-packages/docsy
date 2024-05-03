@@ -1,0 +1,3 @@
+{
+  "additionalDevDependencies": ["@types/fs-extra", "fs-extra"]
+}
