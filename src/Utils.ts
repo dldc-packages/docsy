@@ -1,7 +1,10 @@
-import * as Ast from './Ast';
-import { createCannotTransformValue, createUnexpectedError } from './DocsyErreur';
-import type { TraversePath } from './internal/types';
-import { isReadonlyArray } from './internal/utils';
+import * as Ast from "./Ast.ts";
+import {
+  createCannotTransformValue,
+  createUnexpectedError,
+} from "./DocsyErreur.ts";
+import type { TraversePath } from "./internal/types.ts";
+import { isReadonlyArray } from "./internal/utils.ts";
 
 export const Utils = {
   filter,
@@ -23,7 +26,10 @@ export interface NodeWithPath {
   path: NodePath;
 }
 
-function getChildrenDeep(children: Ast.NodeContentChildren, path: NodePath): Array<NodeWithPath> {
+function getChildrenDeep(
+  children: Ast.NodeContentChildren,
+  path: NodePath,
+): Array<NodeWithPath> {
   if (isReadonlyArray(children)) {
     return children.map((node, index) => ({ node, path: [...path, index] }));
   }
@@ -56,17 +62,22 @@ function getAllNodeChildren(node: Ast.Node): Array<NodeWithPath> {
  * @param node
  * @returns
  */
-function getNodeChildren(node: Ast.Node): Record<string, Ast.NodeContentChildren> {
+function getNodeChildren(
+  node: Ast.Node,
+): Record<string, Ast.NodeContentChildren> {
   const result: Record<string, Ast.NodeContentChildren> = {};
   Object.entries(node).forEach(([key, value]) => {
-    if (key === 'kind' || key === 'parsed') {
+    if (key === "kind" || key === "parsed") {
       return;
     }
     if (value === null || value === undefined) {
       return;
     }
     const type = typeof value;
-    if (type === 'string' || type === 'number' || type === 'boolean' || type === 'bigint') {
+    if (
+      type === "string" || type === "number" || type === "boolean" ||
+      type === "bigint"
+    ) {
       return;
     }
     result[key] = value;
@@ -81,7 +92,10 @@ function getNodeChildren(node: Ast.Node): Record<string, Ast.NodeContentChildren
  * @param onNode
  * @returns
  */
-function traverse(node: Ast.Node, onNode: (item: Ast.Node, path: TraversePath) => void | false | null): void {
+function traverse(
+  node: Ast.Node,
+  onNode: (item: Ast.Node, path: TraversePath) => void | false | null,
+): void {
   return traverseInternal(node, []);
 
   function traverseInternal(item: Ast.Node, path: TraversePath) {
@@ -100,17 +114,17 @@ function traverse(node: Ast.Node, onNode: (item: Ast.Node, path: TraversePath) =
 function getNodeData(node: Ast.Node): Record<string, Ast.NodeContentData> {
   const result: Record<string, Ast.NodeContentData> = {};
   Object.entries(node).forEach(([key, value]) => {
-    if (key === 'kind' || key === 'parsed') {
+    if (key === "kind" || key === "parsed") {
       return;
     }
     const type = typeof value;
     if (
       value === null ||
       value === undefined ||
-      type === 'string' ||
-      type === 'number' ||
-      type === 'boolean' ||
-      type === 'bigint'
+      type === "string" ||
+      type === "number" ||
+      type === "boolean" ||
+      type === "bigint"
     ) {
       result[key] = value;
     }
@@ -118,11 +132,14 @@ function getNodeData(node: Ast.Node): Record<string, Ast.NodeContentData> {
   return result;
 }
 
-function filter<N extends Ast.Node>(node: N, onNode: (item: Ast.Node, path: TraversePath) => boolean): N {
+function filter<N extends Ast.Node>(
+  node: N,
+  onNode: (item: Ast.Node, path: TraversePath) => boolean,
+): N {
   const removePaths: Array<TraversePath> = [];
 
   if (onNode(node, []) === false) {
-    throw new Error('Cannot filter root node !');
+    throw new Error("Cannot filter root node !");
   }
 
   traverse(node, (node, path) => {
@@ -137,7 +154,9 @@ function filter<N extends Ast.Node>(node: N, onNode: (item: Ast.Node, path: Trav
   // we need to update in reverse order
   const sortedRemovePaths = removePaths.reverse();
   // clone parents
-  const clonePaths = sortedRemovePaths.map((v) => v.slice(0, -1)).filter((p) => p.length > 0);
+  const clonePaths = sortedRemovePaths.map((v) => v.slice(0, -1)).filter((p) =>
+    p.length > 0
+  );
   const cloned = cloneAtPaths(node, clonePaths);
   sortedRemovePaths.forEach((removePath) => {
     deleteAtPath(cloned, removePath);
@@ -146,7 +165,10 @@ function filter<N extends Ast.Node>(node: N, onNode: (item: Ast.Node, path: Trav
   return cloned;
 }
 
-function transform<N extends Ast.Node>(node: N, onNode: (item: Ast.Node, path: TraversePath) => Ast.Node): N {
+function transform<N extends Ast.Node>(
+  node: N,
+  onNode: (item: Ast.Node, path: TraversePath) => Ast.Node,
+): N {
   const replaceItems: Array<{ path: TraversePath; node: Ast.Node }> = [];
 
   traverse(node, (node, path) => {
@@ -159,7 +181,9 @@ function transform<N extends Ast.Node>(node: N, onNode: (item: Ast.Node, path: T
   });
 
   // clone parents
-  const clonePaths = replaceItems.map((v) => v.path.slice(0, -1)).filter((p) => p.length > 0);
+  const clonePaths = replaceItems.map((v) => v.path.slice(0, -1)).filter((p) =>
+    p.length > 0
+  );
   const cloned = cloneAtPaths(node, clonePaths);
   replaceItems.forEach(({ path, node }) => {
     updateAtPath(cloned, path, node);
@@ -175,14 +199,14 @@ function createNodeFromValue(value: unknown): Ast.Expression {
   if (value === undefined) {
     return Ast.NodeBuilder.Undefined();
   }
-  if (typeof value === 'boolean') {
+  if (typeof value === "boolean") {
     return Ast.NodeBuilder.Bool({ value });
   }
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return Ast.NodeBuilder.Num({ value, rawValue: String(value) });
   }
-  if (typeof value === 'string') {
-    return Ast.NodeBuilder.Str({ value, quote: 'Single' });
+  if (typeof value === "string") {
+    return Ast.NodeBuilder.Str({ value, quote: "Single" });
   }
   if (Array.isArray(value)) {
     if (value.length === 0) {
@@ -194,7 +218,12 @@ function createNodeFromValue(value: unknown): Ast.Expression {
           value.map((v, i) => {
             return Ast.NodeBuilder.ListItem({
               item: createNodeFromValue(v),
-              whitespaceBefore: i === 0 ? undefined : Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }),
+              whitespaceBefore: i === 0
+                ? undefined
+                : Ast.NodeBuilder.Whitespace({
+                  content: " ",
+                  hasNewLine: false,
+                }),
             });
           }),
         ),
@@ -205,30 +234,45 @@ function createNodeFromValue(value: unknown): Ast.Expression {
     if (Object.keys(value).length === 0) {
       return Ast.NodeBuilder.Obj({});
     }
-    const properties: Array<Ast.ObjItem> = Object.entries(value).map(([key, v], i) => {
-      const isLast = i === Object.keys(value).length - 1;
-      return Ast.NodeBuilder.ObjItem({
-        property: Ast.NodeBuilder.ObjProperty({
-          name: Ast.NodeBuilder.Identifier({ name: key }),
-          value: createNodeFromValue(v),
-          whitespaceAfterColon: Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }),
-        }),
-        whitespaceBefore: Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }),
-        whitespaceAfter: isLast ? Ast.NodeBuilder.Whitespace({ content: ' ', hasNewLine: false }) : undefined,
-      });
-    });
+    const properties: Array<Ast.ObjItem> = Object.entries(value).map(
+      ([key, v], i) => {
+        const isLast = i === Object.keys(value).length - 1;
+        return Ast.NodeBuilder.ObjItem({
+          property: Ast.NodeBuilder.ObjProperty({
+            name: Ast.NodeBuilder.Identifier({ name: key }),
+            value: createNodeFromValue(v),
+            whitespaceAfterColon: Ast.NodeBuilder.Whitespace({
+              content: " ",
+              hasNewLine: false,
+            }),
+          }),
+          whitespaceBefore: Ast.NodeBuilder.Whitespace({
+            content: " ",
+            hasNewLine: false,
+          }),
+          whitespaceAfter: isLast
+            ? Ast.NodeBuilder.Whitespace({ content: " ", hasNewLine: false })
+            : undefined,
+        });
+      },
+    );
 
-    return Ast.NodeBuilder.Obj({ items: Ast.NodeBuilder.ObjItems({ properties: nonEmptyArray(properties) }) });
+    return Ast.NodeBuilder.Obj({
+      items: Ast.NodeBuilder.ObjItems({
+        properties: nonEmptyArray(properties),
+      }),
+    });
   }
   throw createCannotTransformValue(value);
 }
 
 function isObject(val: any): boolean {
-  return val != null && typeof val === 'object' && Array.isArray(val) === false;
+  return val != null && typeof val === "object" && Array.isArray(val) === false;
 }
 
 function isObjectObject(o: any) {
-  return isObject(o) === true && Object.prototype.toString.call(o) === '[object Object]';
+  return isObject(o) === true &&
+    Object.prototype.toString.call(o) === "[object Object]";
 }
 
 function isPlainObject(o: any): o is Record<string, any> {
@@ -236,14 +280,14 @@ function isPlainObject(o: any): o is Record<string, any> {
 
   // If has modified constructor
   const ctor = o.constructor;
-  if (typeof ctor !== 'function') return false;
+  if (typeof ctor !== "function") return false;
 
   // If has modified prototype
   const prot = ctor.prototype;
   if (isObjectObject(prot) === false) return false;
 
   // If constructor does not have an Object-specific method
-  if (Object.prototype.hasOwnProperty.call(prot, 'isPrototypeOf') === false) {
+  if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
     return false;
   }
 
@@ -258,7 +302,9 @@ function cloneAtPaths<T>(obj: T, paths: Array<TraversePath>): T {
   return transformInternal(obj, []);
 
   function transformInternal<T>(item: T, path: TraversePath): T {
-    const isInPath = paths.some((clonePath) => arrayStartsWith(clonePath, path));
+    const isInPath = paths.some((clonePath) =>
+      arrayStartsWith(clonePath, path)
+    );
     if (!isInPath) {
       return item;
     }
@@ -266,7 +312,11 @@ function cloneAtPaths<T>(obj: T, paths: Array<TraversePath>): T {
       return item.map((v, i) => transformInternal(v, [...path, i])) as any;
     }
     if (isPlainObject(item)) {
-      return Object.fromEntries(Object.entries(item).map(([k, v]) => [k, transformInternal(v, [...path, k])])) as any;
+      return Object.fromEntries(
+        Object.entries(item).map((
+          [k, v],
+        ) => [k, transformInternal(v, [...path, k])]),
+      ) as any;
     }
     return item;
   }
@@ -291,7 +341,7 @@ function deleteAtPath(obj: unknown, path: TraversePath) {
     delete parent[removeKey];
     return;
   }
-  throw new Error('[deleteAtPath] Unsuported type');
+  throw new Error("[deleteAtPath] Unsuported type");
 }
 
 function updateAtPath(obj: unknown, path: TraversePath, value: unknown) {
@@ -306,27 +356,29 @@ function updateAtPath(obj: unknown, path: TraversePath, value: unknown) {
 
 export function nonEmptyArray<T>(arr: ReadonlyArray<T>): Ast.NonEmptyArray<T> {
   if (arr.length === 0) {
-    throw createUnexpectedError('Unexpected empty array');
+    throw createUnexpectedError("Unexpected empty array");
   }
   return arr as Ast.NonEmptyArray<T>;
 }
 
 function indent(content: string): string {
   return content
-    .split('\n')
+    .split("\n")
     .map((line) => `  ${line}`)
-    .join('\n');
+    .join("\n");
 }
 
 export function debug(node: Ast.Node | Array<Ast.Node>): string {
   if (Array.isArray(node)) {
-    return node.map((child) => debug(child)).join('\n\n');
+    return node.map((child) => debug(child)).join("\n\n");
   }
   let nodeHeader = `${node.kind}`;
 
   const dataItems = Object.entries(getNodeData(node));
   if (dataItems.length) {
-    nodeHeader += `(${dataItems.map(([name, value]) => `${name}: ${value}`).join(', ')})`;
+    nodeHeader += `(${
+      dataItems.map(([name, value]) => `${name}: ${value}`).join(", ")
+    })`;
   }
 
   const children = getAllNodeChildren(node);
@@ -337,10 +389,10 @@ export function debug(node: Ast.Node | Array<Ast.Node>): string {
     nodeHeader,
     ...children
       .map(({ node: child, path }) => {
-        const name = path.join('.');
+        const name = path.join(".");
         if (child) {
           const childText = debug(child);
-          if (childText.split('\n').length > 1) {
+          if (childText.split("\n").length > 1) {
             return `${name}:\n${childText}`;
           }
           return `${name}: ${indent(childText)}`;
@@ -348,5 +400,5 @@ export function debug(node: Ast.Node | Array<Ast.Node>): string {
         return `${name}: null`;
       })
       .map((v) => indent(v)),
-  ].join('\n');
+  ].join("\n");
 }

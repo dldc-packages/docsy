@@ -1,0 +1,21 @@
+{
+  "name": "@dldc/docsy",
+  "version": "2.0.0",
+  "exports": "./mod.ts",
+  "imports": {
+    "@dldc/erreur": "jsr:@dldc/erreur@^7.1.1",
+    "@std/expect": "jsr:@std/expect@^0.224.2",
+    "@std/path": "jsr:@std/path@^0.225.1"
+  },
+  "tasks": {
+    "test:run": "deno test -A",
+    "test:watch": "deno test --watch",
+    "bump": "deno run -A jsr:@mys/bump@1",
+    "update": "deno run -A https://deno.land/x/nudd/cli.ts update",
+    "check": "deno fmt --check . && deno lint . && deno task test:run"
+  },
+  "lint": {
+    "rules": { "exclude": ["no-explicit-any"] }
+  },
+  "exclude": ["tests/data"]
+}

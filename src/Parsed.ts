@@ -1,7 +1,7 @@
-import type * as Ast from './Ast';
-import { createFileError, createParsedNotReady } from './DocsyErreur';
-import { INTERNAL } from './internal';
-import type { Ranges, ReadonlyRanges } from './internal/types';
+import type * as Ast from "./Ast.ts";
+import { createFileError, createParsedNotReady } from "./DocsyErreur.ts";
+import { INTERNAL } from "./internal.ts";
+import type { Ranges, ReadonlyRanges } from "./internal/types.ts";
 
 export interface IParsedBase {
   readonly ranges: ReadonlyRanges;
@@ -22,7 +22,12 @@ export class Parsed<T extends Ast.Node = Ast.Node> implements IParsedBase {
     },
   } as const;
 
-  constructor(filename: string, source: string, ranges: Ranges, result: T | null = null) {
+  constructor(
+    filename: string,
+    source: string,
+    ranges: Ranges,
+    result: T | null = null,
+  ) {
     this.filename = filename;
     this.source = source;
     this.ranges = ranges;

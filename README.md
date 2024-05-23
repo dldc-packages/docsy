@@ -10,7 +10,7 @@ By default any content is considered as text.
 
 ### Comments
 
-You can use line comments `//` or block comments `/*` and `*/`.  
+You can use line comments `//` or block comments `/*` and `*/`.\
 Comments also works inside elements !
 
 ### Inject
@@ -23,7 +23,8 @@ Two plus two is {2 + 2} !
 
 ### Identifier
 
-An identifier must start with a letter (`[A-Za-z]`) and can contain letters, numbers and `_`.
+An identifier must start with a letter (`[A-Za-z]`) and can contain letters,
+numbers and `_`.
 
 ### Expression
 
@@ -140,7 +141,8 @@ Tag name must be a valid identifier or a member access like `foo.bar`.
 
 Any opening / self closing tag can have attributes.
 
-Attributes are sparated by whitespace and are in the form `NAME=VALUE` or simply `NAME`.
+Attributes are sparated by whitespace and are in the form `NAME=VALUE` or simply
+`NAME`.
 
 Attribute name can be any valid identifier.
 

@@ -1,1 +1,1 @@
-export const INTERNAL = Symbol.for('DOCSY_INTERNAL');
+export const INTERNAL = Symbol.for("DOCSY_INTERNAL");

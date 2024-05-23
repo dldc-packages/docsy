@@ -1,47 +1,47 @@
-import * as p from './parsers';
-import type { ParserContext as Ctx } from './ParserContext';
-import type { Parser } from './types';
+import type { ParserContext as Ctx } from "./ParserContext.ts";
+import * as p from "./parsers.ts";
+import type { Parser } from "./types.ts";
 
 export const eof = p.eof<Ctx>();
 
 // String based
 export const SINGLE_QUOTE = "'";
 export const DOUBLE_QUOTE = '"';
-export const BACKTICK = '`';
-const NEW_LINE_CHAR = '\n';
+export const BACKTICK = "`";
+const NEW_LINE_CHAR = "\n";
 
-export const lineCommentStart = exact('//');
+export const lineCommentStart = exact("//");
 export const newLine = exact(NEW_LINE_CHAR);
-export const blockCommentStart = exact('/*');
-export const blockCommentEnd = exact('*/');
-export const trueToken = exact('true');
-export const falseToken = exact('false');
-export const nullToken = exact('null');
-export const undefinedToken = exact('undefined');
+export const blockCommentStart = exact("/*");
+export const blockCommentEnd = exact("*/");
+export const trueToken = exact("true");
+export const falseToken = exact("false");
+export const nullToken = exact("null");
+export const undefinedToken = exact("undefined");
 export const singleQuote = exact(SINGLE_QUOTE);
 export const doubleQuote = exact(DOUBLE_QUOTE);
 export const backtick = exact(BACKTICK);
-export const dot = exact('.');
-export const parenthesisOpen = exact('(');
-export const parenthesisClose = exact(')');
-export const squareBracketOpen = exact('[');
-export const squareBracketClose = exact(']');
-export const comma = exact(',');
-export const curlyBracketOpen = exact('{');
-export const curlyBracketClose = exact('}');
-export const greaterThan = exact('>');
-export const elementSelfClosingEnd = exact('/>');
-export const fragmentToken = exact('<|>');
-export const rawFragmentToken = exact('<#>');
-export const elementCloseShortcut = exact('</>');
-export const colon = exact(':');
-export const spreadOperator = exact('...');
-export const equal = exact('=');
-export const lessThan = exact('<');
+export const dot = exact(".");
+export const parenthesisOpen = exact("(");
+export const parenthesisClose = exact(")");
+export const squareBracketOpen = exact("[");
+export const squareBracketClose = exact("]");
+export const comma = exact(",");
+export const curlyBracketOpen = exact("{");
+export const curlyBracketClose = exact("}");
+export const greaterThan = exact(">");
+export const elementSelfClosingEnd = exact("/>");
+export const fragmentToken = exact("<|>");
+export const rawFragmentToken = exact("<#>");
+export const elementCloseShortcut = exact("</>");
+export const colon = exact(":");
+export const spreadOperator = exact("...");
+export const equal = exact("=");
+export const lessThan = exact("<");
 export const elementCloseEnd = exact(`/>`);
-export const elementOpenStart = exact('<|');
-export const elementRawOpenStart = exact('<#');
-export const elementSelfClosingStart = exact('</');
+export const elementOpenStart = exact("<|");
+export const elementRawOpenStart = exact("<#");
+export const elementSelfClosingStart = exact("</");
 
 // export const rawElementTokenOpen = exact('<#');
 // export const rawElementTokenClose = exact('#>');
@@ -50,12 +50,12 @@ export const elementSelfClosingStart = exact('</');
 
 const WHITESPACE = `\\s`;
 const STAR = `\\*`;
-const SLASH = '\\/';
+const SLASH = "\\/";
 const NEW_LINE = `\\n`;
 const DIGIT = `\\d`;
 const DOT = `\\.`;
 const BACKSLASH = `\\\\`;
-const PIPE = '\\|';
+const PIPE = "\\|";
 
 const BLOCK_COMMENT_END = `${STAR}${SLASH}`;
 const NEGATIVE_BLOCK_COMMENT_END = `(?!${BLOCK_COMMENT_END})`;
@@ -81,30 +81,46 @@ const ELEM_CLOSE = `(<${ELEMENT_NAME}${SLASH}>)`;
 const ELEM_SHORT_CLOSE = `(<${SLASH}>)`;
 const COMMENT_LINE_START = `${SLASH}${SLASH}`;
 const COMMENT_BLOCK_START = `${SLASH}${STAR}`;
-const ANY_ELEM = `${INJECT_START}|${ELEM_OPEN}|${RAW_ELEM_OPEN}|${LINE_ELEM_OPEN}|${FRAGMENT_OPEN}|${RAW_FRAGMENT_OPEN}|${SELF_CLOSING_ELEM_OPEN}|${ELEM_CLOSE}|${ELEM_SHORT_CLOSE}|${COMMENT_LINE_START}|${COMMENT_BLOCK_START}`;
+const ANY_ELEM =
+  `${INJECT_START}|${ELEM_OPEN}|${RAW_ELEM_OPEN}|${LINE_ELEM_OPEN}|${FRAGMENT_OPEN}|${RAW_FRAGMENT_OPEN}|${SELF_CLOSING_ELEM_OPEN}|${ELEM_CLOSE}|${ELEM_SHORT_CLOSE}|${COMMENT_LINE_START}|${COMMENT_BLOCK_START}`;
 
-export const whitespace = regexp(`${WHITESPACE}+`, 'whitespace');
-export const elemName = regexp(`${ELEMENT_NAME}`, 'elemName');
-export const lineWhitespace = regexp(`[ \t]+`, 'lineWhitespace');
-export const lineCommentContent = regexp(`.+`, 'lineCommentContent');
-export const blockCommentContent = regexp(`(${NEGATIVE_BLOCK_COMMENT_END}${ANYTHING})+`, 'blockCommentContent');
-export const number = regexp(`[+-]?(${NUM_VARIANT_1}|${NUM_VARIANT_2})`, 'number');
+export const whitespace = regexp(`${WHITESPACE}+`, "whitespace");
+export const elemName = regexp(`${ELEMENT_NAME}`, "elemName");
+export const lineWhitespace = regexp(`[ \t]+`, "lineWhitespace");
+export const lineCommentContent = regexp(`.+`, "lineCommentContent");
+export const blockCommentContent = regexp(
+  `(${NEGATIVE_BLOCK_COMMENT_END}${ANYTHING})+`,
+  "blockCommentContent",
+);
+export const number = regexp(
+  `[+-]?(${NUM_VARIANT_1}|${NUM_VARIANT_2})`,
+  "number",
+);
 export const singleQuoteStringContent = regexp(
   `((${ESCAPE_SINGLE_QUOTE})|${NOT_SINGLE_QUOTE_END})+`,
-  'singleQuoteStringContent',
+  "singleQuoteStringContent",
 );
 export const doubleQuoteStringContent = regexp(
   `((${ESCAPE_DOUBLE_QUOTE})|${NOT_DOUBLE_QUOTE_END})+`,
-  'doubleQuoteStringContent',
+  "doubleQuoteStringContent",
 );
 export const backtickStringContent = regexp(
   `((${ESCAPE_BACKTICK_QUOTE})|${NOT_BACKTICK_QUOTE_END})+`,
-  'backtickStringContent',
+  "backtickStringContent",
 );
-export const identifier = regexp(IDENTIFIER, 'identifier');
-export const textContent = regexp(`${ANYTHING}*?(?=$|${ANY_ELEM})`, 'textContent');
-export const lineTextContent = regexp(`.*?(?=$|${NEW_LINE}|${ANY_ELEM})`, 'lineTextContent');
-export const rawTextContent = regexp(`${ANYTHING}*?(?=${ELEM_CLOSE}|${ELEM_SHORT_CLOSE})`, 'rawTextContent');
+export const identifier = regexp(IDENTIFIER, "identifier");
+export const textContent = regexp(
+  `${ANYTHING}*?(?=$|${ANY_ELEM})`,
+  "textContent",
+);
+export const lineTextContent = regexp(
+  `.*?(?=$|${NEW_LINE}|${ANY_ELEM})`,
+  "lineTextContent",
+);
+export const rawTextContent = regexp(
+  `${ANYTHING}*?(?=${ELEM_CLOSE}|${ELEM_SHORT_CLOSE})`,
+  "rawTextContent",
+);
 // export const elementOpenStart = regexp(ELEM_OPEN, 'elementOpenStart');
 // export const elementClose = regexp(ELEM_CLOSE, 'elementClose');
 // export const elementRawOpenStart = regexp(RAW_ELEM_OPEN, 'elementRawOpenStart');
@@ -116,5 +132,5 @@ function exact<T extends string>(str: T): Parser<T, Ctx> {
 }
 
 function regexp(pattern: string, name?: string): p.RegexpParser<Ctx> {
-  return p.regexp<Ctx>(new RegExp(`^${pattern}`, 'g'), name);
+  return p.regexp<Ctx>(new RegExp(`^${pattern}`, "g"), name);
 }

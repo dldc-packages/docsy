@@ -1,18 +1,29 @@
-import * as Ast from './Ast';
-import { createCannotSerializeNode, createUnexpectedError } from './DocsyErreur';
-import type { Parsed } from './Parsed';
-import * as t from './internal/tokens';
-import { isReadonlyArray } from './internal/utils';
+import * as Ast from "./Ast.ts";
+import {
+  createCannotSerializeNode,
+  createUnexpectedError,
+} from "./DocsyErreur.ts";
+import type { Parsed } from "./Parsed.ts";
+import * as t from "./internal/tokens.ts";
+import { isReadonlyArray } from "./internal/utils.ts";
 
 export interface ISerializeOptions {
   file?: Parsed;
 }
 
-export function serialize(item: Ast.Node, options: ISerializeOptions = {}): any {
+export function serialize(
+  item: Ast.Node,
+  options: ISerializeOptions = {},
+): any {
   return serializeNode(item, options);
 }
 
-const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISerializeOptions) => string } = {
+const NODE_SERIALIZER: {
+  [K in Ast.NodeKind]: (
+    item: Ast.Node<K>,
+    options: ISerializeOptions,
+  ) => string;
+} = {
   Document(item, options) {
     return serializeNodes(item.children, options);
   },
@@ -30,19 +41,19 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
     return item.name;
   },
   Str(item) {
-    if (item.quote === 'Single') {
+    if (item.quote === "Single") {
       return t.SINGLE_QUOTE + item.value.replace(/'/g, `\\'`) + t.SINGLE_QUOTE;
     }
-    if (item.quote === 'Double') {
+    if (item.quote === "Double") {
       return t.DOUBLE_QUOTE + item.value.replace(/"/g, `\\"`) + t.DOUBLE_QUOTE;
     }
-    if (item.quote === 'Backtick') {
-      return t.BACKTICK + item.value.replace(/`/g, '\\`') + t.BACKTICK;
+    if (item.quote === "Backtick") {
+      return t.BACKTICK + item.value.replace(/`/g, "\\`") + t.BACKTICK;
     }
     throw createUnexpectedError(`Invalid Qutote type on Str`);
   },
   Bool(item) {
-    return item.value ? 'true' : 'false';
+    return item.value ? "true" : "false";
   },
   Num(item) {
     return item.rawValue;
@@ -57,7 +68,10 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
     return `[` + serializeNodeOrWhitespaceLike(item.items, options) + `]`;
   },
   ListItems(item, options) {
-    return [serializeNodes(item.items, options, ','), serializeNode(item.trailingComma, options)].join('');
+    return [
+      serializeNodes(item.items, options, ","),
+      serializeNode(item.trailingComma, options),
+    ].join("");
   },
   TrailingComma(item, options) {
     return `,` + serializeWhitespaceLike(item.whitespaceAfter, options);
@@ -67,7 +81,7 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
       serializeWhitespaceLike(item.whitespaceBefore, options),
       serializeNode(item.item, options),
       serializeWhitespaceLike(item.whitespaceAfter, options),
-    ].join('');
+    ].join("");
   },
   Spread(item, options) {
     return `...${serializeNode(item.target, options)}`;
@@ -76,61 +90,67 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
     return `{` + serializeNodeOrWhitespaceLike(item.items, options) + `}`;
   },
   ObjItems(item, options) {
-    return [serializeNodes(item.properties, options), serializeNode(item.trailingComma, options)].join('');
+    return [
+      serializeNodes(item.properties, options),
+      serializeNode(item.trailingComma, options),
+    ].join("");
   },
   ObjItem(item, options) {
     return [
       serializeWhitespaceLike(item.whitespaceBefore, options),
       serializeNode(item.property, options),
       serializeWhitespaceLike(item.whitespaceAfter, options),
-    ].join('');
+    ].join("");
   },
   ObjProperty(item, options) {
     return [
       serializeNode(item.name, options),
       serializeWhitespaceLike(item.whitespaceBeforeColon, options),
-      ':',
+      ":",
       serializeWhitespaceLike(item.whitespaceAfterColon, options),
       serializeNode(item.value, options),
-    ].join('');
+    ].join("");
   },
   ObjComputedProperty(item, options) {
     return [
-      '[',
+      "[",
       serializeWhitespaceLike(item.whitespaceBeforeExpression, options),
       serializeNode(item.expression, options),
       serializeWhitespaceLike(item.whitespaceAfterExpression, options),
-      ']',
+      "]",
       serializeWhitespaceLike(item.whitespaceBeforeColon, options),
-      ':',
+      ":",
       serializeWhitespaceLike(item.whitespaceAfterColon, options),
       serializeNode(item.value, options),
-    ].join('');
+    ].join("");
   },
   ObjPropertyShorthand(item, options) {
     return [
       serializeWhitespaceLike(item.whitespaceBefore, options),
       serializeNode(item.name, options),
       serializeWhitespaceLike(item.whitespaceAfter, options),
-    ].join('');
+    ].join("");
   },
   CallExpression(item, options) {
-    return serializeNode(item.target, options) + `(${serializeNodeOrWhitespaceLike(item.arguments, options)})`;
+    return serializeNode(item.target, options) +
+      `(${serializeNodeOrWhitespaceLike(item.arguments, options)})`;
   },
   MemberExpression(item, options) {
-    return serializeNode(item.target, options) + '.' + serializeNode(item.property, options);
+    return serializeNode(item.target, options) + "." +
+      serializeNode(item.property, options);
   },
   ComputedMemberExpression(item, options) {
-    return serializeNode(item.target, options) + `[${serializeNode(item.property, options)}]`;
+    return serializeNode(item.target, options) +
+      `[${serializeNode(item.property, options)}]`;
   },
   Parenthesis(item, options) {
     return [
-      '(',
+      "(",
       serializeWhitespaceLike(item.whitespaceBefore, options),
       serializeNode(item.value, options),
       serializeWhitespaceLike(item.whitespaceAfter, options),
-      ')',
-    ].join('');
+      ")",
+    ].join("");
   },
   LineComment(item) {
     return `//${item.content}`;
@@ -144,10 +164,10 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
       serializeNode(item.name, options),
       serializeNodes(item.attributes, options),
       serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
-      '>',
+      ">",
       serializeNodes(item.children, options),
       item.namedCloseTag ? `<${serializeNode(item.name, options)}/>` : `</>`,
-    ].join('');
+    ].join("");
   },
   RawElement(item, options) {
     return [
@@ -155,10 +175,10 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
       serializeNode(item.name, options),
       serializeNodes(item.attributes, options),
       serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
-      '>',
+      ">",
       item.content,
       item.namedCloseTag ? `<${serializeNode(item.name, options)}/>` : `</>`,
-    ].join('');
+    ].join("");
   },
   SelfClosingElement(item, options) {
     return [
@@ -166,8 +186,8 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
       serializeNode(item.name, options),
       serializeNodes(item.attributes, options),
       serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
-      '/>',
-    ].join('');
+      "/>",
+    ].join("");
   },
   LineElement(item, options) {
     return [
@@ -175,9 +195,9 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
       serializeNode(item.name, options),
       serializeNodes(item.attributes, options),
       serializeWhitespaceLike(item.whitespaceAfterAttributes, options),
-      '>',
+      ">",
       serializeNodes(item.children, options),
-    ].join('');
+    ].join("");
   },
   Fragment(item, options) {
     return `<|>${serializeNodes(item.children, options)}</>`;
@@ -190,34 +210,42 @@ const NODE_SERIALIZER: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: ISeri
   },
   Inject(item, options) {
     return [
-      '{',
+      "{",
       serializeWhitespaceLike(item.whitespaceBefore, options),
       serializeNode(item.value, options),
       serializeWhitespaceLike(item.whitespaceAfter, options),
-      '}',
-    ].join('');
+      "}",
+    ].join("");
   },
   Attribute(item, options) {
     return [
       serializeWhitespaceLike(item.whitespaceBefore, options),
       serializeNode(item.name, options),
-      item.value ? `=${serializeNode(item.value, options)}` : '',
-    ].join('');
+      item.value ? `=${serializeNode(item.value, options)}` : "",
+    ].join("");
   },
   ElementNameMember(item, options) {
-    return serializeNode(item.target, options) + '.' + serializeNode(item.property, options);
+    return serializeNode(item.target, options) + "." +
+      serializeNode(item.property, options);
   },
 };
 
 // -- Utils
 
-function serializeNode(item: Ast.Node | undefined | null, options: ISerializeOptions): any {
+function serializeNode(
+  item: Ast.Node | undefined | null,
+  options: ISerializeOptions,
+): any {
   if (item === undefined || item === null) {
-    return '';
+    return "";
   }
   const serializer = NODE_SERIALIZER[item.kind];
   if (serializer === undefined) {
-    throw createCannotSerializeNode(options.file, item, `Invalid node kind: ${item.kind}`);
+    throw createCannotSerializeNode(
+      options.file,
+      item,
+      `Invalid node kind: ${item.kind}`,
+    );
   }
   return serializer(item as any, options);
 }
@@ -225,20 +253,23 @@ function serializeNode(item: Ast.Node | undefined | null, options: ISerializeOpt
 function serializeNodes(
   items: null | ReadonlyArray<Ast.Node>,
   options: ISerializeOptions,
-  joiner: string = '',
+  joiner: string = "",
 ): string {
   if (!items || items.length === 0) {
-    return '';
+    return "";
   }
   return items.map((sub) => serializeNode(sub, options)).join(joiner);
 }
 
-function serializeWhitespaceLike(whitespace: Ast.WhitespaceLike | undefined, options: ISerializeOptions): string {
+function serializeWhitespaceLike(
+  whitespace: Ast.WhitespaceLike | undefined,
+  options: ISerializeOptions,
+): string {
   if (whitespace === undefined) {
-    return '';
+    return "";
   }
   if (isReadonlyArray(whitespace)) {
-    return whitespace.map((item) => serializeNode(item, options)).join('');
+    return whitespace.map((item) => serializeNode(item, options)).join("");
   }
   return serializeNode(whitespace, options);
 }
@@ -248,7 +279,7 @@ function serializeNodeOrWhitespaceLike(
   options: ISerializeOptions,
 ): string {
   if (item === undefined) {
-    return '';
+    return "";
   }
   if (isReadonlyArray(item)) {
     return serializeWhitespaceLike(item, options);
@@ -256,7 +287,8 @@ function serializeNodeOrWhitespaceLike(
   if (Ast.NodeIs.ObjItems(item)) {
     item.properties;
     return (
-      item.properties.map((item) => serializeNode(item, options)).join(',') + serializeNode(item.trailingComma, options)
+      item.properties.map((item) => serializeNode(item, options)).join(",") +
+      serializeNode(item.trailingComma, options)
     );
   }
   return serializeNode(item, options);

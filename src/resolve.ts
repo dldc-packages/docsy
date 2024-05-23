@@ -1,4 +1,4 @@
-import * as Ast from './Ast';
+import * as Ast from "./Ast.ts";
 import {
   createCannotResolveNode,
   createMissingFragment,
@@ -6,10 +6,10 @@ import {
   createMissingJsxFunction,
   createTypeError,
   createUnexpectedError,
-} from './DocsyErreur';
-import type { Parsed } from './Parsed';
-import { INTERNAL } from './internal';
-import { serialize } from './serialize';
+} from "./DocsyErreur.ts";
+import type { Parsed } from "./Parsed.ts";
+import { INTERNAL } from "./internal.ts";
+import { serialize } from "./serialize.ts";
 
 export interface IResolveOptions {
   file?: Parsed;
@@ -18,18 +18,32 @@ export interface IResolveOptions {
   globals?: Record<string, any>;
 }
 
-export function resolve<K extends Ast.NodeKind>(item: Ast.Node<K>, options: IResolveOptions = {}): Ast.NodeResolved<K> {
+export function resolve<K extends Ast.NodeKind>(
+  item: Ast.Node<K>,
+  options: IResolveOptions = {},
+): Ast.NodeResolved<K> {
   const result = resolveNode(item, options) as any;
   if (result instanceof IntermediateResolvedValue) {
-    throw createCannotResolveNode(options.file, item, `The node resolve to an intermediate value`);
+    throw createCannotResolveNode(
+      options.file,
+      item,
+      `The node resolve to an intermediate value`,
+    );
   }
   return result;
 }
 
-function resolveNode<K extends Ast.NodeKind>(item: Ast.Node<K>, options: IResolveOptions): Ast.NodeResolved<K> {
+function resolveNode<K extends Ast.NodeKind>(
+  item: Ast.Node<K>,
+  options: IResolveOptions,
+): Ast.NodeResolved<K> {
   const resolver = NODE_RESOLVERS[item.kind];
   if (resolver === undefined) {
-    throw createCannotResolveNode(options.file, item, `Invalid node kind: ${item.kind}`);
+    throw createCannotResolveNode(
+      options.file,
+      item,
+      `Invalid node kind: ${item.kind}`,
+    );
   }
   return resolver(item, options);
 }
@@ -45,15 +59,20 @@ export class IntermediateResolvedValue<T = any> {
   }
 }
 
-const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResolveOptions) => Ast.NodeResolved<K> } = {
+const NODE_RESOLVERS: {
+  [K in Ast.NodeKind]: (
+    item: Ast.Node<K>,
+    options: IResolveOptions,
+  ) => Ast.NodeResolved<K>;
+} = {
   Document(item, options) {
     const result = resolveElementChildren(item.children, options);
     if (result === undefined) {
-      return '';
+      return "";
     }
     if (Array.isArray(result)) {
       if (result.length === 0) {
-        return '';
+        return "";
       }
       if (result.length === 1) {
         return result[0];
@@ -87,11 +106,16 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
   RawElement(item, options) {
     const props = resolveAttributes(item.attributes, options);
     const type = resolveNode(item.name, options);
-    return resolveJsx(item, options, type, { ...props, children: item.content });
+    return resolveJsx(item, options, type, {
+      ...props,
+      children: item.content,
+    });
   },
   Fragment(item, options) {
     const children = resolveElementChildren(item.children, options);
-    return resolveJsx(item, options, resolveFragment(item, options), { children });
+    return resolveJsx(item, options, resolveFragment(item, options), {
+      children,
+    });
   },
   RawFragment(item) {
     return item.content;
@@ -102,7 +126,11 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
   Identifier(item, config) {
     const { globals: globalsValues = {} } = config;
     if (Object.hasOwn(globalsValues, item.name) === false) {
-      throw createMissingGlobal(config.file, item, `You probably forgot to provide a value for ${item.name}`);
+      throw createMissingGlobal(
+        config.file,
+        item,
+        `You probably forgot to provide a value for ${item.name}`,
+      );
     }
     return globalsValues[item.name];
   },
@@ -127,9 +155,13 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
       throw createTypeError(
         options.file,
         item.target,
-        `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
-          item,
-        )}')`,
+        `Cannot access property "${serialize(item.property)}" of ${
+          printValueType(target)
+        } (reading '${
+          serialize(
+            item,
+          )
+        }')`,
       );
     }
     return target[item.property.name];
@@ -140,17 +172,25 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
       throw createTypeError(
         options.file,
         item.target,
-        `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
-          item,
-        )}')`,
+        `Cannot access property "${serialize(item.property)}" of ${
+          printValueType(target)
+        } (reading '${
+          serialize(
+            item,
+          )
+        }')`,
       );
     }
     const property = resolveNode(item.property, options);
-    if (typeof property !== 'string' && typeof property !== 'number') {
+    if (typeof property !== "string" && typeof property !== "number") {
       throw createTypeError(
         options.file,
         item.property,
-        `${printValueType(property)} is not valid as a computed property name (reading '${serialize(item)})`,
+        `${
+          printValueType(property)
+        } is not valid as a computed property name (reading '${
+          serialize(item)
+        })`,
       );
     }
     return target[property];
@@ -163,11 +203,11 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
     const resolved = unwrapIntermediate(resolveNode(items, options));
     const obj: Record<string, any> = {};
     resolved.forEach((item) => {
-      if (item.kind === 'property') {
+      if (item.kind === "property") {
         obj[item.name] = item.value;
         return;
       }
-      if (item.kind === 'spread') {
+      if (item.kind === "spread") {
         Object.assign(obj, item.target);
         return;
       }
@@ -190,50 +230,66 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
     return resolveNode(item.value, options);
   },
   ListItems(item, options) {
-    return new IntermediateResolvedValue(item.items.map((item) => unwrapIntermediate(resolveNode(item, options))));
+    return new IntermediateResolvedValue(
+      item.items.map((item) => unwrapIntermediate(resolveNode(item, options))),
+    );
   },
   TrailingComma(item, options) {
-    throw createCannotResolveNode(options.file, item, `Cannot resolve trailing comma`);
+    throw createCannotResolveNode(
+      options.file,
+      item,
+      `Cannot resolve trailing comma`,
+    );
   },
   ListItem(item, options) {
     if (Ast.NodeIs.Expression(item.item)) {
-      return new IntermediateResolvedValue({ kind: 'value', value: resolveNode(item.item, options) });
+      return new IntermediateResolvedValue({
+        kind: "value",
+        value: resolveNode(item.item, options),
+      });
     }
     return resolveNode(item.item, options);
   },
   Spread(item, options) {
-    return new IntermediateResolvedValue({ kind: 'spread', target: resolveNode(item.target, options) });
+    return new IntermediateResolvedValue({
+      kind: "spread",
+      target: resolveNode(item.target, options),
+    });
   },
   ObjItems(item, options) {
-    return new IntermediateResolvedValue(item.properties.map((item) => unwrapIntermediate(resolveNode(item, options))));
+    return new IntermediateResolvedValue(
+      item.properties.map((item) =>
+        unwrapIntermediate(resolveNode(item, options))
+      ),
+    );
   },
   ObjItem(item, options) {
     return resolveNode(item.property, options);
   },
   ObjProperty(item, options) {
     return new IntermediateResolvedValue({
-      kind: 'property',
+      kind: "property",
       name: resolveObjPropertyName(item.name),
       value: resolveNode(item.value, options),
     });
   },
   ObjComputedProperty(item, options) {
     return new IntermediateResolvedValue({
-      kind: 'property',
+      kind: "property",
       name: resolveNode(item.expression, options),
       value: resolveNode(item.value, options),
     });
   },
   ObjPropertyShorthand(item, options) {
     return new IntermediateResolvedValue({
-      kind: 'property',
+      kind: "property",
       name: resolveObjPropertyName(item.name),
       value: resolveNode(item.name, options),
     });
   },
   CallExpression(item, options) {
     const target = resolveNode(item.target, options);
-    if (typeof target !== 'function') {
+    if (typeof target !== "function") {
       throw createTypeError(
         options.file,
         item.target,
@@ -248,10 +304,18 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
     return resolveNode(item.value, options);
   },
   LineComment(item, options) {
-    throw createCannotResolveNode(options.file, item, `Cannot resolve line comment`);
+    throw createCannotResolveNode(
+      options.file,
+      item,
+      `Cannot resolve line comment`,
+    );
   },
   BlockComment(item, options) {
-    throw createCannotResolveNode(options.file, item, `Cannot resolve block comment`);
+    throw createCannotResolveNode(
+      options.file,
+      item,
+      `Cannot resolve block comment`,
+    );
   },
   Attribute(item, options) {
     return new IntermediateResolvedValue({
@@ -265,9 +329,13 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
       throw createTypeError(
         options.file,
         item.target,
-        `Cannot access property "${serialize(item.property)}" of ${printValueType(target)} (reading '${serialize(
-          item,
-        )}')`,
+        `Cannot access property "${serialize(item.property)}" of ${
+          printValueType(target)
+        } (reading '${
+          serialize(
+            item,
+          )
+        }')`,
       );
     }
     return target[item.property.name];
@@ -280,12 +348,15 @@ const NODE_RESOLVERS: { [K in Ast.NodeKind]: (item: Ast.Node<K>, options: IResol
  * Join consecutive whitespace / text
  * Return resolved array / single item / undefined
  */
-export function resolveElementChildren(items: ReadonlyArray<Ast.Child>, options: IResolveOptions = {}): unknown {
+export function resolveElementChildren(
+  items: ReadonlyArray<Ast.Child>,
+  options: IResolveOptions = {},
+): unknown {
   const result: Array<any> = [];
   items.forEach((child) => {
     const next = resolveNode(child, options);
     const last = result[result.length - 1];
-    if (typeof next === 'string' && typeof last === 'string') {
+    if (typeof next === "string" && typeof last === "string") {
       result[result.length - 1] += next;
       return;
     }
@@ -300,10 +371,15 @@ export function resolveElementChildren(items: ReadonlyArray<Ast.Child>, options:
   return result;
 }
 
-export function resolveAttributes(attrs: ReadonlyArray<Ast.Attribute>, options: IResolveOptions = {}): any {
+export function resolveAttributes(
+  attrs: ReadonlyArray<Ast.Attribute>,
+  options: IResolveOptions = {},
+): any {
   const obj: any = {};
   attrs.forEach((attr) => {
-    const resolved = unwrapIntermediate<{ name: string; value: any }>(resolveNode(attr, options));
+    const resolved = unwrapIntermediate<{ name: string; value: any }>(
+      resolveNode(attr, options),
+    );
     obj[resolved.name] = resolved.value;
   });
   return obj;
@@ -313,12 +389,21 @@ function unwrapIntermediate<T>(val: IntermediateResolvedValue<T>): T {
   if (val instanceof IntermediateResolvedValue) {
     return val[INTERNAL];
   }
-  throw createUnexpectedError(`Interbal: Expecting IntermediateResolvedValue but received ${printValueType(val)}`);
+  throw createUnexpectedError(
+    `Interbal: Expecting IntermediateResolvedValue but received ${
+      printValueType(val)
+    }`,
+  );
 }
 
-function resolveJsx(node: Ast.Node, options: IResolveOptions, type: any, props: any): any {
+function resolveJsx(
+  node: Ast.Node,
+  options: IResolveOptions,
+  type: any,
+  props: any,
+): any {
   const { jsx } = options;
-  if (!jsx || typeof jsx !== 'function') {
+  if (!jsx || typeof jsx !== "function") {
     throw createMissingJsxFunction(options.file, node);
   }
   const key = props.key;
@@ -338,30 +423,30 @@ function resolveFragment(node: Ast.Node, options: IResolveOptions): any {
 
 function printValueType(val: any): string {
   if (val === undefined) {
-    return 'undefined';
+    return "undefined";
   }
   if (val === null) {
-    return 'null';
+    return "null";
   }
-  if (typeof val === 'string') {
-    return 'string';
+  if (typeof val === "string") {
+    return "string";
   }
-  if (typeof val === 'number') {
-    return 'number';
+  if (typeof val === "number") {
+    return "number";
   }
-  if (typeof val === 'boolean') {
-    return 'boolean';
+  if (typeof val === "boolean") {
+    return "boolean";
   }
-  if (typeof val === 'symbol') {
-    return 'symbol';
+  if (typeof val === "symbol") {
+    return "symbol";
   }
-  if (typeof val === 'function') {
-    return 'function';
+  if (typeof val === "function") {
+    return "function";
   }
   if (Array.isArray(val)) {
-    return 'Array';
+    return "Array";
   }
-  return 'unknown';
+  return "unknown";
 }
 
 function resolveObjPropertyName(item: Ast.Str | Ast.Identifier): string {
@@ -371,11 +456,11 @@ function resolveObjPropertyName(item: Ast.Str | Ast.Identifier): string {
 function resolveListItems(items: Array<Ast.ResolveListItem>): Array<any> {
   const arr: Array<any> = [];
   items.forEach((item) => {
-    if (item.kind === 'value') {
+    if (item.kind === "value") {
       arr.push(item.value);
       return;
     }
-    if (item.kind === 'spread') {
+    if (item.kind === "spread") {
       arr.push(...item.target);
       return;
     }

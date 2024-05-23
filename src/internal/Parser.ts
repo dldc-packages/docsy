@@ -1,7 +1,14 @@
-import { createNotEOF, createUnexpectedError } from '../DocsyErreur';
-import { LinkedList } from './LinkedList';
-import type { StringReader } from './StringReader';
-import type { Parser, ParseResult, ParseResultFailure, ParseResultSuccess, ResultTracker, Stack } from './types';
+import { createNotEOF, createUnexpectedError } from "../DocsyErreur.ts";
+import { LinkedList } from "./LinkedList.ts";
+import type { StringReader } from "./StringReader.ts";
+import type {
+  Parser,
+  ParseResult,
+  ParseResultFailure,
+  ParseResultSuccess,
+  ResultTracker,
+  Stack,
+} from "./types.ts";
 
 export function ParseFailure(
   pos: number,
@@ -10,7 +17,7 @@ export function ParseFailure(
   child: ParseResultFailure | null = null,
 ): ParseResultFailure {
   return {
-    type: 'Failure',
+    type: "Failure",
     path,
     message,
     pos,
@@ -25,7 +32,7 @@ export function ParseSuccess<T>(
   ifError: ParseResultFailure | null = null,
 ): ParseResultSuccess<T> {
   return {
-    type: 'Success',
+    type: "Success",
     rest,
     start,
     end: rest.position,
@@ -38,17 +45,20 @@ export function ParseSuccess<T>(
  * Keep track of which was the longest result
  */
 class ResultTrackerImpl<T> implements ResultTracker<T> {
-  private selectedError: { error: ParseResultFailure; pos: number } | null = null;
+  private selectedError: { error: ParseResultFailure; pos: number } | null =
+    null;
   private selectedResult: ParseResultSuccess<T> | null = null;
 
   update(result: ParseResult<T>): void {
-    if (result.type === 'Failure') {
+    if (result.type === "Failure") {
       const pos = failurePosition(result);
       if (this.selectedError === null || pos > this.selectedError.pos) {
         this.selectedError = { pos, error: result };
       }
     } else {
-      if (this.selectedResult === null || result.end > this.selectedResult.end) {
+      if (
+        this.selectedResult === null || result.end > this.selectedResult.end
+      ) {
         this.selectedResult = result;
       }
       if (this.selectedResult.ifError) {
@@ -81,12 +91,16 @@ class ResultTrackerImpl<T> implements ResultTracker<T> {
   }
 }
 
-export function executeParser<T, Ctx>(parser: Parser<T, Ctx>, input: StringReader, ctx: Ctx): ParseResult<T> {
+export function executeParser<T, Ctx>(
+  parser: Parser<T, Ctx>,
+  input: StringReader,
+  ctx: Ctx,
+): ParseResult<T> {
   return parser.parse(LinkedList.create(), input, [], ctx);
 }
 
 export function expectEOF<T>(result: ParseResult<T>): ParseResult<T> {
-  if (result.type === 'Success') {
+  if (result.type === "Success") {
     if (result.rest.empty === false) {
       throw createNotEOF(result.rest);
     }
@@ -108,16 +122,26 @@ export function failureToStack(failure: ParseResultFailure): Stack {
   const stack: Stack = [];
   let current = failure;
   while (current.child !== null) {
-    stack.unshift({ position: current.pos, name: current.path.toArray().join('.'), message: current.message() });
+    stack.unshift({
+      position: current.pos,
+      name: current.path.toArray().join("."),
+      message: current.message(),
+    });
     current = current.child;
   }
-  stack.unshift({ position: current.pos, name: current.path.toArray().join('.'), message: current.message() });
+  stack.unshift({
+    position: current.pos,
+    name: current.path.toArray().join("."),
+    message: current.message(),
+  });
   return stack;
 }
 
 export function stackToString(stack: Stack, indent: number = 0): string {
-  const indentText = ' '.repeat(indent);
-  return stack.map((item) => `${indentText}${item.name}:${item.position} ${item.message}`).join('\n');
+  const indentText = " ".repeat(indent);
+  return stack.map((item) =>
+    `${indentText}${item.name}:${item.position} ${item.message}`
+  ).join("\n");
 }
 
 export function resultTracker<T>(): ResultTracker<T> {

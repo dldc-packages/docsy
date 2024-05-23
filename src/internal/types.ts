@@ -1,6 +1,6 @@
-import type { LinkedList } from './LinkedList';
-import type { StringReader } from './StringReader';
-import type * as Ast from '../Ast';
+import type * as Ast from "../Ast.ts";
+import type { LinkedList } from "./LinkedList.ts";
+import type { StringReader } from "./StringReader.ts";
 
 export type Position = {
   readonly line: number;
@@ -18,14 +18,17 @@ export type Ranges = Map<Ast.Node, Range>;
 export type ReadonlyRanges = ReadonlyMap<Ast.Node, Range>;
 
 export interface ReadonlyMap<K, V> {
-  forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void;
+  forEach(
+    callbackfn: (value: V, key: K, map: Map<K, V>) => void,
+    thisArg?: any,
+  ): void;
   get(key: K): V | undefined;
   has(key: K): boolean;
   readonly size: number;
 }
 
 export interface ParseResultFailure {
-  type: 'Failure';
+  type: "Failure";
   path: LinkedList<string>;
   message: () => string;
   pos: number;
@@ -33,7 +36,7 @@ export interface ParseResultFailure {
 }
 
 export interface ParseResultSuccess<T> {
-  type: 'Success';
+  type: "Success";
   value: T;
   start: number;
   end: number;
@@ -72,5 +75,6 @@ export type ResultTracker<T> = {
 export type TraversePath = Array<number | string>;
 
 export type Complete<T> = {
-  [P in keyof Required<T>]: Pick<T, P> extends Required<Pick<T, P>> ? T[P] : T[P] | undefined;
+  [P in keyof Required<T>]: Pick<T, P> extends Required<Pick<T, P>> ? T[P]
+    : T[P] | undefined;
 };

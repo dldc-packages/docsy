@@ -1,4 +1,4 @@
-import { createUnexpectedError } from '../DocsyErreur';
+import { createUnexpectedError } from "../DocsyErreur.ts";
 
 export interface StringReader {
   peek(size?: number): string;
@@ -20,7 +20,10 @@ export function StringReader(input: string): StringReader {
   });
 }
 
-function StringReaderInternal(input: string, options: StringReaderOptions): StringReader {
+function StringReaderInternal(
+  input: string,
+  options: StringReaderOptions,
+): StringReader {
   const size = Math.abs(options.start - options.end);
   const direction = (options.end - options.start) / size; // NaN or 1 or -1
   const position = direction === 1 ? options.start : options.end;
@@ -37,9 +40,12 @@ function StringReaderInternal(input: string, options: StringReaderOptions): Stri
 
   function peek(s: number = 1): string {
     const peekSize = Math.min(s, size);
-    const result = input.slice(options.start, options.start + direction * peekSize);
+    const result = input.slice(
+      options.start,
+      options.start + direction * peekSize,
+    );
     if (s === 1) {
-      return result[0] || '';
+      return result[0] || "";
     }
     return result;
   }
